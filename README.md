@@ -13,3 +13,7 @@ This game was developed using C++ exclusively.
 
 To build it requires SDL 1.2 and SDL Mixer, SDL must have basic OpenGL
 support built in.   I used Mesa for the Amiga port.
+
+You will need the resources from the Amiga release version 1.2.0.  
+
+Grab it from Aminet: https://aminet.net/package/game/shoot/G-WARS
