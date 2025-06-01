@@ -12,8 +12,10 @@ specific code so it should be highly portable to other retro platforms.
 This game was developed using C++ exclusively.
 
 To build it requires SDL 1.2 and SDL Mixer, SDL must have basic OpenGL
-support built in.   I used Mesa for the Amiga port.
+support built in.   
 
-You will need the resources from the Amiga release version 1.2.0.  
+I just used Mesa for the Amiga port.
+
+You will need the resources from the Amiga release version to run it.  
 
 Grab it from Aminet: https://aminet.net/package/game/shoot/G-WARS
