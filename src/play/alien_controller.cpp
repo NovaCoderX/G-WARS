@@ -378,7 +378,6 @@ void AlienController::update(float elapsedTime) {
 			if ((totalElapsedTime - spawnLogic.bossStageStartTime) > INITIAL_SPAWN_DELAY) {
 				// Ready to spawn if all other aliens have been destroyed and the player is active.
 				if ((!alienListHead) && (playState->getPlayer()->isActive())) {
-					logMessage("Spawning boss....\n");
 					g_worldManager->setMusicType(BOSS_MUSIC);
 		            g_worldManager->startMusic();
 		            spawnBossAlien();
@@ -419,12 +418,14 @@ void AlienController::deactivate(Alien* alien) {
 	this->removeFromList(alien);
 
 	if (alien->getAlienType() == SNAKE) {
-		logMessage("Boss has been destroyed, ending the boss stage....\n");
 		// Loop back to the starting stage (restart the game).
 		spawnLogic.currentGameStage = STAGE_ZERO;
 		
 		// Stop the boss music.
 		g_worldManager->stopMusic();
+
+		// Make the next game more interesting.
+		playState->getNuggetController()->setSpawnMode(ALWAYS_SPAWN_NUGGETS);
 
 		// Reset the timers.
 		spawnLogic.lastSpawnedStandard = 0;

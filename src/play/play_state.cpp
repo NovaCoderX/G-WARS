@@ -182,7 +182,6 @@ void PlayState::processInput() {
 
 void PlayState::update() {
 	Uint32 currentFrameTime = SDL_GetTicks();
-
 	float elapsedTime = (currentFrameTime - lastFrameTime) / 1000.0;
 
 	player->update(elapsedTime);

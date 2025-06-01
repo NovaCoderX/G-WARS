@@ -253,12 +253,15 @@ void Player::increaseScore(Alien *alien) {
 		currentScore += (pointsAwarded * scoreMultiplier);
 		
 		// See if the current score is higher than the high-score, if it is then we need to update it and play SFX.
-		if ((!highScoreAchived) && (currentScore > highScore)) {
-			g_worldManager->startSound(HIGH_SCORE_ACHIEVED);
-			highScore = currentScore;
-			highScoreAchived = true;
+		if (currentScore > highScore) {
+			if (!highScoreAchived) {
+				g_worldManager->startSound(HIGH_SCORE_ACHIEVED);
+				highScoreAchived = true;
+			}
 
-			// Update the stats panel.
+			highScore = currentScore;
+
+			// Notify the high score panel that it needs to be updated.
 			playState->getHudController()->getHighScorePanel()->setDirty(true);
 		}
 
