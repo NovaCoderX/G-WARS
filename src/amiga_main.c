@@ -27,7 +27,7 @@
 #include <clib/icon_protos.h>
 #include <workbench/startup.h>
 
-char *ID = "$VER: G-WARS 1.2.01\r\n";
+char *ID = "$VER: G-WARS 1.2.02\r\n";
 
 // The startup message from workbench or 0 if started via CLI.
 extern struct WBStartup *_WBenchMsg;
