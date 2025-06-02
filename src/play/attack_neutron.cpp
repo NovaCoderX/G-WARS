@@ -29,7 +29,6 @@
 
 static AstMatrix3x3 rotationMatrix;
 static float lastAnimatedTime = 0;
-static float spinAngle = 360;
 
 // Function to calculate the first border hit by the laser.
 static std::pair<int, int> first_border_hit(double x0, double y0, double radians, double width, double height) {
@@ -215,16 +214,8 @@ void AttackNeutron::update(float elapsedTime) {
 
 		// Apply animation.
 		if (elapsedTime != lastAnimatedTime) {
-			float originalSpinAngle = spinAngle;
-
-			spinAngle -= (SPIN_ANIMATION_SPEED * elapsedTime);
-			if (spinAngle < 0) {
-				// Wrapped.
-				spinAngle = (360 - spinAngle);
-			}
-
-			// Apply the difference in rotation angle.
-			rotationMatrix.MakeZRotation(spinAngle - originalSpinAngle);
+			// Apply the rotation angle.
+			rotationMatrix.MakeZRotation(-(SPIN_ANIMATION_SPEED * elapsedTime));
 
 			for (int i = 0; i < this->definition->getNumVertices(); i++) {
 				this->definition->staticVertices[i] = (this->definition->staticVertices[i] * rotationMatrix);

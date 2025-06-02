@@ -23,7 +23,7 @@
 
 static AstMatrix3x3 rotationMatrix;
 static float lastAnimatedTime = 0;
-static float spinAngle = 360;
+
 
 ChaseStar::ChaseStar(PlayState* playState) : ChaseAlien(playState) {
 	this->alienType = CHASE_RHOMBUS;
@@ -38,16 +38,8 @@ void ChaseStar::update(float elapsedTime) {
 
 	if (this->isVisible()) {
 		if (elapsedTime != lastAnimatedTime) {
-			float originalSpinAngle = spinAngle;
-
-			spinAngle -= (SPIN_ANIMATION_SPEED * elapsedTime);
-			if (spinAngle < 0) {
-				// Wrapped.
-				spinAngle = (360 - spinAngle);
-			}
-
-			// Apply the difference in rotation angle.
-			rotationMatrix.MakeZRotation(spinAngle - originalSpinAngle);
+			// Apply the rotation angle.
+			rotationMatrix.MakeZRotation(-(SPIN_ANIMATION_SPEED * elapsedTime));
 
 			for (int i = 0; i < this->definition->getNumVertices(); i++) {
 				this->definition->staticVertices[i] = (this->definition->staticVertices[i] * rotationMatrix);
