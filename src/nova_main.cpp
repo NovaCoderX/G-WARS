@@ -35,7 +35,7 @@ static void nova_exit_handler() {
 }
 
 extern "C" {
-	void poly_nova_main(char *baseDirectory) {
+	void nova_main(char *baseDirectory) {
 		atexit(nova_exit_handler);
 
 		// Seed the  pseudo-random number generator.
@@ -47,4 +47,5 @@ extern "C" {
 		g_worldManager->run();
 	}
 }
+
 

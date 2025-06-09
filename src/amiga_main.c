@@ -27,7 +27,7 @@
 #include <clib/icon_protos.h>
 #include <workbench/startup.h>
 
-char *ID = "$VER: G-WARS 1.2.02\r\n";
+const char *ID = "$VER: G-WARS 1.2.03\r\n";
 
 // The startup message from workbench or 0 if started via CLI.
 extern struct WBStartup *_WBenchMsg;
@@ -37,7 +37,7 @@ static char *myargv[MAX_ARGVS];
 static int myargc = 0;
 
 
-extern void poly_nova_main(char *baseDirectory);
+extern void nova_main(char *baseDirectory);
 
 int main(int argc, char *argv[]) {
 	char path[PATH_MAX];
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     if (!_WBenchMsg) {
         // Started from the shell.
         GetCurrentDirName((unsigned char*)path, PATH_MAX);
-        poly_nova_main(path);
+        nova_main(path);
     } else {
 		// Started from WB.
     	struct DiskObject *diskObject;
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		poly_nova_main(path);
+		nova_main(path);
 	}
 
 	// Never reached....
