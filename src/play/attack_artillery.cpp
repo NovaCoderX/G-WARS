@@ -18,10 +18,11 @@
  *****************************************************************/
 #include "poly_nova.h"
 
+#define MINIMUM_CHASE_DISTANCE 10
 #define MAXIMUM_CHASE_ANGLE 60
 #define INITIAL_FIRE_DELAY 30
 #define FIRE_INTERVAL 20
-#define READY_TO_FIRE_DELAY 3
+#define READY_TO_FIRE_DELAY 6
 #define MAXIMUM_TARGET_ANGLE 30
 
 AttackArtillery::AttackArtillery(PlayState* playState) : Alien(playState) {
@@ -72,15 +73,18 @@ void AttackArtillery::update(float elapsedTime) {
 		NovaVertex playerPosition = player->getPositionWCS();
 		NovaVertex alienPosition = this->getPositionWCS();
 
-		double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
-				(playerPosition.y - alienPosition.y));
-		double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
+		float between = (playerPosition - alienPosition).magnitude();
+		if (between > MINIMUM_CHASE_DISTANCE) {
+			double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
+					(playerPosition.y - alienPosition.y));
+			double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
 
-		float diff = fabs(movementDirection - playerDirection);
-		if (diff < MAXIMUM_CHASE_ANGLE) {
-			// Change our velocity to chase the player.
-			this->setVelocityFromDirection(playerDirection, this->getTotalVelocity());
-			this->setFacingTowardsDirection(playerDirection);
+			float diff = fabs(movementDirection - playerDirection);
+			if (diff < MAXIMUM_CHASE_ANGLE) {
+				// Change our velocity to chase the player.
+				this->setVelocityFromDirection(playerDirection, this->getTotalVelocity());
+				this->setFacingTowardsDirection(playerDirection);
+			}
 		}
 	}
 

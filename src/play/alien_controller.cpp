@@ -29,7 +29,7 @@
 #define WAVE_INTENSITY_MIDPOINT_INITIAL_DURATION 30
 #define WAVE_INTENSITY_MIDPOINT_DURATION_INCREMENT 10
 
-#define NUMBER_OF_BOUNCE_ALIENS 10
+#define NUMBER_OF_BOUNCE_ALIENS 12
 #define NUMBER_OF_CHASE_ALIENS 8
 #define NUMBER_OF_ATTACK_ALIENS 6
 
@@ -415,8 +415,6 @@ void AlienController::draw() {
 }
 
 void AlienController::deactivate(Alien* alien) {
-	this->removeFromList(alien);
-
 	if (alien->getAlienType() == SNAKE) {
 		// Loop back to the starting stage (restart the game).
 		spawnLogic.currentGameStage = STAGE_ZERO;
@@ -432,6 +430,8 @@ void AlienController::deactivate(Alien* alien) {
 		spawnLogic.lastSpawnedSpecial = 0;
 		totalElapsedTime = 0;
 	}
+
+	this->removeFromList(alien);
 }
 
 void AlienController::destroyAllLife() {
@@ -968,7 +968,7 @@ void AlienController::spawnPlayerClone() {
 
 	if (alien) {
 		// Setup initial position, direction and velocity of the new alien.
-		spawnHelper(alien, 2, 4);
+		spawnHelper(alien, 1, 3);
 	}
 }
 
@@ -994,7 +994,7 @@ void AlienController::spawnMiniGate() {
 
 	if (alien) {
 		// Setup initial position, direction and velocity of the new alien.
-		spawnHelper(alien, 1, 2);
+		spawnHelper(alien, 1, 3);
 	}
 }
 

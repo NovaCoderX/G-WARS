@@ -21,7 +21,6 @@
 #define INITIAL_FIRE_DELAY 30
 #define FIRE_INTERVAL 20
 #define READY_TO_FIRE_DELAY 3
-#define MISSILE_ADDITIONAL_VELOCITY 6
 #define MAXIMUM_TARGET_ANGLE 30
 
 AttackTank::AttackTank(PlayState* playState) : Alien(playState) {
@@ -72,15 +71,6 @@ void AttackTank::setActive(bool active) {
 void AttackTank::update(float elapsedTime) {
 	totalElapsedTime += elapsedTime;
 
-	Player *player = playState->getPlayer();
-	if (!player->isActive()) {
-		// Player has died, reset.
-		readyToFire = false;
-		this->setSpriteColor(defaultColorBase);
-		gunTurret->setSpriteColor(defaultColorTurret);
-		totalElapsedTime = lastFireTime = readyToFireTime = 0;
-	}
-
 	// Apply the velocity.
 	this->applyVelocity(elapsedTime);
 
@@ -119,6 +109,14 @@ void AttackTank::update(float elapsedTime) {
 
 	// Mark this object visible/invisible for this frame.
 	this->calculateVisibility();
+
+	Player *player = playState->getPlayer();
+	if (!player->isActive()) {
+		// Player has died, reset.
+		readyToFire = false;
+		this->setSpriteColor(defaultColorBase);
+		gunTurret->setSpriteColor(defaultColorTurret);
+	}
 
 	if (this->visible) {
 		if (player->isActive() && (!player->isShieldActive())) {

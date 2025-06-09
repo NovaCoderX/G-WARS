@@ -25,7 +25,7 @@
 #define READY_TO_FIRE_DELAY 3
 #define MAXIMUM_TARGET_ANGLE 20
 #define MAXIMUM_TARGET_DISTANCE 40
-#define SPIN_ANIMATION_SPEED 21.0f
+#define SPIN_ANIMATION_SPEED 16.0f
 
 static AstMatrix3x3 rotationMatrix;
 static float lastAnimatedTime = 0;
@@ -158,15 +158,9 @@ void AttackNeutron::deactivateLaser() {
 }
 
 void AttackNeutron::update(float elapsedTime) {
-	totalElapsedTime += elapsedTime;
-
 	Player *player = playState->getPlayer();
-	if (!player->isActive()) {
-		// Player has died, reset.
-		this->deactivateLaser();
-		readyToFire = false;
-		totalElapsedTime = lastFireTime = readyToFireTime = 0;
-	}
+
+	totalElapsedTime += elapsedTime;
 
 	// Apply the velocity.
 	this->applyVelocity(elapsedTime);
@@ -202,6 +196,11 @@ void AttackNeutron::update(float elapsedTime) {
 		double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(),
 				this->getVerticalVelocity());
 		this->setFacingTowardsDirection(movementDirection);
+
+		// If the laser is currently active, deactivate it.
+		if (laser->isActive()) {
+			this->deactivateLaser();
+		}
 	}
 
 	// Mark this object visible/invisible for this frame.
@@ -234,7 +233,6 @@ void AttackNeutron::update(float elapsedTime) {
 		} else {
 			// The laser is still active.
 			NovaVertex alienPosition = this->getPositionWCS();
-			NovaVertex playerPosition = player->getPositionWCS();
 
 			// Update the laser's starting position based on the alien's current position.
 			laser->staticVertices[BEGIN].x = alienPosition.x;
@@ -245,29 +243,39 @@ void AttackNeutron::update(float elapsedTime) {
 			double direction = atan2(verticalVelocity, horizontalVelocity);
 
 			// See if we hit the player.
-			if (checkLaserHit(alienPosition.x, alienPosition.y, direction, playerPosition.x, playerPosition.y,
-										player->getBoundingSphere())) {
-				// We need to work out the distance from the alien to the player (minus the player's bounding sphere)
-				// using that distance, and the alien's starting point we need to calculate the laser end point.
-				// We cannot use the player's location because it might alter the angle of the laser.
-				float distanceToPlayer = (playerPosition - alienPosition).magnitude();
+			bool laserHitPlayer = false;
 
-				// Adjust for the player's bounding sphere.
-				distanceToPlayer -= player->getBoundingSphere();
+			if (player->isActive()) {
+				NovaVertex playerPosition = player->getPositionWCS();
 
-				// Update laser end point.
-				laser->staticVertices[END].x = alienPosition.x + (distanceToPlayer * cos(direction));
-				laser->staticVertices[END].y = alienPosition.y + (distanceToPlayer * sin(direction));
-				laser->staticVertices[END].z = 0;
+				if (checkLaserHit(alienPosition.x, alienPosition.y, direction, playerPosition.x, playerPosition.y,
+											player->getBoundingSphere())) {
+					laserHitPlayer = true;
 
-				if (player->isShieldActive()) {
-					// Create some pretty particles where the laser hits the shield.
-					playState->getExplosionController()->createExplosion(laser);
-				} else {
-					// We killed the Player.
-					player->setActive(false);
+					// We need to work out the distance from the alien to the player (minus the player's bounding sphere)
+					// using that distance, and the alien's starting point we need to calculate the laser end point.
+					// We cannot use the player's location because it might alter the angle of the laser.
+					float distanceToPlayer = (playerPosition - alienPosition).magnitude();
+
+					// Adjust for the player's bounding sphere.
+					distanceToPlayer -= player->getBoundingSphere();
+
+					// Update laser end point.
+					laser->staticVertices[END].x = alienPosition.x + (distanceToPlayer * cos(direction));
+					laser->staticVertices[END].y = alienPosition.y + (distanceToPlayer * sin(direction));
+					laser->staticVertices[END].z = 0;
+
+					if (player->isShieldActive()) {
+						// Create some pretty particles where the laser hits the shield.
+						playState->getExplosionController()->createExplosion(laser);
+					} else {
+						// We killed the Player.
+						player->setActive(false);
+					}
 				}
-			} else {
+			}
+
+			if (!laserHitPlayer) {
 				// We need to calculate which border we will hit first and then make that our end point.
 				auto result = first_border_hit(alienPosition.x, alienPosition.y, direction, VERTICAL_BORDER_POSITION, HORIZONTAL_BORDER_POSITION);
 				laser->staticVertices[END].x = result.first;

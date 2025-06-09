@@ -142,6 +142,7 @@ void PlayerClone::update(float elapsedTime) {
 				alienShield->setVisible(false);
 			}
 
+			// See if we are now ready to fire.
 			if (player->isActive()) {
 				NovaVertex alienPosition = this->getPositionWCS();
 				float between = (playerPosition - alienPosition).magnitude();

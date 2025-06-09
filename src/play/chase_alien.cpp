@@ -36,7 +36,6 @@ void ChaseAlien::update(float elapsedTime) {
 		if (between > MINIMUM_CHASE_DISTANCE) {
 			double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
 					(playerPosition.y - alienPosition.y));
-
 			double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(),
 					this->getVerticalVelocity());
 

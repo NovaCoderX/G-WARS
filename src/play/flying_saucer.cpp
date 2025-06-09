@@ -29,7 +29,7 @@ FlyingSaucer::FlyingSaucer(PlayState* playState) : Alien(playState) {
 	this->setSpriteDefinition("flying_saucer");
 	highColor = NovaColor(255, 95, 31);
 	lowColor = highColor;
-	lowColor.rebase(30);
+	lowColor.rebase(10);
 	this->setSpriteColor(lowColor);
 	this->setExplosionColor(highColor);
 }
