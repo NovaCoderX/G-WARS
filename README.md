@@ -14,7 +14,8 @@ This game was developed using C++ exclusively.
 To build it requires SDL 1.2 and SDL Mixer, SDL must have basic OpenGL
 support built in.   
 
-I just used Mesa for the Amiga port.
+I used Mesa for the Amiga port because the classic Amiga doesn't
+really have any hardware 3D acceleration (yet).
 
 You will need the resources from the Amiga release version to run it.  
 
