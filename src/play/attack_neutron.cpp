@@ -247,7 +247,6 @@ void AttackNeutron::update(float elapsedTime) {
 
 			if (player->isActive()) {
 				NovaVertex playerPosition = player->getPositionWCS();
-
 				if (checkLaserHit(alienPosition.x, alienPosition.y, direction, playerPosition.x, playerPosition.y,
 											player->getBoundingSphere())) {
 					laserHitPlayer = true;

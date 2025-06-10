@@ -82,8 +82,6 @@ Explosion::~Explosion() {
 void Explosion::setExplosionColor(const NovaColor &color) {
 	this->explosionColor = color;
 
-	//LogMessage("starting explosionColor = %d, %d, %d\n", explosionColor.getRed(), explosionColor.getGreen(), explosionColor.getBlue());
-
 	// Seed.
 	float highest = explosionColor.data[ColorIndex::RED];
 
@@ -99,12 +97,11 @@ void Explosion::setExplosionColor(const NovaColor &color) {
 		fatalError("Invalid explosion starting color\n");
 	}
 
-	//LogMessage("starting intensity = %f\n", highest);
-	//LogMessage("duration = %f\n", duration);
-
-	// Calculate how much explosionColor we need to degrade (each update) to get to zero at 'max elapsed time'
+	// Calculate how much color we need to degrade (each update) to get to zero at 'max elapsed time'.
 	colorDegredationFactor = (highest / duration);
-	//LogMessage("colorDegredationFactor = %f\n", colorDegredationFactor);
+
+	// Reset.
+	totalElapsedTime = 0;
 }
 
 void Explosion::calculateVisibility() {
