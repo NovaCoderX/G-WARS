@@ -184,8 +184,6 @@ void MenuState::setActiveMenu(MenuType menu, bool reset) {
 }
 
 void MenuState::init() {
-	logMessage("Creating the menu state...\n");
-
 	camera = new Camera();
 
 	// Create the lookup characters used by the buttons, labels and titles.
