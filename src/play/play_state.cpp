@@ -81,8 +81,6 @@ PlayState::~PlayState() {
 }
 
 void PlayState::init() {
-	logMessage("Creating the play state...\n");
-
 	camera = new Camera();
 	player = new Player(this);
 
@@ -228,8 +226,6 @@ void PlayState::draw() {
 }
 
 void PlayState::reset() {
-	logMessage("Destroying the play state...\n");
-
 	if (camera) {
 		delete camera;
 		camera = NULL;
@@ -253,6 +249,11 @@ void PlayState::reset() {
 	if (alienController) {
 		delete alienController;
 		alienController = NULL;
+	}
+
+	if (nuggetController) {
+		delete nuggetController;
+		nuggetController = NULL;
 	}
 
 	if (missileController) {
