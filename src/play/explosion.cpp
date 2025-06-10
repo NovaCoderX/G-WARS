@@ -43,6 +43,7 @@ Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, 
 	}
 
 	this->duration = duration;
+	colorDegredationFactor = 0;
 
 	/*
 	 ** Iterate through the particles
@@ -67,6 +68,8 @@ Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, 
 	boundingSphereExpansionFactor = (farthest / duration);
 
 	this->lightEmitting = lightEmitting;
+
+	totalElapsedTime = 0;
 }
 
 Explosion::~Explosion() {
