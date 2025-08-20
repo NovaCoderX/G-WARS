@@ -170,6 +170,7 @@ void HighScoreMenu::enterState() {
 
 	for (uint i = 0; i < highScores.size(); i++) {
 		entries.push_back(new HighScoreEntry(menuState, i+1, highScores[i].name, highScores[i].score, textColor, NovaVertex(x, y, z)));
+		textColor.rebase(90);
 		y -= ENTRY_VERTICAL_SPACING;
 	}
 }

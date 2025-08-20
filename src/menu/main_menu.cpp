@@ -214,7 +214,7 @@ void MainMenu::selectionDown() {
 }
 
 void MainMenu::selectionChosen() {
-	g_worldManager->startSound(UI_CONFIRM);
+	int channel = g_worldManager->startSound(UI_CONFIRM);
 	switch (currentSelection) {
 	case NEW_GAME_BUTTON:
 		// New game (reset state).
@@ -236,6 +236,15 @@ void MainMenu::selectionChosen() {
 
 	case QUIT_BUTTON:
 		g_worldManager->save();
+
+		// Let the UI sound finish playing.
+		Uint32 startTime = SDL_GetTicks();
+		while (g_worldManager->isSoundPlaying(channel)) {
+			if ((SDL_GetTicks() - startTime) > 3000) {
+				break;
+			}
+		}
+
 		exit(EXIT_SUCCESS);
 		break;
 	}

@@ -74,37 +74,37 @@ MenuPanel::MenuPanel(MenuState* menuState, float width, float height, const Nova
 
 	borders = new NovaLine[NUMBER_OF_BORDERS];
 
-	borders[0].staticVertices[BEGIN] = &borderData.staticVertices[0];
-	borders[0].renderVertices[BEGIN] = &borderData.renderVertices[0];
-	borders[0].displayVertices[BEGIN] = &borderData.displayVertices[0];
+	borders[0].staticVertices[LINE_BEGIN] = &borderData.staticVertices[0];
+	borders[0].renderVertices[LINE_BEGIN] = &borderData.renderVertices[0];
+	borders[0].displayVertices[LINE_BEGIN] = &borderData.displayVertices[0];
 
-	borders[0].staticVertices[END] = &borderData.staticVertices[1];
-	borders[0].renderVertices[END] = &borderData.renderVertices[1];
-	borders[0].displayVertices[END] = &borderData.displayVertices[1];
+	borders[0].staticVertices[LINE_END] = &borderData.staticVertices[1];
+	borders[0].renderVertices[LINE_END] = &borderData.renderVertices[1];
+	borders[0].displayVertices[LINE_END] = &borderData.displayVertices[1];
 
-	borders[1].staticVertices[BEGIN] = &borderData.staticVertices[1];
-	borders[1].renderVertices[BEGIN] = &borderData.renderVertices[1];
-	borders[1].displayVertices[BEGIN] = &borderData.displayVertices[1];
+	borders[1].staticVertices[LINE_BEGIN] = &borderData.staticVertices[1];
+	borders[1].renderVertices[LINE_BEGIN] = &borderData.renderVertices[1];
+	borders[1].displayVertices[LINE_BEGIN] = &borderData.displayVertices[1];
 
-	borders[1].staticVertices[END] = &borderData.staticVertices[2];
-	borders[1].renderVertices[END] = &borderData.renderVertices[2];
-	borders[1].displayVertices[END] = &borderData.displayVertices[2];
+	borders[1].staticVertices[LINE_END] = &borderData.staticVertices[2];
+	borders[1].renderVertices[LINE_END] = &borderData.renderVertices[2];
+	borders[1].displayVertices[LINE_END] = &borderData.displayVertices[2];
 
-	borders[2].staticVertices[BEGIN] = &borderData.staticVertices[2];
-	borders[2].renderVertices[BEGIN] = &borderData.renderVertices[2];
-	borders[2].displayVertices[BEGIN] = &borderData.displayVertices[2];
+	borders[2].staticVertices[LINE_BEGIN] = &borderData.staticVertices[2];
+	borders[2].renderVertices[LINE_BEGIN] = &borderData.renderVertices[2];
+	borders[2].displayVertices[LINE_BEGIN] = &borderData.displayVertices[2];
 
-	borders[2].staticVertices[END] = &borderData.staticVertices[3];
-	borders[2].renderVertices[END] = &borderData.renderVertices[3];
-	borders[2].displayVertices[END] = &borderData.displayVertices[3];
+	borders[2].staticVertices[LINE_END] = &borderData.staticVertices[3];
+	borders[2].renderVertices[LINE_END] = &borderData.renderVertices[3];
+	borders[2].displayVertices[LINE_END] = &borderData.displayVertices[3];
 
-	borders[3].staticVertices[BEGIN] = &borderData.staticVertices[3];
-	borders[3].renderVertices[BEGIN] = &borderData.renderVertices[3];
-	borders[3].displayVertices[BEGIN] = &borderData.displayVertices[3];
+	borders[3].staticVertices[LINE_BEGIN] = &borderData.staticVertices[3];
+	borders[3].renderVertices[LINE_BEGIN] = &borderData.renderVertices[3];
+	borders[3].displayVertices[LINE_BEGIN] = &borderData.displayVertices[3];
 
-	borders[3].staticVertices[END] = &borderData.staticVertices[0];
-	borders[3].renderVertices[END] = &borderData.renderVertices[0];
-	borders[3].displayVertices[END] = &borderData.displayVertices[0];
+	borders[3].staticVertices[LINE_END] = &borderData.staticVertices[0];
+	borders[3].renderVertices[LINE_END] = &borderData.renderVertices[0];
+	borders[3].displayVertices[LINE_END] = &borderData.displayVertices[0];
 
 	this->moveTo(position);
 }
@@ -160,34 +160,34 @@ void MenuPanel::draw() {
 		NovaLine *line = &borders[i];
 
 		// We only transform (LCS to CCS) and project (CCS to screen coordinates) a single (shared) static vertex once per frame.
-		if (!line->renderVertices[BEGIN]->transformedAndProjected) {
+		if (!line->renderVertices[LINE_BEGIN]->transformedAndProjected) {
 			// Transform.
-			(*line->renderVertices[BEGIN]) = (*line->staticVertices[BEGIN]) * objectToCameraMatrix;
+			(*line->renderVertices[LINE_BEGIN]) = (*line->staticVertices[LINE_BEGIN]) * objectToCameraMatrix;
 
 			// Project.
-			line->displayVertices[BEGIN]->x = horizontalProject(line->renderVertices[BEGIN]->x,
-					line->renderVertices[BEGIN]->z);
-			line->displayVertices[BEGIN]->y = verticalProject(line->renderVertices[BEGIN]->y,
-					line->renderVertices[BEGIN]->z);
+			line->displayVertices[LINE_BEGIN]->x = horizontalProject(line->renderVertices[LINE_BEGIN]->x,
+					line->renderVertices[LINE_BEGIN]->z);
+			line->displayVertices[LINE_BEGIN]->y = verticalProject(line->renderVertices[LINE_BEGIN]->y,
+					line->renderVertices[LINE_BEGIN]->z);
 
-			line->renderVertices[BEGIN]->transformedAndProjected = true;
+			line->renderVertices[LINE_BEGIN]->transformedAndProjected = true;
 		}
 
-		if (!line->renderVertices[END]->transformedAndProjected) {
+		if (!line->renderVertices[LINE_END]->transformedAndProjected) {
 			// Transform.
-			(*line->renderVertices[END]) = (*line->staticVertices[END]) * objectToCameraMatrix;
+			(*line->renderVertices[LINE_END]) = (*line->staticVertices[LINE_END]) * objectToCameraMatrix;
 
 			// Project.
-			line->displayVertices[END]->x = horizontalProject(line->renderVertices[END]->x,
-					line->renderVertices[END]->z);
-			line->displayVertices[END]->y = verticalProject(line->renderVertices[END]->y,
-					line->renderVertices[END]->z);
+			line->displayVertices[LINE_END]->x = horizontalProject(line->renderVertices[LINE_END]->x,
+					line->renderVertices[LINE_END]->z);
+			line->displayVertices[LINE_END]->y = verticalProject(line->renderVertices[LINE_END]->y,
+					line->renderVertices[LINE_END]->z);
 
-			line->renderVertices[END]->transformedAndProjected = true;
+			line->renderVertices[LINE_END]->transformedAndProjected = true;
 		}
 
-		glVertex2i(line->displayVertices[BEGIN]->x, line->displayVertices[BEGIN]->y);
-		glVertex2i(line->displayVertices[END]->x, line->displayVertices[END]->y);
+		glVertex2i(line->displayVertices[LINE_BEGIN]->x, line->displayVertices[LINE_BEGIN]->y);
+		glVertex2i(line->displayVertices[LINE_END]->x, line->displayVertices[LINE_END]->y);
 	}
 	glEnd();
 }
