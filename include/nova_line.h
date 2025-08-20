@@ -20,7 +20,7 @@
 #define __NOVA_LINE_H
 
 enum LineIndex {
-	BEGIN = 0, END = 1
+	LINE_BEGIN = 0, LINE_END = 1
 };
 
 struct NovaLine {

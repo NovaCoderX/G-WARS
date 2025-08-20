@@ -67,6 +67,22 @@ struct NovaColor {
 	bool fade(float amount, const NovaColor &targetColor);
 	bool brighten(float amount, const NovaColor &targetColor);
 
+	bool isBlack() const {
+		if (data[ColorIndex::RED] == 0 && data[ColorIndex::GREEN] == 0 && data[ColorIndex::BLUE] == 0) {
+			return true;
+		}
+
+		return false;
+	}
+
+	bool isWhite() const {
+		if (data[ColorIndex::RED] == 1 && data[ColorIndex::GREEN] == 1 && data[ColorIndex::BLUE] == 1) {
+			return true;
+		}
+
+		return false;
+	}
+
 	void reset() {
 		data[ColorIndex::RED] = 0;
 		data[ColorIndex::GREEN] = 0;
@@ -74,6 +90,7 @@ struct NovaColor {
 	}
 
 	void operator +=(const NovaColor &a);
+	void operator -=(const NovaColor &a);
 	void operator *=(float val);
 };
 

@@ -38,11 +38,7 @@ public:
 		return activeDigit;
 	}
 
-	void setVisible(int activeDigit) {
-		// accepts 0 > 10 (inclusive).
-		this->activeDigit = activeDigit;
-		this->visible = true;
-	}
+	void setVisible(int activeDigit);
 
 	void init(const NovaColor &color);
 	void setSpriteColor(const NovaColor &color);

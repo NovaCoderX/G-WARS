@@ -16,11 +16,14 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-
 #ifndef __NOVA_UTILS_H
 #define __NOVA_UTILS_H
 
-void fatalError(const char *fmtString, ...);
+extern void logMessage(const char *fmtString, ...);
+extern void logWarningMessage(const char *fmtString, ...);
+extern void logErrorMessage(const char *message);
+extern void logShutdown(void);
+extern void fatalError(const char *fmtString, ...);
 
 static inline float float_rand(float minValue, float maxValue) {
 	return minValue + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxValue-(minValue))));

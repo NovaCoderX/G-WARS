@@ -33,8 +33,12 @@ public:
 		return baseDirectory;
 	}
 
-	void startSound(SampleType sampleType) {
-		audioManager->startSound(sampleType);
+	int startSound(SampleType sampleType) {
+		return audioManager->startSound(sampleType);
+	}
+
+	bool isSoundPlaying(int channel) {
+		return audioManager->isSoundPlaying(channel);
 	}
 
 	void setMusicType(MusicType musicType) {

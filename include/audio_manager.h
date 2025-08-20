@@ -16,7 +16,6 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-
 #ifndef __AUDIO_MANAGER_H
 #define __AUDIO_MANAGER_H
 
@@ -44,7 +43,7 @@ enum SampleType {
 	ENEMY_SPAWN_PLAYER_CLONE = 11, // Enemy_spawn_purple
 	ENEMY_SPAWN_BLACK_HOLE = 12, // Enemy_spawn_red
 	ENEMY_SPAWN_MINI_GATE = 13, // Enemy_spawn_blue
-	ENEMY_SPAWN_SNAKE = 14,
+	ENEMY_SPAWN_BOSS = 14,
 	ENEMY_EXPLODE = 15,
 	PLAYER_SPAWN = 16,
 	PLAYER_SHIELD_ON = 17,
@@ -76,7 +75,8 @@ public:
 	~AudioManager();
 
 	void init();
-	void startSound(SampleType sampleType);
+	int startSound(SampleType sampleType);
+	bool isSoundPlaying(int channel);
 	void startMusic(bool fadeIn = true);
 	void stopMusic(bool fadeOut = true);
 	void pauseMusic();

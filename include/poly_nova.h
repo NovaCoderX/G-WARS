@@ -39,7 +39,6 @@ class GameState;
 #include <input_manager.h>
 #include <yamlish.h>
 #include <nova_utils.h>
-#include <logging.h>
 #include <nova_color.h>
 #include <nova_vertex.h>
 #include <nova_matrix.h>
@@ -67,10 +66,12 @@ class PlayState;
 #include <play/alien_missile.h>
 #include <play/player_missile.h>
 #include <play/laser.h>
-#include <play/alien.h>
 #include <play/nugget.h>
 #include <play/multiplier_nugget.h>
 #include <play/power_up_nugget.h>
+#include <play/alien.h>
+#include <play/alien_component.h>
+#include <play/bounding_sphere.h>
 #include <play/bounce_alien.h>
 #include <play/bounce_cube.h>
 #include <play/bounce_wanderer.h>
@@ -96,6 +97,13 @@ class PlayState;
 #include <play/snake_body_segment.h>
 #include <play/snake_tail_segment.h>
 #include <play/snake.h>
+#include <play/jelly.h>
+#include <play/tentacle_segment.h>
+#include <play/tentacle_nematocyst.h>
+#include <play/tentacle.h>
+#include <play/gun_platform.h>
+#include <play/crusher_platform.h>
+#include <play/crusher.h>
 #include <play/player_shield.h>
 #include <play/player.h>
 #include <play/hud_panel.h>

@@ -35,6 +35,10 @@ public:
 	Sprite(GameState* gameState);
 	~Sprite();
 
+	GameState* getGameState() {
+		return gameState;
+	}
+
 	SpriteDefinition* getDefinition() {
 		return definition;
 	}
@@ -48,14 +52,6 @@ public:
 
 	void setSpriteColor(const NovaColor &color) {
 		this->spriteColor = color;
-	}
-
-	const NovaColor& getExplosionColor() const {
-		return explosionColor;
-	}
-
-	void setExplosionColor(const NovaColor &explosionColor) {
-		this->explosionColor = explosionColor;
 	}
 
 	float getBoundingSphere() const {
@@ -81,7 +77,7 @@ public:
 	}
 
 	double getTotalVelocity() const {
-		return std::sqrt(horizontalVelocity * horizontalVelocity + verticalVelocity * verticalVelocity);;
+		return std::sqrt((horizontalVelocity * horizontalVelocity) + (verticalVelocity * verticalVelocity));
 	}
 
 	void reverseHorizontalVelocity() {
@@ -99,6 +95,9 @@ public:
 
 	void setVelocityFromDirection(double direction, double totalVelocity);
 	void applyVelocity(float elapsedTime);
+
+	NovaVertex getAnchorPointWCS(int vertexIndex) const;
+	NovaVertex getAnchorPointCCS(int vertexIndex) const;
 
 	virtual void update(float elapsedTime) {}
 	virtual void calculateVisibility();
@@ -120,7 +119,6 @@ protected:
 	NovaLine *lines;
 
 	NovaColor spriteColor;
-	NovaColor explosionColor;
 	NovaVertex positionCCS;
 
 	double facingTowardsDirection;

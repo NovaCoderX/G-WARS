@@ -49,12 +49,9 @@ public:
 
 	void allocateVertices(int vertices);
 	void setVertex(int eleNum, float x, float y, float z);
-
 	void allocateLines(int lines);
-	void setLineMapping(int lineIndex, int startVertex, int endVertex);
-
-	void scaleVertices(float scaleFactor);
-
+	void setLineVertexMapping(int lineIndex, int startVertex, int endVertex);
+	void scale(float factor);
 	void calculateBoundingSphere();
 
 	float getBoundingSphere() const {
