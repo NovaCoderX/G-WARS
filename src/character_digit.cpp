@@ -34,6 +34,16 @@ CharacterDigit::~CharacterDigit() {
     characters.clear();
 }
 
+void CharacterDigit::setVisible(int activeDigit) {
+	if (activeDigit >= NUM_CHARACTER_DIGITS) {
+		fatalError("Character index out of range\n");
+	}
+
+	// accepts 0 > 10 (inclusive).
+	this->activeDigit = activeDigit;
+	this->visible = true;
+}
+
 void CharacterDigit::init(const NovaColor &color) {
 	// Setup the characters.
 	for (int i = 0; i < NUM_CHARACTER_DIGITS; i++) {

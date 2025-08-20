@@ -24,7 +24,7 @@ Sprite::Sprite(GameState *gameState) {
 	renderVertices = NULL;
 	displayVertices = NULL;
 	lines = NULL;
-	spriteColor = explosionColor = NovaColor(255, 255, 255);
+	spriteColor = NovaColor(255, 255, 255);
 	facingTowardsDirection = 0;
 	horizontalVelocity = verticalVelocity = 0;
 }
@@ -51,11 +51,11 @@ void Sprite::setSpriteDefinition(SpriteDefinition *definition) {
 		fatalError("Definition is invalid\n");
 	}
 
-	if (!definition->getNumVertices()) {
+	if (definition->getNumVertices() <= 0) {
 		fatalError("Definition is invalid\n");
 	}
 
-	if (!definition->getNumLines()) {
+	if (definition->getNumLines() <= 0) {
 		fatalError("Definition is invalid\n");
 	}
 
@@ -91,17 +91,17 @@ void Sprite::setSpriteDefinition(SpriteDefinition *definition) {
 		fatalError("Could not allocate lines");
 	}
 
-	// The  use shared static vertices.
+	// Shared static vertices.
 	for (int index = 0; index < definition->getNumLines(); index++) {
-		int startVertex = definition->lineVertexMap[index].vertexIndex[BEGIN];
-		lines[index].staticVertices[BEGIN] = &definition->staticVertices[startVertex];
-		lines[index].renderVertices[BEGIN] = &renderVertices[startVertex];
-		lines[index].displayVertices[BEGIN] = &displayVertices[startVertex];
+		int startVertex = definition->lineVertexMap[index].vertexIndex[LINE_BEGIN];
+		lines[index].staticVertices[LINE_BEGIN] = &definition->staticVertices[startVertex];
+		lines[index].renderVertices[LINE_BEGIN] = &renderVertices[startVertex];
+		lines[index].displayVertices[LINE_BEGIN] = &displayVertices[startVertex];
 
-		int endVertex = definition->lineVertexMap[index].vertexIndex[END];
-		lines[index].staticVertices[END] = &definition->staticVertices[endVertex];
-		lines[index].renderVertices[END] = &renderVertices[endVertex];
-		lines[index].displayVertices[END] = &displayVertices[endVertex];
+		int endVertex = definition->lineVertexMap[index].vertexIndex[LINE_END];
+		lines[index].staticVertices[LINE_END] = &definition->staticVertices[endVertex];
+		lines[index].renderVertices[LINE_END] = &renderVertices[endVertex];
+		lines[index].displayVertices[LINE_END] = &displayVertices[endVertex];
 	}
 }
 
@@ -142,6 +142,31 @@ void Sprite::applyVelocity(float elapsedTime) {
 	}
 }
 
+NovaVertex Sprite::getAnchorPointWCS(int vertexIndex) const {
+	if (vertexIndex < 0 || vertexIndex >= definition->getNumVertices()) {
+		fatalError("Vertex index out of range\n");
+	}
+
+	// Transform.
+	return (this->definition->staticVertices[vertexIndex] * objectToWorldMatrix);
+}
+
+NovaVertex Sprite::getAnchorPointCCS(int vertexIndex) const {
+	static AstMatrix4x3 objectToCameraMatrix;
+
+	if (vertexIndex < 0 || vertexIndex >= definition->getNumVertices()) {
+		fatalError("Vertex index out of range\n");
+	}
+
+	// Update our composite LCS to CCS matrix that consists of the product of the object to world matrix and the
+	// global world to camera matrix.
+	objectToCameraMatrix = objectToWorldMatrix * gameState->getCamera()->getWorldToCameraMatrix();
+
+	// Transform.
+	return (this->definition->staticVertices[vertexIndex] * objectToCameraMatrix);
+}
+
+
 void Sprite::calculateVisibility() {
 	// Update for derived class usage.
 	positionCCS = gameState->getCamera()->getPositionCCS(this);
@@ -160,7 +185,7 @@ void Sprite::calculateVisibility() {
 void Sprite::draw() {
 	static AstMatrix4x3 objectToCameraMatrix;
 
-	// Reset all (shared) scratch data used by this object.
+	// Reset all scratch data used by this object.
 	for (int i = 0; i < definition->getNumVertices(); i++) {
 		renderVertices[i].transformedAndProjected = false;
 	}
@@ -169,41 +194,41 @@ void Sprite::draw() {
 	// global world to camera matrix.
 	objectToCameraMatrix = objectToWorldMatrix * gameState->getCamera()->getWorldToCameraMatrix();
 
-	// All  have the same color.
+	// All lines  have the same color.
 	glColor3fv(spriteColor.data);
 
 	for (int i = 0; i < definition->getNumLines(); i++) {
 		NovaLine *line = &lines[i];
 
 		// We only transform (LCS to CCS) and project (CCS to screen coordinates) a single (shared) static vertex once per frame.
-		if (!line->renderVertices[BEGIN]->transformedAndProjected) {
+		if (!line->renderVertices[LINE_BEGIN]->transformedAndProjected) {
 			// Transform.
-			(*line->renderVertices[BEGIN]) = (*line->staticVertices[BEGIN]) * objectToCameraMatrix;
+			(*line->renderVertices[LINE_BEGIN]) = (*line->staticVertices[LINE_BEGIN]) * objectToCameraMatrix;
 
 			// Project.
-			line->displayVertices[BEGIN]->x = horizontalProject(line->renderVertices[BEGIN]->x,
-					line->renderVertices[BEGIN]->z);
-			line->displayVertices[BEGIN]->y = verticalProject(line->renderVertices[BEGIN]->y,
-					line->renderVertices[BEGIN]->z);
+			line->displayVertices[LINE_BEGIN]->x = horizontalProject(line->renderVertices[LINE_BEGIN]->x,
+					line->renderVertices[LINE_BEGIN]->z);
+			line->displayVertices[LINE_BEGIN]->y = verticalProject(line->renderVertices[LINE_BEGIN]->y,
+					line->renderVertices[LINE_BEGIN]->z);
 
-			line->renderVertices[BEGIN]->transformedAndProjected = true;
+			line->renderVertices[LINE_BEGIN]->transformedAndProjected = true;
 		}
 
-		if (!line->renderVertices[END]->transformedAndProjected) {
+		if (!line->renderVertices[LINE_END]->transformedAndProjected) {
 			// Transform.
-			(*line->renderVertices[END]) = (*line->staticVertices[END]) * objectToCameraMatrix;
+			(*line->renderVertices[LINE_END]) = (*line->staticVertices[LINE_END]) * objectToCameraMatrix;
 
 			// Project.
-			line->displayVertices[END]->x = horizontalProject(line->renderVertices[END]->x,
-					line->renderVertices[END]->z);
-			line->displayVertices[END]->y = verticalProject(line->renderVertices[END]->y,
-					line->renderVertices[END]->z);
+			line->displayVertices[LINE_END]->x = horizontalProject(line->renderVertices[LINE_END]->x,
+					line->renderVertices[LINE_END]->z);
+			line->displayVertices[LINE_END]->y = verticalProject(line->renderVertices[LINE_END]->y,
+					line->renderVertices[LINE_END]->z);
 
-			line->renderVertices[END]->transformedAndProjected = true;
+			line->renderVertices[LINE_END]->transformedAndProjected = true;
 		}
 
-		glVertex2i(line->displayVertices[BEGIN]->x, line->displayVertices[BEGIN]->y);
-		glVertex2i(line->displayVertices[END]->x, line->displayVertices[END]->y);
+		glVertex2i(line->displayVertices[LINE_BEGIN]->x, line->displayVertices[LINE_BEGIN]->y);
+		glVertex2i(line->displayVertices[LINE_END]->x, line->displayVertices[LINE_END]->y);
 	}
 }
 

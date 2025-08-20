@@ -27,7 +27,15 @@
 #include <clib/icon_protos.h>
 #include <workbench/startup.h>
 
-const char *ID = "$VER: G-WARS 1.2.04\r\n";
+#ifdef GET_TIME_OF_DAY_FUNC
+int _gettimeofday(struct timeval *tv, void *tzvp) {
+	return 0;
+}
+#endif
+
+extern void nova_main(char *baseDirectory);
+
+const char *ID = "$VER: G-WARS 2.0.02\r\n";
 
 // The startup message from workbench or 0 if started via CLI.
 extern struct WBStartup *_WBenchMsg;
@@ -35,9 +43,6 @@ extern struct WBStartup *_WBenchMsg;
 #define MAX_ARGVS 100
 static char *myargv[MAX_ARGVS];
 static int myargc = 0;
-
-
-extern void nova_main(char *baseDirectory);
 
 int main(int argc, char *argv[]) {
 	char path[PATH_MAX];

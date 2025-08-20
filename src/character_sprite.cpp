@@ -50,30 +50,30 @@ void CharacterSprite::transform() {
 		NovaLine *line = &lines[i];
 
 		// We only transform (LCS to CCS) and project (CCS to screen coordinates) a single (shared) static vertex once per frame.
-		if (!line->renderVertices[BEGIN]->transformedAndProjected) {
+		if (!line->renderVertices[LINE_BEGIN]->transformedAndProjected) {
 			// Transform.
-			(*line->renderVertices[BEGIN]) = (*line->staticVertices[BEGIN]) * objectToCameraMatrix;
+			(*line->renderVertices[LINE_BEGIN]) = (*line->staticVertices[LINE_BEGIN]) * objectToCameraMatrix;
 
 			// Project.
-			line->displayVertices[BEGIN]->x = horizontalProject(line->renderVertices[BEGIN]->x,
-					line->renderVertices[BEGIN]->z);
-			line->displayVertices[BEGIN]->y = verticalProject(line->renderVertices[BEGIN]->y,
-					line->renderVertices[BEGIN]->z);
+			line->displayVertices[LINE_BEGIN]->x = horizontalProject(line->renderVertices[LINE_BEGIN]->x,
+					line->renderVertices[LINE_BEGIN]->z);
+			line->displayVertices[LINE_BEGIN]->y = verticalProject(line->renderVertices[LINE_BEGIN]->y,
+					line->renderVertices[LINE_BEGIN]->z);
 
-			line->renderVertices[BEGIN]->transformedAndProjected = true;
+			line->renderVertices[LINE_BEGIN]->transformedAndProjected = true;
 		}
 
-		if (!line->renderVertices[END]->transformedAndProjected) {
+		if (!line->renderVertices[LINE_END]->transformedAndProjected) {
 			// Transform.
-			(*line->renderVertices[END]) = (*line->staticVertices[END]) * objectToCameraMatrix;
+			(*line->renderVertices[LINE_END]) = (*line->staticVertices[LINE_END]) * objectToCameraMatrix;
 
 			// Project.
-			line->displayVertices[END]->x = horizontalProject(line->renderVertices[END]->x,
-					line->renderVertices[END]->z);
-			line->displayVertices[END]->y = verticalProject(line->renderVertices[END]->y,
-					line->renderVertices[END]->z);
+			line->displayVertices[LINE_END]->x = horizontalProject(line->renderVertices[LINE_END]->x,
+					line->renderVertices[LINE_END]->z);
+			line->displayVertices[LINE_END]->y = verticalProject(line->renderVertices[LINE_END]->y,
+					line->renderVertices[LINE_END]->z);
 
-			line->renderVertices[END]->transformedAndProjected = true;
+			line->renderVertices[LINE_END]->transformedAndProjected = true;
 		}
 	}
 }
@@ -85,8 +85,8 @@ void CharacterSprite::draw() {
 	for (int i = 0; i < definition->getNumLines(); i++) {
 		NovaLine *line = &lines[i];
 
-		glVertex2i(line->displayVertices[BEGIN]->x, line->displayVertices[BEGIN]->y);
-		glVertex2i(line->displayVertices[END]->x, line->displayVertices[END]->y);
+		glVertex2i(line->displayVertices[LINE_BEGIN]->x, line->displayVertices[LINE_BEGIN]->y);
+		glVertex2i(line->displayVertices[LINE_END]->x, line->displayVertices[LINE_END]->y);
 	}
 }
 

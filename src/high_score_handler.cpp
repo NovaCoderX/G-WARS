@@ -99,10 +99,6 @@ bool HighScoreHandler::load(const std::string& filename) {
 		highScores.pop_back();
 	}
 
-	/*for (HighScoreData highScore : highScores) {
-		logMessage("%s = %d\n", highScore.name.c_str(), highScore.score);
-	}*/
-
 	return true;
 }
 

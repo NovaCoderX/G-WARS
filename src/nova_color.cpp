@@ -21,7 +21,7 @@
 
 void NovaColor::rebase(float percentage) {
 	if (percentage < 0) {
-		logWarningMessage("Percentage cannot be less than zero\n");
+		logWarningMessage("Rebase percentage cannot be less than zero\n");
 		percentage = 0;
 	}
 
@@ -44,23 +44,28 @@ void NovaColor::rebase(float percentage) {
 bool NovaColor::fade(float amount, const NovaColor &targetColor) {
 	int matchCount = 0;
 
+	if (amount < 0) {
+		logWarningMessage("Fade amount cannot be less than zero\n");
+		amount = 0;
+	}
+
 	// Fade until we reach the target color.
 	data[ColorIndex::RED] -= amount;
 	data[ColorIndex::GREEN] -= amount;
 	data[ColorIndex::BLUE] -= amount;
 
 	// Must check for underflow.
-	if (data[ColorIndex::RED] < targetColor.data[ColorIndex::RED]) {
+	if (data[ColorIndex::RED] <= targetColor.data[ColorIndex::RED]) {
 		data[ColorIndex::RED] = targetColor.data[ColorIndex::RED];
 		matchCount++;
 	}
 
-	if (data[ColorIndex::GREEN] < targetColor.data[ColorIndex::GREEN]) {
+	if (data[ColorIndex::GREEN] <= targetColor.data[ColorIndex::GREEN]) {
 		data[ColorIndex::GREEN] = targetColor.data[ColorIndex::GREEN];
 		matchCount++;
 	}
 
-	if (data[ColorIndex::BLUE] < targetColor.data[ColorIndex::BLUE]) {
+	if (data[ColorIndex::BLUE] <= targetColor.data[ColorIndex::BLUE]) {
 		data[ColorIndex::BLUE] = targetColor.data[ColorIndex::BLUE];
 		matchCount++;
 	}
@@ -72,23 +77,28 @@ bool NovaColor::fade(float amount, const NovaColor &targetColor) {
 bool NovaColor::brighten(float amount, const NovaColor &targetColor) {
 	int matchCount = 0;
 
+	if (amount < 0) {
+		logWarningMessage("Brighten amount cannot be less than zero\n");
+		amount = 0;
+	}
+
 	// Brighten until we reach the target color.
 	data[ColorIndex::RED] += amount;
 	data[ColorIndex::GREEN] += amount;
 	data[ColorIndex::BLUE] += amount;
 
 	// Must check for overflow.
-	if (data[ColorIndex::RED] > targetColor.data[ColorIndex::RED]) {
+	if (data[ColorIndex::RED] >= targetColor.data[ColorIndex::RED]) {
 		data[ColorIndex::RED] = targetColor.data[ColorIndex::RED];
 		matchCount++;
 	}
 
-	if (data[ColorIndex::GREEN] > targetColor.data[ColorIndex::GREEN]) {
+	if (data[ColorIndex::GREEN] >= targetColor.data[ColorIndex::GREEN]) {
 		data[ColorIndex::GREEN] = targetColor.data[ColorIndex::GREEN];
 		matchCount++;
 	}
 
-	if (data[ColorIndex::BLUE] > targetColor.data[ColorIndex::BLUE]) {
+	if (data[ColorIndex::BLUE] >= targetColor.data[ColorIndex::BLUE]) {
 		data[ColorIndex::BLUE] = targetColor.data[ColorIndex::BLUE];
 		matchCount++;
 	}
@@ -113,21 +123,45 @@ void NovaColor::operator +=(const NovaColor &a) {
 		data[ColorIndex::BLUE] = 1;
 }
 
+void NovaColor::operator -=(const NovaColor &a) {
+	data[ColorIndex::RED] -= a.data[ColorIndex::RED];
+	data[ColorIndex::GREEN] -= a.data[ColorIndex::GREEN];
+	data[ColorIndex::BLUE] -= a.data[ColorIndex::BLUE];
+
+	// Must check for underflow.
+	if (data[ColorIndex::RED] < 0)
+		data[ColorIndex::RED] = 0;
+
+	if (data[ColorIndex::GREEN] < 0)
+		data[ColorIndex::GREEN] = 0;
+
+	if (data[ColorIndex::BLUE] < 0)
+		data[ColorIndex::BLUE] = 0;
+}
+
 void NovaColor::operator *=(float amount) {
-	if (amount > 0) {
-		data[ColorIndex::RED] *= amount;
-		data[ColorIndex::GREEN] *= amount;
-		data[ColorIndex::BLUE] *= amount;
+	data[ColorIndex::RED] *= amount;
+	data[ColorIndex::GREEN] *= amount;
+	data[ColorIndex::BLUE] *= amount;
 
-		// Must check for overflow.
-		if (data[ColorIndex::RED] > 1)
-			data[ColorIndex::RED] = 1;
+	// Must check for overflow.
+	if (data[ColorIndex::RED] > 1)
+		data[ColorIndex::RED] = 1;
 
-		if (data[ColorIndex::GREEN] > 1)
-			data[ColorIndex::GREEN] = 1;
+	if (data[ColorIndex::GREEN] > 1)
+		data[ColorIndex::GREEN] = 1;
 
-		if (data[ColorIndex::BLUE] > 1)
-			data[ColorIndex::BLUE] = 1;
-	}
+	if (data[ColorIndex::BLUE] > 1)
+		data[ColorIndex::BLUE] = 1;
+
+	// And underflow.
+	if (data[ColorIndex::RED] < 0)
+		data[ColorIndex::RED] = 0;
+
+	if (data[ColorIndex::GREEN] < 0)
+		data[ColorIndex::GREEN] = 0;
+
+	if (data[ColorIndex::BLUE] < 0)
+		data[ColorIndex::BLUE] = 0;
 }
 

@@ -118,7 +118,6 @@ void WorldManager::setActiveState(StateType state, bool reset) {
 
         activeState = menuState;
         if (reset) {
-            // Won't really do much, just set the current selection
 	        activeState->reset();
 	    }
     }

@@ -21,23 +21,6 @@
 
 #include <sys/time.h>
 
-#ifdef GET_TIME_OF_DAY_FUNC
-extern "C" {
-	// Implementation using time() for systems without gettimeofday()
-	int _gettimeofday(struct timeval *tv, void *tzvp) {
-		time_t now = time(NULL);
-		if (now == -1) {
-		   return -1; // Indicate error
-		}
-
-		tv->tv_sec = now;
-		tv->tv_usec = 0; // time() doesn't provide microseconds
-
-		return 0;
-   }
-}
-#endif
-
 static SDL_Surface *screen = NULL;
 static timeval startTime;
 

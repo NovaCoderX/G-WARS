@@ -109,7 +109,7 @@ void AudioManager::init() {
 		if (mixer_channels != 2) {
 			logWarningMessage("Could not allocate stereo audio\n");
 		} else {
-			logMessage("Using 16-bit stereo audio frequency: %d\n", mixer_freq);
+			logMessage("Using 16-bit stereo mixing frequency: %d\n", mixer_freq);
 		}
 
 		int mixerChannels = g_worldManager->getYamlish()->getInt("audio.mixer.channels", DEFAULT_MIXER_CHANNELS);
@@ -203,8 +203,8 @@ void AudioManager::init() {
 		}
 
 		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "Snake_spawn");
-		samples[ENEMY_SPAWN_SNAKE] = Mix_LoadWAV(filepath);
-		if (!samples[ENEMY_SPAWN_SNAKE]) {
+		samples[ENEMY_SPAWN_BOSS] = Mix_LoadWAV(filepath);
+		if (!samples[ENEMY_SPAWN_BOSS]) {
 			fatalError("Could not load sound sample: %s\n", filepath);
 		}
 
@@ -357,13 +357,27 @@ void AudioManager::init() {
 	}
 }
 
-void AudioManager::startSound(SampleType sampleType) {
+int AudioManager::startSound(SampleType sampleType) {
+	int result = -1;
+
 	if (soundEnabled) {
 		if (samples[sampleType]) {
 			// Pick the first free channel.
-			Mix_PlayChannel(-1, samples[sampleType], 0);
+			result = Mix_PlayChannel(-1, samples[sampleType], 0);
 		}
 	}
+
+	return result;
+}
+
+bool AudioManager::isSoundPlaying(int channel) {
+	bool playing = false;
+
+	if (Mix_Playing(channel)) {
+		playing = true;
+	}
+
+	return playing;
 }
 
 void AudioManager::startMusic(bool fadeIn) {

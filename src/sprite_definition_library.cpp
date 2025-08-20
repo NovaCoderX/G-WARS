@@ -295,6 +295,7 @@ int SpriteDefinitionLibrary::countMainSections(const char *section_name) {
 						break;
 					}
 				}
+
 				// Make sure there is a closing brace.
 				if ((found == true) && (buffer[(ctr + 1) + temp] != ']'))
 					found = false;
@@ -439,7 +440,6 @@ void SpriteDefinitionLibrary::loadDefinitions() {
 		loadData(mainSection, name[0]);
 		definitions[ctr].setName(name);
 
-
 		// Find out how many vertices 'this' object has. [rewinds file]
 		numVertices = countEntries(mainSection, "vertices", ctr);
 		if (numVertices == 0) {
@@ -478,13 +478,13 @@ void SpriteDefinitionLibrary::loadDefinitions() {
 		for (inCtr = 0; inCtr < numLines; inCtr++) {
 			if (fgets(buffer, 80, sceneFp) != NULL) {
 				sscanf(buffer, "%u,%u", &startVertex, &endVertex);
-				definitions[ctr].setLineMapping(inCtr, startVertex, endVertex);
+				definitions[ctr].setLineVertexMapping(inCtr, startVertex, endVertex);
 			}
 		}
 
 		moveToSubSection(mainSection, "scaling");
 		loadData(mainSection, factor);
-		definitions[ctr].scaleVertices(factor);
+		definitions[ctr].scale(factor);
 
 		definitions[ctr].calculateBoundingSphere();
 	} // FOR NUM_DEFS.

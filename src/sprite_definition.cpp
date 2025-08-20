@@ -73,7 +73,7 @@ void SpriteDefinition::allocateLines(int lines) {
 	}
 }
 
-void SpriteDefinition::setLineMapping(int index, int startVertex, int endVertex) {
+void SpriteDefinition::setLineVertexMapping(int index, int startVertex, int endVertex) {
 	if (index < 0 || index >= numLines) {
 		fatalError("Line index out of range\n");
 	}
@@ -87,23 +87,23 @@ void SpriteDefinition::setLineMapping(int index, int startVertex, int endVertex)
 	}
 
 	// We need to record that this line index uses these two vertex indexes.
-	lineVertexMap[index].vertexIndex[BEGIN] = startVertex;
-	lineVertexMap[index].vertexIndex[END] = endVertex;
+	lineVertexMap[index].vertexIndex[LINE_BEGIN] = startVertex;
+	lineVertexMap[index].vertexIndex[LINE_END] = endVertex;
 }
 
-void SpriteDefinition::scaleVertices(float scaleFactor) {
-	if (scaleFactor != 0) {
-		if (scaleFactor < 0) {
+void SpriteDefinition::scale(float factor) {
+	if (factor != 0) {
+		if (factor < 0) {
 			for (int i = 0; i < numVertices; i++) {
-				staticVertices[i].x = (staticVertices[i].x / fabs(scaleFactor));
-				staticVertices[i].y = (staticVertices[i].y / fabs(scaleFactor));
-				staticVertices[i].z = (staticVertices[i].z / fabs(scaleFactor));
+				staticVertices[i].x = (staticVertices[i].x / fabs(factor));
+				staticVertices[i].y = (staticVertices[i].y / fabs(factor));
+				staticVertices[i].z = (staticVertices[i].z / fabs(factor));
 			}
 		} else {
 			for (int i = 0; i < numVertices; i++) {
-				staticVertices[i].x = (staticVertices[i].x * scaleFactor);
-				staticVertices[i].y = (staticVertices[i].y * scaleFactor);
-				staticVertices[i].z = (staticVertices[i].z * scaleFactor);
+				staticVertices[i].x = (staticVertices[i].x * factor);
+				staticVertices[i].y = (staticVertices[i].y * factor);
+				staticVertices[i].z = (staticVertices[i].z * factor);
 			}
 		}
 	}
