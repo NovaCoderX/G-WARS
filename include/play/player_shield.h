@@ -30,7 +30,6 @@ public:
 	void update(float elapsedTime);
 
 private:
-	PlayState* playState;
 	float totalElapsedTime;
 	float lastFlashTime;
 };

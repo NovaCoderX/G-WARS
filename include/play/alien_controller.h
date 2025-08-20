@@ -30,10 +30,10 @@ public:
 	void checkCollisions();
 	void draw();
 	void deactivate(Alien* alien);
-	void destroyAllLife();
+	void destroyAliens();
 	Alien* findBestTarget(Missile* missile);
-    void applyGravitionalPull(Player* player);
-    bool isWithinBlackHole(const NovaVertex &positionCCS);
+	void applyGravitionalPull(Player* player);
+	bool isWithinBlackHole(const NovaVertex& positionCCS);
 
 private:
 	PlayState* playState;
@@ -63,12 +63,16 @@ private:
 	MiniGate* miniGate;
 
 	// Boss aliens.
-	Snake *snake;
+	Snake* snake;
+	Jelly* jelly;
+	Crusher* crusher;
+
+	int currentGameStage;
+	int currentBossType;
 
 	struct SpawnLogic {
-		int currentGameStage;
-		int currentWave;
-		int currentWaveType[3];
+		int currentAlienType;
+		int currentWave[3];
 		int intensity;
 		float currentIntervalStandard;
 		float currentIntervalSpecial;
@@ -78,15 +82,15 @@ private:
 		float midPointDuration;
 		float lastSpawnedStandard;
 		float lastSpawnedSpecial;
-		float bossStageStartTime;
 	} spawnLogic;
 
+	float stageStartDelay;
 	float totalElapsedTime;
 
 	void addToList(Alien* alien);
 	void removeFromList(Alien* alien);
 	void spawnHelper(Alien* alien, float miniumVelocity, float maximumVelocity);
-	void spawnStandardAlien(AlienType type);
+	void spawnStandardAlien(Alien::AlienType type);
 	void spawnBounceCube();
 	void spawnBounceWanderer();
 	void spawnBounceStar();
@@ -99,13 +103,16 @@ private:
 	void spawnAttackShip();
 	void spawnAttackArtillery();
 	void spawnAttackNeutron();
-	void spawnSpecialAlien(AlienType type);
+	void spawnSpecialAlien(Alien::AlienType type);
 	void spawnRocketShip();
 	void spawnFlyingSaucer();
 	void spawnPlayerClone();
 	void spawnBlackHole();
 	void spawnMiniGate();
-	void spawnBossAlien();
+	void spawnBossAlien(Alien::AlienType type);
+	void spawnSnake();
+	void spawnJelly();
+	void spawnCrusher();
 };
 
 #endif // __ALIEN_CONTROLLER_H

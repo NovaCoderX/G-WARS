@@ -31,22 +31,18 @@ public:
 	void update(float elapsedTime);
 
 	// Overridden.
-	void checkCollision(Player *player);
+	bool checkCollision(Player *player);
 
 	// Overridden.
-	void checkCollision(Missile *missile);
+	bool checkCollision(Missile *missile);
 
 	// Overridden.
 	void draw();
 
-	bool isHeadNodeVulnerable();
-
 private:
-	SnakeSegment **segments;
+	std::vector<SnakeSegment*> segments;
 	SnakeHeadSegment *headSegment;
-	//SnakeBodySegment *bodySegments;
 	std::vector<SnakeBodySegment*> bodySegments;
-	SnakeTailSegment *tailSegment;
 	int numSpawnedSegments;
 	float lastSpawnedTime;
 	float totalElapsedTime;

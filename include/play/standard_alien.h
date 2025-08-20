@@ -16,12 +16,26 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ALIEN_SHIELD_H
-#define __ALIEN_SHIELD_H
+#ifndef __STANDARD_ALIEN_H
+#define __STANDARD_ALIEN_H
 
-class AlienShield: public Sprite {
+
+class StandardAlien: public Alien {
 public:
-	AlienShield(PlayState* playState, SpriteDefinition *shieldDefinition);
+	StandardAlien(PlayState* playState);
+
+protected:
+	PlayState* playState;
+	Alien* nextInList;
+	Alien* priorInList;
+	bool explosive;
+	NovaColor explosionColor;
+
+	void setAlienType(AlienType type);
+
+private:
+	AlienType alienType;
+	AlienCategory alienCategory;
 };
 
-#endif // __ALIEN_SHIELD_H
+#endif // __ALIEN_H

@@ -20,21 +20,34 @@
 #define __LASER_H
 
 class Laser: public MatrixObject {
-	friend class AttackShip;
-	friend class AttackNeutron;
-	friend class MiniGate;
 public:
 	Laser(PlayState* playState);
 
-	void draw();
+	void setVertex(LineIndex index, float x, float y, float z) {
+		staticVertices[index].x = x;
+		staticVertices[index].y = y;
+		staticVertices[index].z = z;
+	}
+
+	void setColor(const NovaColor& color) {
+		laserColor[LINE_BEGIN] = color;
+		laserColor[LINE_END] = color;
+		laserColor[LINE_END].rebase(50);
+	}
+
+	void setColor(LineIndex index, const NovaColor& color) {
+		laserColor[index] = color;
+	}
 
 	const NovaColor& getExplosionColor() const {
-		return laserColor[END];
+		return laserColor[LINE_END];
 	}
 
 	NovaVertex getEndPoint() const {
-		return staticVertices[END];
+		return staticVertices[LINE_END];
 	}
+
+	void draw();
 
 protected:
 	PlayState* playState;

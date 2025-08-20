@@ -48,8 +48,8 @@ public:
 		this->lightEmitting = lightEmitting;
 	}
 
-	void calculateVisibility();
 	void update(float elapsedTime);
+	void calculateVisibility();
 	void draw();
 
 private:
@@ -61,7 +61,8 @@ private:
 	float duration;
 	float totalElapsedTime;
 	NovaColor explosionColor;
-	float colorDegredationFactor;
+	float currentFadeAmount;
+	float totalFadeAmount;
 	float boundingSphereExpansionFactor;
 	NovaVertex positionCCS;
 	bool lightEmitting;

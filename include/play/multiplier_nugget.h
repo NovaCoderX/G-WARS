@@ -26,6 +26,7 @@ public:
 	// Overridden.
 	void setActive(bool active);
 
+	// Overridden.
 	void update(float timePassed);
 
 private:

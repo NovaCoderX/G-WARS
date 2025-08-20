@@ -16,12 +16,21 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ALIEN_SHIELD_H
-#define __ALIEN_SHIELD_H
+#ifndef __TENTACLE_SEGMENT_H
+#define __TENTACLE_SEGMENT_H
 
-class AlienShield: public Sprite {
+class TentacleSegment: public AlienComponent {
 public:
-	AlienShield(PlayState* playState, SpriteDefinition *shieldDefinition);
+	TentacleSegment(PlayState* playState, Sprite* parent, float radius, const NovaColor &color, bool explosive);
+	~TentacleSegment();
+
+	// Overridden.
+	void setDisabled(bool disabled);
+
+protected:
+	SpriteDefinition* segmentDefinition;
+	NovaColor defaultColor;
+	NovaColor disabledColor;
 };
 
-#endif // __ALIEN_SHIELD_H
+#endif // __TENTACLE_SEGMENT_H

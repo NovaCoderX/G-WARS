@@ -19,13 +19,13 @@
 #ifndef __SNAKE_HEAD_SEGMENT_H
 #define __SNAKE_HEAD_SEGMENT_H
 
-// Forward declaration;
-class Snake;
-
 class SnakeHeadSegment: public SnakeSegment {
 public:
-	SnakeHeadSegment(PlayState* playState, Snake *snake, const NovaColor &highColor);
+	SnakeHeadSegment(PlayState* playState, Sprite* parent, const NovaColor &color, bool explosive);
 	~SnakeHeadSegment();
+
+	// Overridden.
+	void setVulnerable(bool vulnerable);
 
 	// Overridden.
 	void setActive(bool active);
@@ -34,20 +34,13 @@ public:
 	void update(float elapsedTime);
 
 	// Overridden.
-	void youHit(Player *player);
-
-	// Overridden.
-	void youHit(Missile *missile);
+	bool checkCollision(Missile* missile);
 
 	// Overridden.
 	void draw();
 
 private:
-	Snake *snake;
-	NovaColor highColor;
-	NovaColor lowColor;
-
-	struct TeethVertexData {
+	struct FangVertexData {
 		// Vertex data (stored in LCS).
 		NovaVertex *staticVertices;
 
@@ -58,7 +51,7 @@ private:
 		DisplayVertex *displayVertices;
 
 		NovaColor color;
-	} teethData;
+	} fangData;
 
 	struct LeftEyeVertexData {
 		// Vertex data (stored in LCS).
@@ -86,8 +79,13 @@ private:
 		NovaColor color;
 	} rightEyeData;
 
-	float totalElapsedTime;
+	NovaColor highColor;
+	NovaColor lowColor;
+	bool increasingColor;
+	uint damage;
+	float fireInterval;
 	float lastFireTime;
+	float totalElapsedTime;
 };
 
 #endif // __SNAKE_HEAD_SEGMENT_H

@@ -25,19 +25,19 @@ public:
 	~MissileController();
 
 	void init();
-	void launchMissile(const Player *player);
-	void launchMissile(const Alien *alien, double direction, const NovaVertex& origin);
+	void launchMissile(const Player* player);
+	void launchMissile(const NovaVertex& origin, double direction, double exitVelocity);
 	void update(float elapsedTime);
 	void checkCollisions();
 	void draw();
-	void deactivate(Missile *missile);
+	void deactivate(Missile* missile);
 
 private:
 	PlayState* playState;
 	Missile *missileListHead;
 	std::vector<PlayerMissile*> playerMissiles;
-	float additionalPlayerMissileVelocity;
 	std::vector<AlienMissile*> alienMissiles;
+	float additionalPlayerMissileVelocity;
 	float additionalAlienMissileVelocity;
 
 	void addToList(Missile *missile);

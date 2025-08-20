@@ -22,9 +22,6 @@
 class AlienMissile: public Missile {
 public:
 	AlienMissile(PlayState* playState);
-
-private:
-	PlayState* playState;
 };
 
 #endif // __ALIEN_MISSILE_H

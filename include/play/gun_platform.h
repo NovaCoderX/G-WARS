@@ -16,12 +16,38 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ALIEN_SHIELD_H
-#define __ALIEN_SHIELD_H
+#ifndef __GUN_PLATFORM_H
+#define __GUN_PLATFORM_H
 
-class AlienShield: public Sprite {
+class GunPlatform: public AlienComponent {
 public:
-	AlienShield(PlayState* playState, SpriteDefinition *shieldDefinition);
+	GunPlatform(PlayState* playState, Sprite* parent, int anchorIndex);
+	~GunPlatform();
+
+	// Overridden.
+	void setDisabled(bool disabled);
+
+	// Overridden.
+	void setActive(bool active);
+
+	// Overridden.
+	void update(float elapsedTime);
+
+	// Overridden.
+	bool checkCollision(Missile* missile);
+
+	// Overridden.
+	void draw();
+
+private:
+	int anchorIndex;
+	Sprite* gunTurret;
+	NovaColor defaultPlatformColor;
+	NovaColor defaultGunColor;
+	NovaColor disabledColor;
+	float damage;
+	float lastFireTime;
+	float totalElapsedTime;
 };
 
-#endif // __ALIEN_SHIELD_H
+#endif // __GUN_PLATFORM_H

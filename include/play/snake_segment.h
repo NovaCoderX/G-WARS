@@ -19,19 +19,13 @@
 #ifndef __SNAKE_SEGMENT_H
 #define __SNAKE_SEGMENT_H
 
-enum AnchorPointIndex {
-	TOP_ANCHOR = 5, BOTTOM_ANCHOR = 0
-};
-
-class SnakeSegment: public Alien {
+class SnakeSegment: public AlienComponent {
 public:
-	SnakeSegment(PlayState* playState);
+	SnakeSegment(PlayState* playState, Sprite* parent, const NovaColor &color, bool explosive);
 
-	NovaVertex getAnchorPointWCS(AnchorPointIndex anchorIndex) const;
-	NovaVertex getAnchorPointCCS(AnchorPointIndex anchorIndex) const;
-
-	virtual void youHit(Player *player) = 0;
-	virtual void youHit(Missile *missile) = 0;
+	enum AnchorPoint {
+		TOP_VERTEX_ANCHOR = 5, BOTTOM_VERTEX_ANCHOR = 0
+	};
 };
 
 #endif // __SNAKE_SEGMENT_H

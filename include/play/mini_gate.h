@@ -31,17 +31,17 @@ public:
 	void update(float elapsedTime);
 
 	// Overridden.
-	void checkCollision(Player* player);
+	bool checkCollision(Player* player);
 
 	// Overridden.
-	void checkCollision(Missile* missile);
+	bool checkCollision(Missile* missile);
 
 	// Overridden.
 	void draw();
 
 private:
-	Alien* head;
-	Alien* tail;
+	AlienComponent* head;
+	AlienComponent* tail;
 	Laser* laser;
 	NovaColor laserHighColor;
 	NovaColor laserLowColor;

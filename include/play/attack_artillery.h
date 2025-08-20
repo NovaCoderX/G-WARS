@@ -22,7 +22,6 @@
 class AttackArtillery: public Alien {
 public:
 	AttackArtillery(PlayState* playState);
-	~AttackArtillery();
 
 	// Overridden.
 	void setActive(bool active);
@@ -33,10 +32,10 @@ public:
 private:
 	NovaColor defaultColor;
 	NovaColor readyToFireColor;
-	float totalElapsedTime;
-	float lastFireTime;
 	bool readyToFire;
+	float lastFireTime;
 	float readyToFireTime;
+	float totalElapsedTime;
 };
 
 #endif // __ATTACK_ARTILLERY_H

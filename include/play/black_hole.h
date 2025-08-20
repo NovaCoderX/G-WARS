@@ -19,9 +19,9 @@
 #ifndef __BLACK_HOLE_H
 #define __BLACK_HOLE_H
 
-class BlackHoleRing: public Sprite {
+class BlackHoleRing: public AlienComponent {
 public:
-	BlackHoleRing(PlayState* playState, SpriteDefinition *definition, const NovaColor &highColor);
+	BlackHoleRing(PlayState* playState, Alien* parent, SpriteDefinition *definition, const NovaColor &color);
 
 	// Overridden.
 	void update(float elapsedTime);
@@ -44,10 +44,10 @@ public:
 	void update(float elapsedTime);
 
 	// Overridden.
-	void checkCollision(Player *player);
+	bool checkCollision(Player *player);
 
 	// Overridden.
-	void checkCollision(Missile *missile);
+	bool checkCollision(Missile *missile);
 
 	// Overridden.
 	void draw();

@@ -27,9 +27,6 @@ public:
 	// Overridden.
 	void setActive(bool active);
 
-	void activateLaser();
-	void deactivateLaser();
-
 	// Overridden.
 	void update(float elapsedTime);
 

@@ -16,12 +16,16 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __POWER_UP_NUGGET_H
-#define __POWER_UP_NUGGET_H
+#ifndef __CRUSHER_PLATFORM_H
+#define __CRUSHER_PLATFORM_H
 
-class PowerUpNugget: public Nugget {
+class CrusherPlatform: public AlienComponent {
 public:
-	PowerUpNugget(PlayState* playState);
+	CrusherPlatform(PlayState* playState, Sprite* parent);
+	~CrusherPlatform();
+
+	// Overridden.
+	void setDisabled(bool disabled);
 
 	// Overridden.
 	void setActive(bool active);
@@ -29,11 +33,43 @@ public:
 	// Overridden.
 	void update(float elapsedTime);
 
-private:
-	NovaColor highColor;
-	NovaColor lowColor;
-	bool increasingColor;
-	float totalElapsedTime;
+	// Overridden.
+	bool checkCollision(Player* player);
+
+	// Overridden.
+	bool checkCollision(Missile* missile);
+
+	// Overridden.
+	void draw();
+
+protected:
+	std::vector<AlienComponent*> components;
+	NovaColor defaultColor;
+	NovaColor disabledColor;
 };
 
-#endif // __POWER_UP_NUGGET_H
+class LeftCrusherPlatform: public CrusherPlatform {
+public:
+	LeftCrusherPlatform(PlayState* playState, Sprite* parent);
+
+	// Overridden.
+	void setActive(bool active);
+
+	// Overridden.
+	void update(float elapsedTime);
+};
+
+class RightCrusherPlatform: public CrusherPlatform {
+public:
+	RightCrusherPlatform(PlayState* playState, Sprite* parent);
+
+	// Overridden.
+	void setActive(bool active);
+
+	// Overridden.
+	void update(float elapsedTime);
+};
+
+
+
+#endif // __CRUSHER_PLATFORM_H

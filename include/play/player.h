@@ -50,7 +50,6 @@ public:
 	// Overridden.
 	void setActive(bool active);
 
-	// Probably should set all of these to false when the player dies and not allow them to be changed until respawned?
 	void moveDownRequest(bool toggle) {
 		inputRequest.down = toggle;
 	}
@@ -102,6 +101,14 @@ public:
 		return highScore;
 	}
 
+	const NovaColor& getExplosionColor() const {
+		return explosionColor;
+	}
+
+	void setExplosionColor(const NovaColor& explosionColor) {
+		this->explosionColor = explosionColor;
+	}
+
 	void youHit(Alien *alien);
 	void youHit(Nugget *nugget);
 	void checkCollision(Missile *missile);
@@ -123,7 +130,6 @@ private:
 	bool fireMissileRequested;
 	bool dropBombRequested;
 	uint numSmartBombs;
-	float resurrectionTimer;
 	bool autofireModeActive;
 	float autofireTimer;
 	uint numLives;
@@ -134,11 +140,9 @@ private:
 	float scoreMultiplier;
 	PowerUpType currentPowerUp;
 	float powerUpTimer;
-	float thrustSoundTimer;
+	int thrustSoundChannel;
 	bool restartMusic;
-
-	void updateActivePlayer(float elapsedTime);
-	void updateInactivePlayer(float elapsedTime);
+	NovaColor explosionColor;
 };
 
 #endif // __PLAYER_H

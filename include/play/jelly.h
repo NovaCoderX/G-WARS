@@ -16,12 +16,43 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ALIEN_SHIELD_H
-#define __ALIEN_SHIELD_H
+#ifndef __JELLY_H
+#define __JELLY_H
 
-class AlienShield: public Sprite {
+// Forward declaration.
+class Tentacle;
+
+class Jelly: public Alien {
 public:
-	AlienShield(PlayState* playState, SpriteDefinition *shieldDefinition);
+	Jelly(PlayState* playState);
+	~Jelly();
+
+	enum AnchorPoint {
+		FIRST_TENTACLE_ANCHOR = 0, SECOND_TENTACLE_ANCHOR = 1, THIRD_TENTACLE_ANCHOR = 2, FOURTH_TENTACLE_ANCHOR = 3
+	};
+
+	NovaVertex getAnchorPointWCS(AnchorPoint anchor) const;
+
+	// Overridden.
+	void setActive(bool active);
+
+	// Overridden.
+	void update(float elapsedTime);
+
+	// Overridden.
+	bool checkCollision(Player* player);
+
+	// Overridden.
+	bool checkCollision(Missile* missile);
+
+	// Overridden.
+	void draw();
+
+private:
+	std::vector<Tentacle*> tentacles;
+	NovaColor highColor;
+	NovaColor lowColor;
+	bool increasingColor;
 };
 
-#endif // __ALIEN_SHIELD_H
+#endif // __JELLY_H

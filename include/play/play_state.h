@@ -90,6 +90,7 @@ private:
 	MissileController* missileController;
 	ExplosionController* explosionController;
 	HudController* hudController;
+	float resurrectionTimer;
 
 	void handleKeyDown(SDL_keysym *keysym);
 	void handleKeyUp(SDL_keysym *keysym);

@@ -16,12 +16,31 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ALIEN_SHIELD_H
-#define __ALIEN_SHIELD_H
+#ifndef __TENTACLE_NEMATOCYST_H
+#define __TENTACLE_NEMATOCYST_H
 
-class AlienShield: public Sprite {
+class TentacleNematocyst: public TentacleSegment {
 public:
-	AlienShield(PlayState* playState, SpriteDefinition *shieldDefinition);
+	TentacleNematocyst(PlayState* playState, Sprite* parent, float radius, const NovaColor &color, bool explosive);
+	~TentacleNematocyst();
+
+	// Overridden.
+	void setActive(bool active);
+
+	// Overridden.
+	void update(float elapsedTime);
+
+	// Overridden.
+	bool checkCollision(Missile* missile);
+
+	// Overridden.
+	void draw();
+
+private:
+	Laser* laser;
+	float damage;
+	NovaColor lowColor;
+	bool increasingColor;
 };
 
-#endif // __ALIEN_SHIELD_H
+#endif // __TENTACLE_NEMATOCYST_H

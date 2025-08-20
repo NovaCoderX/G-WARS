@@ -19,16 +19,19 @@
 #ifndef __NUGGET_H
 #define __NUGGET_H
 
-enum NuggetType {
-	UNDEFINED_NUGGET = 0,
-	MULTIPLIER_NUGGET = 1,
-	POWER_UP_NUGGET = 2
-};
+// Forward declaration.
+class Player;
 
 class Nugget: public Sprite {
 	friend class NuggetController;
 public:
 	Nugget(PlayState* playState);
+
+	enum NuggetType {
+		UNDEFINED = 0,
+		MULTIPLIER = 1,
+		POWER_UP = 2
+	};
 
 	NuggetType getNuggetType() const {
 		return nuggetType;

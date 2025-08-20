@@ -39,10 +39,10 @@ private:
 	NovaColor defaultColorTurret;
 	NovaColor readyToFireColorBase;
 	NovaColor readyToFireColorTurret;
-	float totalElapsedTime;
 	float lastFireTime;
 	bool readyToFire;
 	float readyToFireTime;
+	float totalElapsedTime;
 };
 
 #endif // __ATTACK_TANK_H

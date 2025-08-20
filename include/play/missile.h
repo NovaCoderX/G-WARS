@@ -30,12 +30,20 @@ class Missile: public Sprite {
 public:
 	Missile(PlayState* playState);
 
+	// Overridden.
+	void setActive(bool active);
+
 	MissileType getMissileType() const {
 		return missileType;
 	}
 
-	// Overridden.
-	void setActive(bool active);
+	const NovaColor& getExplosionColor() const {
+		return explosionColor;
+	}
+
+	void setExplosionColor(const NovaColor& explosionColor) {
+		this->explosionColor = explosionColor;
+	}
 
 	// Overridden.
 	void update(float elapsedTime);
@@ -45,6 +53,7 @@ protected:
 	MissileType missileType;
 	Missile *nextInList;
 	Missile *priorInList;
+	NovaColor explosionColor;
 };
 
 #endif // __MISSILE_H

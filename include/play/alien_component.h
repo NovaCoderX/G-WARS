@@ -16,53 +16,27 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ALIEN_H
-#define __ALIEN_H
+#ifndef __ALIEN_COMPONENT_H
+#define __ALIEN_COMPONENT_H
 
-enum ExplosionSize {
-	DO_NOT_EXPLODE = 0,
-	SMALL_EXPLOSION = 1,
-	MEDIUM_EXPLOSION = 2,
-	LARGE_EXPLOSION = 3
-};
-
-class Alien: public Sprite {
-	friend class AlienController;
-	friend class MissileController;
-	friend class ExplosionController;
+class AlienComponent : public Sprite {
 public:
-	Alien(PlayState* playState);
+	AlienComponent(PlayState* playState, Sprite* parent);
 
-	PlayState* getPlayState() {
-		return playState;
+	bool isVulnerable() const {
+		return vulnerable;
 	}
 
-	enum AlienType {
-		UNDEFINED = 0,
-		BOUNCE_CUBE = 1,
-		BOUNCE_WANDERER = 2,
-		BOUNCE_STAR = 3,
-		BOUNCE_HEXAGON = 4,
-		CHASE_RHOMBUS = 5,
-		CHASE_STAR = 6,
-		CHASE_SHURIKEN = 7,
-		CHASE_CONCAVE = 8,
-		ATTACK_TANK = 9,
-		ATTACK_SHIP = 10,
-		ATTACK_ARTILLERY = 11,
-		ATTACK_NEUTRON = 12,
-		ROCKET_SHIP = 13,
-		FLYING_SAUCER = 14,
-		PLAYER_CLONE = 15,
-		BLACK_HOLE = 16,
-		MINI_GATE = 17,
-		SNAKE = 18,
-		JELLY = 19,
-		CRUSHER = 20
-	};
+	virtual void setVulnerable(bool vulnerable) {
+		this->vulnerable = vulnerable;
+	}
 
-	AlienType getAlienType() const {
-		return alienType;
+	bool isDisabled() const {
+		return disabled;
+	}
+
+	virtual void setDisabled(bool disabled) {
+		this->disabled = disabled;
 	}
 
 	ExplosionSize getExplosionSize() const {
@@ -81,20 +55,6 @@ public:
 		this->explosionColor = explosionColor;
 	}
 
-	enum NuggetSpawnType {
-		DO_NOT_SPAWN = 0,
-		MULTIPLIER = 1,
-		POWER_UP = 2
-	};
-
-	NuggetSpawnType getNuggetSpawnType() const {
-		return nuggetType;
-	}
-
-	void setNuggetSpawnType(NuggetSpawnType type) {
-		this->nuggetType = type;
-	}
-
 	// Overridden.
 	void setActive(bool active);
 
@@ -103,18 +63,11 @@ public:
 
 protected:
 	PlayState* playState;
-	Alien* nextInList;
-	Alien* priorInList;
+	Sprite* parent;
+	bool vulnerable;
+	bool disabled;
 	ExplosionSize explosionSize;
 	NovaColor explosionColor;
-	NuggetSpawnType nuggetType;
-
-	void setAlienType(AlienType type) {
-		this->alienType = type;
-	}
-
-private:
-	AlienType alienType;
 };
 
-#endif // __ALIEN_H
+#endif // __ALIEN_COMPONENT_H

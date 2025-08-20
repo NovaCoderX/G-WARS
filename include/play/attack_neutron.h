@@ -27,9 +27,6 @@ public:
 	// Overridden.
 	void setActive(bool active);
 
-	void activateLaser();
-	void deactivateLaser();
-
 	// Overridden.
 	void update(float timePassed);
 
@@ -42,10 +39,10 @@ private:
 	NovaColor defaultColorBase;
 	NovaColor defaultColorCenter;
 	NovaColor readyToFireColor;
-	float totalElapsedTime;
 	float lastFireTime;
 	bool readyToFire;
 	float readyToFireTime;
+	float totalElapsedTime;
 };
 
 #endif // __ATTACK_NEUTRON_H

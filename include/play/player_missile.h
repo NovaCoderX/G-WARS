@@ -38,7 +38,6 @@ public:
 	void update(float elapsedTime);
 
 private:
-	PlayState* playState;
 	bool homingEnabled;
 	Sprite *target;
 };

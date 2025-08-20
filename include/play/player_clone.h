@@ -27,15 +27,18 @@ public:
 	// Overridden.
 	void setActive(bool active);
 
+	// Overridden.
 	void update(float elapsedTime);
 
 	// Overridden.
-	void checkCollision(Player *player);
+	bool checkCollision(Player *player);
 
 	// Overridden.
-	void checkCollision(Missile *missile);
+	bool checkCollision(Missile *missile);
 
+	// Overridden.
 	void draw();
+
 private:
 	float autofireTimer;
 	SpriteDefinition *shieldDefinition;

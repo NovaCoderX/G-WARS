@@ -27,23 +27,27 @@ public:
 	void init();
 	void update(float elapsedTime);
 	void draw();
-	void createExplosion(Player *player);
-	void createExplosion(Alien *alien);
-	void createExplosion(Missile *missile);
-	void createExplosion(Laser *laser);
-	void deactivate(Explosion *explosion);
-    void applyLighting(RenderVertex &targetVertex);
+
+	void createExplosion(const Player* player);
+	void createExplosion(const Alien* alien);
+	void createExplosion(const AlienComponent* alien);
+	void createExplosion(const Missile* missile);
+	void createExplosion(const Laser* laser);
+	void deactivate(Explosion* explosion);
+	void applyLighting(RenderVertex& targetVertex);
 
 private:
 	PlayState* playState;
-	Explosion *explosionListHead;
-	Explosion *playerExplosion;
-	std::vector<Explosion*> alienExplosions;
+	Explosion* explosionListHead;
+	Explosion* playerExplosion;
+	std::vector<Explosion*> smallAlienExplosions;
+	std::vector<Explosion*> mediumAlienExplosions;
+	std::vector<Explosion*> largeAlienExplosions;
 	std::vector<Explosion*> missileExplosions;
 	std::vector<Explosion*> laserExplosions;
 
-	void addToList(Explosion *explosion);
-	void removeFromList(Explosion *explosion);
+	void addToList(Explosion* explosion);
+	void removeFromList(Explosion* explosion);
 };
 
 #endif // __EXPLOSION_CONTROLLER_H

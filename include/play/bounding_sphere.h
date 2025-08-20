@@ -16,12 +16,23 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ALIEN_SHIELD_H
-#define __ALIEN_SHIELD_H
+#ifndef __BOUNDING_SPHERE_H
+#define __BOUNDING_SPHERE_H
 
-class AlienShield: public Sprite {
+class BoundingSphere: public AlienComponent {
 public:
-	AlienShield(PlayState* playState, SpriteDefinition *shieldDefinition);
+	BoundingSphere(PlayState* playState, Sprite* parent, int anchorIndex, float radius);
+	~BoundingSphere();
+
+	// Overridden.
+	void setActive(bool active);
+
+	// Overridden.
+	void update(float elapsedTime);
+
+private:
+	int anchorIndex;
+	SpriteDefinition* sphereDefinition;
 };
 
-#endif // __ALIEN_SHIELD_H
+#endif // __BOUNDING_SPHERE_H

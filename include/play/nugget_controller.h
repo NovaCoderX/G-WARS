@@ -41,8 +41,10 @@ public:
 		return spawnMode;
 	}
 
-	void setSpawnMode(NuggetSpawnMode spawnMode) {
+	NuggetSpawnMode setSpawnMode(NuggetSpawnMode spawnMode) {
+		NuggetSpawnMode perviousMode = this->spawnMode;
 		this->spawnMode = spawnMode;
+		return perviousMode;
 	}
 
 private:

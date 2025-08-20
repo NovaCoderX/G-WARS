@@ -16,12 +16,42 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ALIEN_SHIELD_H
-#define __ALIEN_SHIELD_H
+#ifndef __TENTACLE_H
+#define __TENTACLE_H
 
-class AlienShield: public Sprite {
+class Tentacle {
 public:
-	AlienShield(PlayState* playState, SpriteDefinition *shieldDefinition);
+	Tentacle(Jelly* jelly, Jelly::AnchorPoint anchor, const NovaColor &color);
+	~Tentacle();
+
+	bool isVisible() const {
+		return visible;
+	}
+
+	void setVisible(bool visible) {
+		this->visible = visible;
+	}
+
+	bool isDisabled() const {
+		return disabled;
+	}
+
+	void setDisabled(bool disabled);
+	void setActive(bool active);
+	void update(float elapsedTime);
+	bool checkCollision(Player* player);
+	bool checkCollision(Missile* missile);
+	void draw();
+
+private:
+	Jelly* jelly;
+	Jelly::AnchorPoint anchor;
+	std::vector<TentacleSegment*> segments;
+	TentacleNematocyst* nematocyst;
+    float phaseOffset;
+	float totalElapsedTime;
+	bool visible;
+	bool disabled;
 };
 
-#endif // __ALIEN_SHIELD_H
+#endif // __TENTACLE_H
