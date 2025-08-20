@@ -20,7 +20,7 @@
 #include "poly_nova.h"
 
 #define NUMBER_OF_MULTIPLIER_NUGGETS 20
-#define NUMBER_OF_POWER_UP_NUGGETS 10
+#define NUMBER_OF_POWER_UP_NUGGETS 5
 
 NuggetController::NuggetController(PlayState* playState) {
 	this->playState = playState;
@@ -90,95 +90,24 @@ void NuggetController::draw() {
 }
 
 void NuggetController::spawnNugget(Alien* alien) {
-	bool spawn = false;
+	// Different aliens spawn different types of nugget, some don't spawn any.
+	if (alien->getNuggetSpawnType() != Alien::DO_NOT_SPAWN) {
+		bool shouldSpawn = false;
 
-	if (spawnMode == RANDOMLY_SPAWN_NUGGETS) {
-		if (int_rand(0, 3) == 2) {
-			spawn = true;
-		}
-	} else if (spawnMode == ALWAYS_SPAWN_NUGGETS) {
-		spawn = true;
-	}
-
-	if (spawn) {
-		// Different aliens spawn different types of nugget, some aliens don't spawned any nuggets,
-		NuggetType nuggetType = UNDEFINED_NUGGET;
-
-		switch (alien->getAlienType()) {
-		case BOUNCE_CUBE:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case BOUNCE_WANDERER:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case BOUNCE_STAR:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case BOUNCE_HEXAGON:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case CHASE_RHOMBUS:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case CHASE_STAR:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case CHASE_SHURIKEN:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case CHASE_CONCAVE:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case ATTACK_TANK:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case ATTACK_SHIP:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case ATTACK_ARTILLERY:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case ATTACK_NEUTRON:
-			nuggetType = MULTIPLIER_NUGGET;
-			break;
-
-		case ROCKET_SHIP:
-			nuggetType = POWER_UP_NUGGET;
-			break;
-
-		case FLYING_SAUCER:
-			nuggetType = POWER_UP_NUGGET;
-			break;
-
-		case PLAYER_CLONE:
-			nuggetType = POWER_UP_NUGGET;
-			break;
-
-		case BLACK_HOLE:
-			nuggetType = POWER_UP_NUGGET;
-			break;
-
-		default:
-			// No nuggets are spawned by this alien type.
-			nuggetType = UNDEFINED_NUGGET;
+		if (spawnMode == RANDOMLY_SPAWN_NUGGETS) {
+			if (int_rand(0, 3) == 2) {
+				shouldSpawn = true;
+			}
+		} else if (spawnMode == ALWAYS_SPAWN_NUGGETS) {
+			shouldSpawn = true;
 		}
 
-		// Only one type of nugget can be spawned at a time.
-		if (nuggetType == MULTIPLIER_NUGGET) {
-			this->spawnMultiplierNugget(alien);
-		} else if (nuggetType == POWER_UP_NUGGET) {
-			this->spawnPowerUpNugget(alien);
+		if (shouldSpawn) {
+			if (alien->getNuggetSpawnType() == Alien::MULTIPLIER) {
+				this->spawnMultiplierNugget(alien);
+			} else {
+				this->spawnPowerUpNugget(alien);
+			}
 		}
 	}
 }

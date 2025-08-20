@@ -24,52 +24,41 @@
 #define FIRE_INTERVAL 20
 #define READY_TO_FIRE_DELAY 6
 #define MAXIMUM_TARGET_ANGLE 30
+#define MUZZLE_VERTEX_ANCHOR 14
 
 AttackArtillery::AttackArtillery(PlayState* playState) : Alien(playState) {
-	this->alienType = ATTACK_ARTILLERY;
-	totalElapsedTime = lastFireTime = 0;
-	readyToFire = false;
-	readyToFireTime = 0;
+	this->setAlienType(ATTACK_ARTILLERY);
+	this->setSpriteDefinition("attack_artillery");
 	defaultColor = NovaColor(169, 169, 169);
 	readyToFireColor = NovaColor(255, 201, 4);
-	this->setSpriteDefinition("attack_artillery");
 	this->setSpriteColor(defaultColor);
 	this->setExplosionColor(readyToFireColor);
-}
-
-AttackArtillery::~AttackArtillery() {
-	// Empty.
+	readyToFire = false;
+	totalElapsedTime = lastFireTime = readyToFireTime = 0;
 }
 
 void AttackArtillery::setActive(bool active) {
+	// Base processing.
+	Alien::setActive(active);
+
 	if (active) {
+		// Rotate the sprite towards the direction of travel.
+		double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
+		this->setFacingTowardsDirection(movementDirection);
+
 		// Reset.
 		readyToFire = false;
 		this->setSpriteColor(defaultColor);
 		totalElapsedTime = lastFireTime = readyToFireTime = 0;
-
-		// Rotate the sprite towards the direction of travel.
-		double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
-		this->setFacingTowardsDirection(movementDirection);
 	}
-
-	// Base processing.
-	Alien::setActive(active);
 }
 
 void AttackArtillery::update(float elapsedTime) {
 	totalElapsedTime += elapsedTime;
 
-	Player* player = playState->getPlayer();
-	if (!player->isActive()) {
-		// Player has died, reset.
-		readyToFire = false;
-		this->setSpriteColor(defaultColor);
-		totalElapsedTime = lastFireTime = readyToFireTime = 0;
-	}
-
-	if (readyToFire) {
-		// Only chase if we are heading towards the player.
+	// Only chase if we are heading towards the player.
+	Player *player = playState->getPlayer();
+	if (readyToFire && (player->isActive()) && (!player->isShieldActive())) {
 		NovaVertex playerPosition = player->getPositionWCS();
 		NovaVertex alienPosition = this->getPositionWCS();
 
@@ -133,11 +122,12 @@ void AttackArtillery::update(float elapsedTime) {
 				(playerPosition.y - alienPosition.y));
 
 		if (readyToFire) {
-			// This is just so that we stay orange for a couple of seconds before firing.
+			// This is just so that we stay highlighted for a couple of seconds before firing.
 			if ((totalElapsedTime - readyToFireTime) >= READY_TO_FIRE_DELAY) {
 				// Need to check to see if we are traveling roughly in the correct direction to fire.
 				if (fabs(this->getFacingTowardsDirection() - playerDirection) < MAXIMUM_TARGET_ANGLE) {
-					playState->getMissileController()->launchMissile(this, playerDirection, alienPosition);
+					playState->getMissileController()->launchMissile(this->getAnchorPointWCS(MUZZLE_VERTEX_ANCHOR),
+							this->getFacingTowardsDirection(), this->getTotalVelocity());
 
 					// Reset.
 					readyToFire = false;

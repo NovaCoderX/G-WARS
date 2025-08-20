@@ -66,22 +66,24 @@ void Star::draw() {
 	displayVertex.y = verticalProject(positionCCS.y, positionCCS.z);
 	glVertex2i(displayVertex.x, displayVertex.y);
 
-	// Then draw the outer pixels.
-	glColor3fv(lowColor.data);
-	displayVertex.x = horizontalProject(positionCCS.x + 1, positionCCS.z);
-	displayVertex.y = verticalProject(positionCCS.y, positionCCS.z);
-	glVertex2i(displayVertex.x, displayVertex.y);
+	// Then draw the outer pixels (if the star is far enough away).
+	if (positionCCS.z > 300) {
+		glColor3fv(lowColor.data);
+		displayVertex.x = horizontalProject(positionCCS.x + 1, positionCCS.z);
+		displayVertex.y = verticalProject(positionCCS.y, positionCCS.z);
+		glVertex2i(displayVertex.x, displayVertex.y);
 
-	displayVertex.x = horizontalProject(positionCCS.x, positionCCS.z);
-	displayVertex.y = verticalProject(positionCCS.y - 1, positionCCS.z);
-	glVertex2i(displayVertex.x, displayVertex.y);
+		displayVertex.x = horizontalProject(positionCCS.x, positionCCS.z);
+		displayVertex.y = verticalProject(positionCCS.y - 1, positionCCS.z);
+		glVertex2i(displayVertex.x, displayVertex.y);
 
-	displayVertex.x = horizontalProject(positionCCS.x - 1, positionCCS.z);
-	displayVertex.y = verticalProject(positionCCS.y, positionCCS.z);
-	glVertex2i(displayVertex.x, displayVertex.y);
+		displayVertex.x = horizontalProject(positionCCS.x - 1, positionCCS.z);
+		displayVertex.y = verticalProject(positionCCS.y, positionCCS.z);
+		glVertex2i(displayVertex.x, displayVertex.y);
 
-	displayVertex.x = horizontalProject(positionCCS.x, positionCCS.z);
-	displayVertex.y = verticalProject(positionCCS.y + 1, positionCCS.z);
-	glVertex2i(displayVertex.x, displayVertex.y);
+		displayVertex.x = horizontalProject(positionCCS.x, positionCCS.z);
+		displayVertex.y = verticalProject(positionCCS.y + 1, positionCCS.z);
+		glVertex2i(displayVertex.x, displayVertex.y);
+	}
 }
 

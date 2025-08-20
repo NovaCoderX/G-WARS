@@ -19,20 +19,24 @@
 
 #include "poly_nova.h"
 
-Alien::Alien(PlayState* playState) : Sprite(playState) {
+AlienComponent::AlienComponent(PlayState* playState, Sprite* parent) : Sprite(playState) {
 	this->playState = playState;
-	alienType = UNDEFINED;
-	nextInList = priorInList = NULL;
-	this->setExplosionSize(SMALL_EXPLOSION);
+	this->parent = parent;
+	this->setVulnerable(false);
+	this->setDisabled(false);
+	this->setExplosionSize(DO_NOT_EXPLODE);
 	this->setExplosionColor(NovaColor(255, 255, 255));
-	this->setNuggetSpawnType(MULTIPLIER);
 }
 
-void Alien::setActive(bool active) {
+void AlienComponent::setActive(bool active) {
 	// Base processing.
 	Sprite::setActive(active);
 
-	if (!active) {
+	if (active) {
+		// Reset.
+		this->setVulnerable(false);
+		this->setDisabled(false);
+	} else {
 		// We have been destroyed.
 		if (this->isVisible()) {
 			playState->getExplosionController()->createExplosion(this);
@@ -40,37 +44,25 @@ void Alien::setActive(bool active) {
 	}
 }
 
-bool Alien::checkCollision(Player* player) {
+bool AlienComponent::checkCollision(Player* player) {
 	bool collision = false;
 
-	// See if this alien has just hit the player.
+	// See if this alien component has just hit the player.
 	NovaVertex between = (player->getPositionWCS() - this->getPositionWCS());
 	if (between.magnitude() < (player->getBoundingSphere() + this->getBoundingSphere())) {
-		// This alien was hit by the player and destroyed.
 		collision = true;
-		playState->getAlienController()->deactivate(this);
-
-		// Optionally destroy the player.
-		player->youHit(this);
 	}
 
 	return collision;
 }
 
-bool Alien::checkCollision(Missile* missile) {
+bool AlienComponent::checkCollision(Missile* missile) {
 	bool collision = false;
 
-	// See if this alien has just hit this missile.
+	// See if this alien component has just hit this missile.
 	NovaVertex between = (missile->getPositionWCS() - this->getPositionWCS());
 	if (between.magnitude() < (missile->getBoundingSphere() + this->getBoundingSphere())) {
-		// This alien was destroyed by a player's missile.
 		collision = true;
-		playState->getAlienController()->deactivate(this);
-		playState->getNuggetController()->spawnNugget(this);
-		playState->getPlayer()->increaseScore(this);
-
-		// Missile has also been destroyed.
-		playState->getMissileController()->deactivate(missile);
 	}
 
 	return collision;

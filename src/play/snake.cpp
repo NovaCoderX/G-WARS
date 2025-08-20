@@ -21,51 +21,54 @@
 
 #define SEGMENT_SPAWN_INTERVAL 0.3
 #define NUMBER_OF_SEGMENTS 21
-#define NUMBER_OF_BODY_SEGMENTS (NUMBER_OF_SEGMENTS - 2)
 
 Snake::Snake(PlayState* playState) : Alien(playState) {
-	this->alienType = SNAKE;
-	NovaColor headColor = NovaColor(255, 243, 2);
-	NovaColor bodyOneColor = NovaColor(255, 82, 15);
-	NovaColor bodyTwoColor = NovaColor(255, 243, 2);
+	this->setAlienType(SNAKE);
 
-	// Create the head and body segments.
-	segments = new SnakeSegment*[NUMBER_OF_SEGMENTS];
-	headSegment = new SnakeHeadSegment(playState, this, headColor);
-	segments[0] = headSegment;
+	// The alien container doesn't explode.
+	this->setExplosionSize(DO_NOT_EXPLODE);
 
-	bool colorSwitch = true;
-	for (int i = 0; i < NUMBER_OF_BODY_SEGMENTS; i++) {
-		if (colorSwitch) {
-			bodySegments.push_back(new SnakeBodySegment(playState, bodyOneColor));
-		}  else {
-			bodySegments.push_back(new SnakeBodySegment(playState, bodyTwoColor));
+	// Does not spawn nuggets.
+	this->setNuggetSpawnType(DO_NOT_SPAWN);
+
+	NovaColor firstSegmentColor = NovaColor(255, 243, 2);
+	NovaColor secondSegmentColor = NovaColor(255, 82, 15);
+
+	// Create the head segment (the first segment).
+	headSegment = new SnakeHeadSegment(playState, this, firstSegmentColor, true);
+	segments.push_back(headSegment);
+
+	// The first body segment's parent will be the head.
+	SnakeSegment* parentSegment = headSegment;
+
+	// Create the body segments.
+	for (int i = 1; i < NUMBER_OF_SEGMENTS; i++) {
+		// Make every 3rd segment explosive.
+		bool explosive = false;
+		if (i % 3 == 0) {
+			explosive = true;
 		}
 
-		colorSwitch = (!colorSwitch);
+		// Swap colors.
+		NovaColor segmentColor = secondSegmentColor;
+		if (i % 2 == 0) {
+			segmentColor = firstSegmentColor;
+		}
 
-		// Setup the parent references.
-		if (i == 0) {
-			bodySegments[i]->setParent(headSegment);
+		SnakeBodySegment* bodySegment = NULL;
+		if (i < (NUMBER_OF_SEGMENTS - 1)) {
+			bodySegment = new SnakeBodySegment(playState, parentSegment, segmentColor, explosive);
 		} else {
-			bodySegments[i]->setParent(bodySegments[i - 1]);
+			bodySegment = new SnakeTailSegment(playState, parentSegment, segmentColor, explosive);
 		}
 
 		// Add to the list of segments.
-		segments[i + 1] = bodySegments[i];
+		bodySegments.push_back(bodySegment);
+		segments.push_back(bodySegment);
+
+		// Store.
+		parentSegment = bodySegment;
 	}
-
-	if (colorSwitch) {
-		tailSegment = new SnakeTailSegment(playState, bodyOneColor);
-	}  else {
-		tailSegment = new SnakeTailSegment(playState, bodyTwoColor);
-	}
-
-	// Setup the parent references.
-	tailSegment->setParent(bodySegments[NUMBER_OF_BODY_SEGMENTS - 1]);
-
-	// Add to the list of segments.
-	segments[NUMBER_OF_SEGMENTS - 1] = tailSegment;
 
 	numSpawnedSegments = 0;
 	lastSpawnedTime = 0;
@@ -73,6 +76,8 @@ Snake::Snake(PlayState* playState) : Alien(playState) {
 }
 
 Snake::~Snake() {
+	segments.clear();
+
 	if (headSegment) {
 		delete headSegment;
 		headSegment = NULL;
@@ -83,60 +88,50 @@ Snake::~Snake() {
 	}
 
 	bodySegments.clear();
-
-	if (tailSegment) {
-		delete tailSegment;
-		tailSegment = NULL;
-	}
-
-	if (segments) {
-		delete[] segments;
-		segments = NULL;
-	}
 }
 
 void Snake::setActive(bool active) {
+	// Base processing.
+	Alien::setActive(active);
+
 	if (active) {
-	    // Make some sound.
-		g_worldManager->startSound(ENEMY_SPAWN_SNAKE);
-	    
-		// Setup all segments.
+		// Make some sound.
+		g_worldManager->startSound(ENEMY_SPAWN_BOSS);
+
+		// Set up all segments.
 		double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
 
-		for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
-			segments[i]->moveTo(this->getPositionWCS());
-			segments[i]->setVelocityFromComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
-			segments[i]->setFacingTowardsDirection(movementDirection);
+		for (SnakeSegment* segment : segments) {
+			segment->moveTo(this->getPositionWCS());
+			segment->setVelocityFromComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
+			segment->setFacingTowardsDirection(movementDirection);
 		}
 
 		// Reset.
 		numSpawnedSegments = 0;
 		lastSpawnedTime = 0;
 		totalElapsedTime = 0;
-	} else if (this->isActive()) {
-		for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
-			// This will create an explosion for each segment.
-			segments[i]->setActive(false);
+	} else {
+		// We have been destroyed, deactivate all of the segments.
+		for (SnakeSegment* segment : segments) {
+			segment->setActive(false);
 		}
 	}
-
-	// Base processing - Note, we do not want to use the base Alien logic.
-	Sprite::setActive(active);
 }
 
 void Snake::update(float elapsedTime) {
 	totalElapsedTime += elapsedTime;
 
-	for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
-		if (segments[i]->isActive()) {
-			segments[i]->update(elapsedTime);
+	for (SnakeSegment* segment : segments) {
+		if (segment->isActive()) {
+			segment->update(elapsedTime);
 		}
 	}
 
 	// If any segments are visible then mark the container as visible (so the draw method is called).
 	this->setVisible(false);
-	for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
-		if (segments[i]->isVisible()) {
+	for (SnakeSegment* segment : segments) {
+		if (segment->isVisible()) {
 			this->setVisible(true);
 			break;
 		}
@@ -154,78 +149,111 @@ void Snake::update(float elapsedTime) {
 	}
 }
 
-void Snake::checkCollision(Player *player) {
+bool Snake::checkCollision(Player* player) {
+	bool collision = false;
+
 	// See if this alien has just hit the player.
-	for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
-		if (segments[i]->isVisible()) {
-			NovaVertex between = (player->getPositionWCS() - segments[i]->getPositionWCS());
-			if (between.magnitude() < (player->getBoundingSphere() + segments[i]->getBoundingSphere())) {
-				// A collision occurred, conditionally destroy the alien and player.
-				segments[i]->youHit(player);
+	for (SnakeSegment* segment : segments) {
+		if (segment->isVisible()) {
+			if (segment->checkCollision(player)) {
+				// This alien was hit by the player.
+				collision = true;
+
+				// Optionally destroy the player.
+				player->youHit(this);
+				break;
 			}
 		}
 	}
+
+	return collision;
 }
 
-void Snake::checkCollision(Missile *missile) {
-	// See if this alien has just hit this missile.
-	for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
-		if (segments[i]->isVisible()) {
-			NovaVertex between = (missile->getPositionWCS() - segments[i]->getPositionWCS());
-			if (between.magnitude() < (missile->getBoundingSphere() + segments[i]->getBoundingSphere())) {
-				// A collision occurred, conditionally destroy the alien and missile.
-				segments[i]->youHit(missile);
+bool Snake::checkCollision(Missile* missile) {
+	bool collision = false;
+
+	// See if this alien has just hit this missile, first check the body segments.
+	for (SnakeBodySegment* segment : bodySegments) {
+		if (segment->isVisible()) {
+			collision = segment->checkCollision(missile);
+			if (collision) {
+				break;
 			}
 		}
 	}
+
+	if (collision) {
+		if (!headSegment->isVulnerable()) {
+			// See if the head is vulnerable as a result of this body collision.
+			bool vulnerable = true;
+			for (SnakeBodySegment* segment : bodySegments) {
+				if (!segment->isDisabled()) {
+					vulnerable = false;
+					break;
+				}
+			}
+
+			if (vulnerable) {
+				// The head can now be disabled.
+				headSegment->setVulnerable(true);
+			}
+		}
+	}
+
+	if (!collision) {
+		// If no body collision, check the head.
+		if (headSegment->isVisible()) {
+			collision = headSegment->checkCollision(missile);
+		}
+	}
+
+	if (collision) {
+		if (headSegment->isDisabled()) {
+			// The head is dead, therefore the snake is dead.
+			playState->getAlienController()->deactivate(this);
+			playState->getPlayer()->increaseScore(this);
+		}
+
+		// Missile has been destroyed.
+		playState->getMissileController()->deactivate(missile);
+	}
+
+	return collision;
 }
 
 void Snake::draw() {
 	static DisplayVertex displayVertex;
 
 	// Only draw the nodes and connecting line if at least one child or parent node is visible.
-	SnakeSegment *parent = segments[0];
+	SnakeSegment* parentSegment = headSegment;
 	for (int i = 1; i < NUMBER_OF_SEGMENTS; i++) {
-		SnakeSegment *child = segments[i];
-		if (parent->isVisible() || child->isVisible()) {
+		SnakeSegment* childSegment = segments[i];
+		if (parentSegment->isVisible() || childSegment->isVisible()) {
 			// Draw the line.
-			NovaVertex start = child->getAnchorPointCCS(TOP_ANCHOR);
+			NovaVertex start = childSegment->getAnchorPointCCS(SnakeSegment::BOTTOM_VERTEX_ANCHOR);
 			displayVertex.x = horizontalProject(start.x, start.z);
 			displayVertex.y = verticalProject(start.y, start.z);
-			glColor3fv(child->getSpriteColor().data);
+			glColor3fv(childSegment->getSpriteColor().data);
 			glVertex2i(displayVertex.x, displayVertex.y);
 
-			NovaVertex finish = parent->getAnchorPointCCS(BOTTOM_ANCHOR);
+			NovaVertex finish = parentSegment->getAnchorPointCCS(SnakeSegment::BOTTOM_VERTEX_ANCHOR);
 			displayVertex.x = horizontalProject(finish.x, finish.z);
 			displayVertex.y = verticalProject(finish.y, finish.z);
-			glColor3fv(parent->getSpriteColor().data);
+			glColor3fv(parentSegment->getSpriteColor().data);
 			glVertex2i(displayVertex.x, displayVertex.y);
 
 			// Draw the segments.
-			if (parent->isVisible()) {
-				parent->draw();
+			if (parentSegment->isVisible()) {
+				parentSegment->draw();
 			}
 
-			if (child->isVisible()) {
-				child->draw();
+			if (childSegment->isVisible()) {
+				childSegment->draw();
 			}
 		}
 
 		// Move down one node.
-		parent = child;
+		parentSegment = childSegment;
 	}
 }
 
-bool Snake::isHeadNodeVulnerable() {
-	bool vulnerable = true;
-
-	// See if all of the spawned body segments have been disabled.
-	for (int i = 0; i < NUMBER_OF_BODY_SEGMENTS; i++) {
-		if (bodySegments[i]->isActive() && (!bodySegments[i]->isDisabled())) {
-			vulnerable = false;
-			break;
-		}
-	}
-
-	return vulnerable;
-}

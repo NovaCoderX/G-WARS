@@ -21,26 +21,26 @@
 #define NUGGET_DURATION 40
 
 MultiplierNugget::MultiplierNugget(PlayState* playState) : Nugget(playState) {
-	nuggetType = MULTIPLIER_NUGGET;
-	increasingColor = false;
-	totalElapsedTime = 0;
+	nuggetType = MULTIPLIER;
 	this->setSpriteDefinition("alien_nugget");
 	highColor = NovaColor(201, 255, 4);
 	lowColor = highColor;
 	lowColor.rebase(60);
 	this->setSpriteColor(highColor);
+	increasingColor = false;
+	totalElapsedTime = 0;
 }
 
 void MultiplierNugget::setActive(bool active) {
-	if (active) {
-		// Reset.
-		totalElapsedTime = 0;
-		this->setSpriteColor(highColor);
-		increasingColor = false;
-	}
-
 	// Base processing.
 	Nugget::setActive(active);
+
+	if (active) {
+		// Reset.
+		this->setSpriteColor(highColor);
+		increasingColor = false;
+		totalElapsedTime = 0;
+	}
 }
 
 void MultiplierNugget::update(float elapsedTime) {

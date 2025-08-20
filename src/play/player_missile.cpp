@@ -20,7 +20,6 @@
 #include "poly_nova.h"
 
 PlayerMissile::PlayerMissile(PlayState *playState) : Missile(playState) {
-	this->playState = playState;
 	missileType = PLAYER_MISSILE;
 	this->setSpriteDefinition("missile");
 	this->setSpriteColor(NovaColor(253, 243, 2));
@@ -30,14 +29,14 @@ PlayerMissile::PlayerMissile(PlayState *playState) : Missile(playState) {
 }
 
 void PlayerMissile::setActive(bool active) {
+	// Base processing.
+	Missile::setActive(active);
+
 	if (active) {
 		// Reset.
 		homingEnabled = false;
 		target = NULL;
 	}
-
-    // Do the base processing.
-    Missile::setActive(active);
 }
 
 void PlayerMissile::update(float elapsedTime) {

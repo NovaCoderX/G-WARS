@@ -19,7 +19,6 @@
 
 #include "poly_nova.h"
 
-#define RESPAWN_INTERVAL 33
 #define DEFAULT_AUTOFIRE_INTERVAL 2
 #define POWER_UP_AUTOFIRE_INTERVAL 1
 #define DEFAULT_NUMBER_OF_SMART_BOMBS 3
@@ -27,14 +26,15 @@
 #define DEFAULT_NUMBER_LIVES 3
 #define MAX_NUMBER_LIVES 9
 #define POWER_UP_DURATION 150
-#define THRUST_SOUND_INTERVAL 3
-#define DEFAULT_AWARD_SCORE 100000
+#define DEFAULT_AWARD_SCORE 50000
 #define AWARD_SCORE_MULTIPLIER 3
 #define DEFAULT_SHIP_VELOCITY 4.0
 #define POWER_UP_SHIP_VELOCITY 6.0
 #define MAX_SHIP_VELOCITY 6.0
 #define DECELERATION_FACTOR 1.5
 #define NUMBER_OF_POWER_UP_TYPES 4
+#define DEFAULT_SCORE_MULTIPLIER 1
+#define SCORE_MULTIPLIER_INCREMENT 1
 
 static PowerUpType powerUpTypes[NUMBER_OF_POWER_UP_TYPES] = { NO_POWER_UP_ASSIGNED };
 
@@ -71,7 +71,7 @@ Player::Player(PlayState *playState) : Sprite(playState) {
 	int startVertex = 0;
 	int endVertex = 1;
 	for (int i = 0; i < numPoints; i++) {
-		shieldDefinition->setLineMapping(i, startVertex++, endVertex);
+		shieldDefinition->setLineVertexMapping(i, startVertex++, endVertex);
 
 		if (endVertex < (numPoints - 1)) {
 			endVertex++;
@@ -90,7 +90,6 @@ Player::Player(PlayState *playState) : Sprite(playState) {
 	fireMissileRequested = false;
 	dropBombRequested = false;
 	numSmartBombs = DEFAULT_NUMBER_OF_SMART_BOMBS;
-	resurrectionTimer = 0;
 	autofireModeActive = false;
 	autofireTimer = 0;
 	numLives = DEFAULT_NUMBER_LIVES;
@@ -98,10 +97,10 @@ Player::Player(PlayState *playState) : Sprite(playState) {
 	highScore = g_worldManager->getHighScoreHandler()->getHighScore();
 	highScoreAchived = false;
 	awardScore = DEFAULT_AWARD_SCORE;
-	scoreMultiplier = 1;
+	scoreMultiplier = DEFAULT_SCORE_MULTIPLIER;
 	currentPowerUp = NO_POWER_UP_ASSIGNED;
 	powerUpTimer = 0;
-	thrustSoundTimer = 0;
+	thrustSoundChannel = 0;
     restartMusic = false;
     
 	// Set the power-ups.
@@ -124,19 +123,22 @@ Player::~Player() {
 }
 
 void Player::setActive(bool active) {
+	// Base processing.
+	Sprite::setActive(active);
+
 	if (active) {
 		// Make some sound.
 		g_worldManager->startSound(PLAYER_SPAWN);
-		
-		// Only start play music if the player has died (and stopped the music).
+
+		// Only start play music if the player stopped the music when they died.
 		if (restartMusic) {
-		    g_worldManager->startMusic();
-		    restartMusic = false;
+			g_worldManager->startMusic();
+			restartMusic = false;
 		}
 
 		// Create a temporary shield.
 		playerShield->setActive(true);
-	} else if (this->active) {
+	} else {
 		// Player has been destroyed.
 		this->setVelocityFromComponents(0, 0);
 		g_worldManager->stopMusic();
@@ -150,12 +152,11 @@ void Player::setActive(bool active) {
 			playState->getHudController()->getGameOverPanel()->setVisible(true);
 		} else {
 			// Player died but will be reborn....
-		    restartMusic = true;
-			resurrectionTimer = 0;
+			restartMusic = true;
 		}
 
 		// Reset score multiplier.
-		scoreMultiplier = 1;
+		scoreMultiplier = DEFAULT_SCORE_MULTIPLIER;
 
 		// Remove any assigned power-up.
 		currentPowerUp = NO_POWER_UP_ASSIGNED;
@@ -164,13 +165,10 @@ void Player::setActive(bool active) {
 		// Update the stats panel.
 		playState->getHudController()->getPlayerStatsPanel()->setDirty(true);
 	}
-
-	// Base processing.
-	Sprite::setActive(active);
 }
 
 void Player::youHit(Alien *alien) {
-	// The player has collied with an alien.
+	// The player has collided with an alien.
 	if (!playerShield->isActive()) {
 		// Player destroyed.
 		this->setActive(false);
@@ -184,18 +182,19 @@ void Player::youHit(Alien *alien) {
 }
 
 void Player::youHit(Nugget *nugget) {
-	if (nugget->getNuggetType() == MULTIPLIER_NUGGET) {
+	if (nugget->getNuggetType() == Nugget::MULTIPLIER) {
 		// Player just picked up a nugget, increase the score multiplier.
 		g_worldManager->startSound(PICKUP_MULTIPLIER);
-		scoreMultiplier += 0.3f;
+		scoreMultiplier += SCORE_MULTIPLIER_INCREMENT;
 	} else {
 		// Player just picked up a nugget, randomly choose a new power-up.
 		g_worldManager->startSound(PICKUP_POWER_UP);
 		currentPowerUp = powerUpTypes[int_rand(0, 4)];
 		this->setSpriteColor(NovaColor(253, 243, 2));
 
-		// Reset duration timer.
+		// Reset.
 		powerUpTimer = 0;
+		thrustSoundChannel = 0;
 	}
 }
 
@@ -209,7 +208,7 @@ void Player::checkCollision(Missile *missile) {
 			this->setActive(false);
 		}
 
-		// Missile has also been destroyed.
+		// Missile has been destroyed.
 		playState->getMissileController()->deactivate(missile);
 	}
 }
@@ -219,34 +218,42 @@ void Player::increaseScore(Alien *alien) {
 	if (this->isActive()) {
 		uint pointsAwarded = 0;
 
-		// The alien was destroyed, award points depending on the value of the various alien types.
+		// The alien was destroyed, award points depending on the value of the various aliens.
 		switch (alien->getAlienType()) {
-		case ROCKET_SHIP:
+		case Alien::ROCKET_SHIP:
 			pointsAwarded = 1000;
 			break;
 
-		case FLYING_SAUCER:
+		case Alien::FLYING_SAUCER:
 			pointsAwarded = 3000;
 			break;
 
-		case PLAYER_CLONE:
+		case Alien::PLAYER_CLONE:
 			pointsAwarded = 6000;
 			break;
 
-		case BLACK_HOLE:
+		case Alien::BLACK_HOLE:
 			pointsAwarded = 12000;
 			break;
 
-		case MINI_GATE:
+		case Alien::MINI_GATE:
 			pointsAwarded = 24000;
 			break;
 
-		case SNAKE:
+		case Alien::SNAKE:
 			pointsAwarded = 48000;
 			break;
 
+		case Alien::JELLY:
+			pointsAwarded = 58000;
+			break;
+
+		case Alien::CRUSHER:
+			pointsAwarded = 68000;
+			break;
+
 		default:
-			// Base aliens (maybe award different points depending on the wave difficulty).
+			// Standard aliens.
 			pointsAwarded = 100;
 		}
 
@@ -295,15 +302,6 @@ void Player::increaseScore(Alien *alien) {
 }
 
 void Player::update(float elapsedTime) {
-	// If the player is dead we need to check to see if they can be resurrected.
-	if (active) {
-		updateActivePlayer(elapsedTime);
-	} else {
-		updateInactivePlayer(elapsedTime);
-	}
-}
-
-void Player::updateActivePlayer(float elapsedTime) {
 	NovaVertex originalShipPosition = this->getPositionWCS();
 
 	// See if the power-up has expired.
@@ -351,13 +349,16 @@ void Player::updateActivePlayer(float elapsedTime) {
 		// Set the new direction (this will overwrite any current velocity).
 		if (currentPowerUp == INCREASED_SPEED_POWER_UP) {
 			this->setVelocityFromDirection(direction, POWER_UP_SHIP_VELOCITY);
+			bool restartSound = false;
 
-			thrustSoundTimer += elapsedTime;
-			if (thrustSoundTimer >= THRUST_SOUND_INTERVAL) {
-				g_worldManager->startSound(PLAYER_THRUST_LOOP);
+			if (!thrustSoundChannel) {
+				restartSound = true;
+			} else if (!g_worldManager->isSoundPlaying(thrustSoundChannel)) {
+				restartSound = true;
+			}
 
-				// Reset.
-				thrustSoundTimer = 0;
+			if (restartSound) {
+				thrustSoundChannel = g_worldManager->startSound(PLAYER_THRUST_LOOP);
 			}
 		} else {
 			this->setVelocityFromDirection(direction, DEFAULT_SHIP_VELOCITY);
@@ -544,9 +545,8 @@ void Player::updateActivePlayer(float elapsedTime) {
 
 	if (dropBombRequested) {
 		if (numSmartBombs > 0) {
-			NuggetSpawnMode savedMode = playState->getNuggetController()->getSpawnMode();
-			playState->getNuggetController()->setSpawnMode(NEVER_SPAWN_NUGGETS);
-			playState->getAlienController()->destroyAllLife();
+			NuggetSpawnMode savedMode = playState->getNuggetController()->setSpawnMode(NEVER_SPAWN_NUGGETS);
+			playState->getAlienController()->destroyAliens();
 			playState->getNuggetController()->setSpawnMode(savedMode);
 			playState->getPlayAreaController()->shakeGrid();
 			g_worldManager->startSound(FIRE_SMARTBOMB_LOW);
@@ -565,15 +565,6 @@ void Player::updateActivePlayer(float elapsedTime) {
 	}
 }
 
-void Player::updateInactivePlayer(float elapsedTime) {
-	if (numLives) {
-		resurrectionTimer += elapsedTime;
-		if (resurrectionTimer >= RESPAWN_INTERVAL) {
-			// Back to life.
-			this->setActive(true);
-		}
-	}
-}
 
 void Player::updateVelocity(double additionalHorizontalVelocity, double additionalVerticalVelocity) {
     if ((additionalHorizontalVelocity != 0) || (additionalVerticalVelocity != 0)) {
@@ -598,7 +589,6 @@ void Player::draw() {
 
 	// Also draw the shield.
 	if (playerShield->isVisible()) {
-		// Keep the shield position in sync with the player.
 		playerShield->moveTo(this->getPositionWCS());
 		playerShield->draw();
 	}

@@ -20,20 +20,22 @@
 #include "poly_nova.h"
 
 RocketShip::RocketShip(PlayState* playState) : Alien(playState) {
-	this->alienType = ROCKET_SHIP;
+	this->setAlienType(ROCKET_SHIP);
 	this->setSpriteDefinition("rocket_ship");
 	this->setSpriteColor(NovaColor(86, 173, 10));
+	this->setExplosionSize(MEDIUM_EXPLOSION);
 	this->setExplosionColor(this->getSpriteColor());
+	this->setNuggetSpawnType(POWER_UP);
 }
 
 void RocketShip::setActive(bool active) {
+	// Base processing.
+	Alien::setActive(active);
+
 	if (active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_ROCKET_SHIP);
 	}
-
-	// Base processing.
-	Alien::setActive(active);
 }
 
 void RocketShip::update(float elapsedTime) {

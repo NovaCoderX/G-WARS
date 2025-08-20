@@ -19,40 +19,40 @@
 
 #include "poly_nova.h"
 
-#define DAMAGE_FACTOR 0.05
-#define NUMBER_OF_TEETH_VERTICES 5
+#define MAX_DAMAGE 5
+#define NUMBER_OF_FANG_VERTICES 5
 #define NUMBER_OF_EYE_VERTICES 5
 #define INITIAL_FIRE_DELAY 10
-#define FIRE_INTERVAL 10
+#define DEFAULT_FIRE_INTERVAL 10
 #define MAXIMUM_TARGET_ANGLE 33
 
-SnakeHeadSegment::SnakeHeadSegment(PlayState* playState, Snake *snake, const NovaColor &highColor) : SnakeSegment(playState) {
-	this->snake = snake;
-	this->setSpriteDefinition("snake_segment");
-	this->highColor = highColor;
-	this->lowColor = highColor;
-	this->lowColor.rebase(80);
-	this->setSpriteColor(highColor);
-	this->setExplosionColor(this->getSpriteColor());
+SnakeHeadSegment::SnakeHeadSegment(PlayState* playState, Sprite* parent, const NovaColor &color,  bool explosive) :
+ SnakeSegment(playState, parent, color, explosive) {
+	highColor = color;
+	lowColor = color;
+	lowColor.rebase(10);
+	increasingColor = false;
+	damage = 0;
+	fireInterval = DEFAULT_FIRE_INTERVAL;
 
 	// Create the face data.
-	teethData.color = NovaColor(255, 82, 15);
-	teethData.staticVertices = new NovaVertex[NUMBER_OF_TEETH_VERTICES];
-	teethData.renderVertices = new RenderVertex[NUMBER_OF_TEETH_VERTICES];
-	teethData.displayVertices = new DisplayVertex[NUMBER_OF_TEETH_VERTICES];
+	fangData.color = NovaColor(255, 82, 15);
+	fangData.staticVertices = new NovaVertex[NUMBER_OF_FANG_VERTICES];
+	fangData.renderVertices = new RenderVertex[NUMBER_OF_FANG_VERTICES];
+	fangData.displayVertices = new DisplayVertex[NUMBER_OF_FANG_VERTICES];
 
-	teethData.staticVertices[0] = NovaVertex(-10, 20, 0);
-	teethData.staticVertices[1] = NovaVertex(-5, 30, 0);
-	teethData.staticVertices[2] = NovaVertex(0, 20, 0);
-	teethData.staticVertices[3] = NovaVertex(5, 30, 0);
-	teethData.staticVertices[4] = NovaVertex(10, 20, 0);
+	fangData.staticVertices[0] = NovaVertex(-10, 20, 0);
+	fangData.staticVertices[1] = NovaVertex(-5, 30, 0);
+	fangData.staticVertices[2] = NovaVertex(0, 20, 0);
+	fangData.staticVertices[3] = NovaVertex(5, 30, 0);
+	fangData.staticVertices[4] = NovaVertex(10, 20, 0);
 
 	double scaleFactor = 3;
 
-	for (int i = 0; i < NUMBER_OF_TEETH_VERTICES; i++) {
-		teethData.staticVertices[i].x = (teethData.staticVertices[i].x / scaleFactor);
-		teethData.staticVertices[i].y = (teethData.staticVertices[i].y / scaleFactor);
-		teethData.staticVertices[i].z = (teethData.staticVertices[i].z / scaleFactor);
+	for (int i = 0; i < NUMBER_OF_FANG_VERTICES; i++) {
+		fangData.staticVertices[i].x = (fangData.staticVertices[i].x / scaleFactor);
+		fangData.staticVertices[i].y = (fangData.staticVertices[i].y / scaleFactor);
+		fangData.staticVertices[i].z = (fangData.staticVertices[i].z / scaleFactor);
 	}
 
 	leftEyeData.color = NovaColor(255, 82, 15);
@@ -93,19 +93,19 @@ SnakeHeadSegment::SnakeHeadSegment(PlayState* playState, Snake *snake, const Nov
 }
 
 SnakeHeadSegment::~SnakeHeadSegment() {
-	if (teethData.staticVertices) {
-		delete[] teethData.staticVertices;
-		teethData.staticVertices = NULL;
+	if (fangData.staticVertices) {
+		delete[] fangData.staticVertices;
+		fangData.staticVertices = NULL;
 	}
 
-	if (teethData.renderVertices) {
-		delete[] teethData.renderVertices;
-		teethData.renderVertices = NULL;
+	if (fangData.renderVertices) {
+		delete[] fangData.renderVertices;
+		fangData.renderVertices = NULL;
 	}
 
-	if (teethData.displayVertices) {
-		delete[] teethData.displayVertices;
-		teethData.displayVertices = NULL;
+	if (fangData.displayVertices) {
+		delete[] fangData.displayVertices;
+		fangData.displayVertices = NULL;
 	}
 
 	if (leftEyeData.staticVertices) {
@@ -139,14 +139,30 @@ SnakeHeadSegment::~SnakeHeadSegment() {
 	}
 }
 
+void SnakeHeadSegment::setVulnerable(bool vulnerable) {
+	// Base processing.
+	SnakeSegment::setVulnerable(vulnerable);
+
+	if (vulnerable) {
+		// Increase fire rate when vulnerable.
+		fireInterval = (DEFAULT_FIRE_INTERVAL / 2);
+	} else {
+		fireInterval = DEFAULT_FIRE_INTERVAL;
+	}
+}
+
 void SnakeHeadSegment::setActive(bool active) {
+	// Base processing.
+	SnakeSegment::setActive(active);
+
 	if (active) {
 		// Reset.
 		this->setSpriteColor(highColor);
-	}
+		increasingColor = false;
+		damage = 0;
 
-	// Base processing.
-	SnakeSegment::setActive(active);
+		totalElapsedTime = lastFireTime = 0;
+	}
 }
 
 void SnakeHeadSegment::update(float elapsedTime) {
@@ -194,48 +210,61 @@ void SnakeHeadSegment::update(float elapsedTime) {
 	// Mark this object visible/invisible for this frame.
 	this->calculateVisibility();
 
-	// See if we are now ready to fire a missile.
-	Player *player = playState->getPlayer();
-	if (player->isActive() && (this->isVisible())) {
-		if (totalElapsedTime > INITIAL_FIRE_DELAY) {
-			if ((totalElapsedTime - lastFireTime) >= FIRE_INTERVAL) {
-				playerPosition = player->getPositionWCS();
-				alienPosition = this->getPositionWCS();
+	if (this->isVisible()) {
+		if (this->isVulnerable()) {
+			// Do some simple color cycling.
+			if (increasingColor) {
+				if (spriteColor.brighten((elapsedTime / 5), highColor)) {
+					increasingColor = false;
+				}
+			} else {
+				if (spriteColor.fade((elapsedTime / 5), lowColor)) {
+					increasingColor = true;
+				}
+			}
+		}
 
-				double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
-						(playerPosition.y - alienPosition.y));
+		// See if we are now ready to fire a missile.
+		Player *player = playState->getPlayer();
+		if (player->isActive()) {
+			if (totalElapsedTime > INITIAL_FIRE_DELAY) {
+				if ((totalElapsedTime - lastFireTime) >= fireInterval) {
+					playerPosition = player->getPositionWCS();
+					alienPosition = this->getPositionWCS();
+					double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
+							(playerPosition.y - alienPosition.y));
 
-				// Need to check to see if we are traveling roughly in the correct direction to fire.
-				if (fabs(this->getFacingTowardsDirection() - playerDirection) < MAXIMUM_TARGET_ANGLE) {
-					playState->getMissileController()->launchMissile(this, this->getFacingTowardsDirection(), this->getAnchorPointWCS(TOP_ANCHOR));
+					// Need to check to see if we are traveling roughly in the correct direction to fire.
+					if (fabs(this->getFacingTowardsDirection() - playerDirection) < MAXIMUM_TARGET_ANGLE) {
+						playState->getMissileController()->launchMissile(this->getAnchorPointWCS(TOP_VERTEX_ANCHOR),
+								this->getFacingTowardsDirection(), this->getTotalVelocity());
 
-					// Store the last time that we fired.
-					lastFireTime = totalElapsedTime;
+						// Store the last time that we fired.
+						lastFireTime = totalElapsedTime;
+					}
 				}
 			}
 		}
 	}
 }
 
-void SnakeHeadSegment::youHit(Player *player) {
-	// This segment was hit by the player, optionally destroy the player.
-	player->youHit(this);
-}
+bool SnakeHeadSegment::checkCollision(Missile* missile) {
+	bool collision = false;
 
-void SnakeHeadSegment::youHit(Missile *missile) {
-	// This segment was hit by the player's missile.
-	if (snake->isHeadNodeVulnerable()) {
-		if (this->spriteColor.fade(DAMAGE_FACTOR, lowColor)) {
-			// The head is dead, therefore the snake is dead.
-			playState->getAlienController()->deactivate(snake);
+	NovaVertex between = (missile->getPositionWCS() - this->getPositionWCS());
+	if (between.magnitude() < (missile->getBoundingSphere() + this->getBoundingSphere())) {
+		// This segment was hit by the player's missile.
+		collision = true;
 
-			// This alien was destroyed by a player's missile.
-			playState->getPlayer()->increaseScore(snake);
+		if (this->isVulnerable()) {
+			damage++;
+			if (damage >= MAX_DAMAGE) {
+				this->setDisabled(true);
+			}
 		}
 	}
 
-	// Missile has also been destroyed.
-	playState->getMissileController()->deactivate(missile);
+	return collision;
 }
 
 void SnakeHeadSegment::draw() {
@@ -249,26 +278,26 @@ void SnakeHeadSegment::draw() {
 	SnakeSegment::draw();
 
 	// Then draw the teeth.
-	for (int i = 0; i < NUMBER_OF_TEETH_VERTICES; i++) {
+	for (int i = 0; i < NUMBER_OF_FANG_VERTICES; i++) {
 		// Transform.
-		teethData.renderVertices[i] = teethData.staticVertices[i] * objectToCameraMatrix;
+		fangData.renderVertices[i] = fangData.staticVertices[i] * objectToCameraMatrix;
 
 		// Project.
-		teethData.displayVertices[i].x = horizontalProject(teethData.renderVertices[i].x,
-				teethData.renderVertices[i].z);
-		teethData.displayVertices[i].y = verticalProject(teethData.renderVertices[i].y,
-				teethData.renderVertices[i].z);
+		fangData.displayVertices[i].x = horizontalProject(fangData.renderVertices[i].x,
+				fangData.renderVertices[i].z);
+		fangData.displayVertices[i].y = verticalProject(fangData.renderVertices[i].y,
+				fangData.renderVertices[i].z);
 	}
 
 	// Loop through the display vertex array and create line segments for each pair of vertices.
 	int startVertex = 0;
 	int endVertex = 1;
 
-	glColor3fv(teethData.color.data);
+	glColor3fv(fangData.color.data);
 
-	for (int i = 0; i < (NUMBER_OF_TEETH_VERTICES - 1); i++) {
-		glVertex2i(teethData.displayVertices[startVertex].x, teethData.displayVertices[startVertex].y);
-		glVertex2i(teethData.displayVertices[endVertex].x, teethData.displayVertices[endVertex].y);
+	for (int i = 0; i < (NUMBER_OF_FANG_VERTICES - 1); i++) {
+		glVertex2i(fangData.displayVertices[startVertex].x, fangData.displayVertices[startVertex].y);
+		glVertex2i(fangData.displayVertices[endVertex].x, fangData.displayVertices[endVertex].y);
 		startVertex++;
 		endVertex++;
 	}

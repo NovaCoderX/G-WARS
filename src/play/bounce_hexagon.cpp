@@ -27,7 +27,7 @@ static float minWarpSize = 0;
 static float maxWarpSize = 0;
 
 BounceHexagon::BounceHexagon(PlayState* playState) : BounceAlien(playState) {
-	this->alienType = BOUNCE_HEXAGON;
+	this->setAlienType(BOUNCE_HEXAGON);
 	this->setSpriteDefinition("bounce_hexagon");
 	this->setSpriteColor(NovaColor(96, 243, 195));
 	this->setExplosionColor(this->getSpriteColor());

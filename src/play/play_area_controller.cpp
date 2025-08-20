@@ -72,16 +72,16 @@ void PlayAreaController::init() {
 	borderData.staticVertices[1].y = HORIZONTAL_BORDER_POSITION;
 	borderData.staticVertices[1].z = 0;
 
-	borders[LEFT_BORDER]->staticVertices[BEGIN] = &borderData.staticVertices[0];
-	borders[LEFT_BORDER]->lineColors[BEGIN] = &borderData.lineColors[1];
-	borders[LEFT_BORDER]->staticVertices[END] = &borderData.staticVertices[1];
-	borders[LEFT_BORDER]->lineColors[END] = &borderData.lineColors[0];
+	borders[LEFT_BORDER]->staticVertices[LINE_BEGIN] = &borderData.staticVertices[0];
+	borders[LEFT_BORDER]->lineColors[LINE_BEGIN] = &borderData.lineColors[1];
+	borders[LEFT_BORDER]->staticVertices[LINE_END] = &borderData.staticVertices[1];
+	borders[LEFT_BORDER]->lineColors[LINE_END] = &borderData.lineColors[0];
 	borders[LEFT_BORDER]->moveTo(-VERTICAL_BORDER_POSITION, 0, 0);
 
-	borders[RIGHT_BORDER]->staticVertices[BEGIN] = &borderData.staticVertices[1];
-	borders[RIGHT_BORDER]->lineColors[BEGIN] = &borderData.lineColors[1];
-	borders[RIGHT_BORDER]->staticVertices[END] = &borderData.staticVertices[0];
-	borders[RIGHT_BORDER]->lineColors[END] = &borderData.lineColors[0];
+	borders[RIGHT_BORDER]->staticVertices[LINE_BEGIN] = &borderData.staticVertices[1];
+	borders[RIGHT_BORDER]->lineColors[LINE_BEGIN] = &borderData.lineColors[1];
+	borders[RIGHT_BORDER]->staticVertices[LINE_END] = &borderData.staticVertices[0];
+	borders[RIGHT_BORDER]->lineColors[LINE_END] = &borderData.lineColors[0];
 	borders[RIGHT_BORDER]->moveTo(VERTICAL_BORDER_POSITION, 0, 0);
 
 	// Set the shared vertex data for the two horizontal borders.
@@ -92,19 +92,19 @@ void PlayAreaController::init() {
 	borderData.staticVertices[3].y = 0;
 	borderData.staticVertices[3].z = 0;
 
-	borders[TOP_BORDER]->staticVertices[BEGIN] = &borderData.staticVertices[2];
-	borders[TOP_BORDER]->lineColors[BEGIN] = &borderData.lineColors[0];
-	borders[TOP_BORDER]->staticVertices[END] = &borderData.staticVertices[3];
-	borders[TOP_BORDER]->lineColors[END] = &borderData.lineColors[1];
+	borders[TOP_BORDER]->staticVertices[LINE_BEGIN] = &borderData.staticVertices[2];
+	borders[TOP_BORDER]->lineColors[LINE_BEGIN] = &borderData.lineColors[0];
+	borders[TOP_BORDER]->staticVertices[LINE_END] = &borderData.staticVertices[3];
+	borders[TOP_BORDER]->lineColors[LINE_END] = &borderData.lineColors[1];
 	borders[TOP_BORDER]->moveTo(0, HORIZONTAL_BORDER_POSITION, 0);
 
-	borders[BOTTOM_BORDER]->staticVertices[BEGIN] = &borderData.staticVertices[3];
-	borders[BOTTOM_BORDER]->lineColors[BEGIN] = &borderData.lineColors[0];
-	borders[BOTTOM_BORDER]->staticVertices[END] = &borderData.staticVertices[2];
-	borders[BOTTOM_BORDER]->lineColors[END] = &borderData.lineColors[1];
+	borders[BOTTOM_BORDER]->staticVertices[LINE_BEGIN] = &borderData.staticVertices[3];
+	borders[BOTTOM_BORDER]->lineColors[LINE_BEGIN] = &borderData.lineColors[0];
+	borders[BOTTOM_BORDER]->staticVertices[LINE_END] = &borderData.staticVertices[2];
+	borders[BOTTOM_BORDER]->lineColors[LINE_END] = &borderData.lineColors[1];
 	borders[BOTTOM_BORDER]->moveTo(0, -HORIZONTAL_BORDER_POSITION, 0);
 
-	bool gridEnabled  = yamlish->getBool("playarea.grid.enabled", true);
+	bool gridEnabled = yamlish->getBool("playarea.grid.enabled", true);
 	if (gridEnabled) {
 		grid = new PlayAreaGrid(playState);
 		grid->init();

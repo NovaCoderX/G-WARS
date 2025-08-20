@@ -20,7 +20,6 @@
 #include "poly_nova.h"
 
 AlienMissile::AlienMissile(PlayState *playState) : Missile(playState) {
-	this->playState = playState;
 	missileType = ALIEN_MISSILE;
 	this->setSpriteDefinition("missile");
 	this->setSpriteColor(NovaColor(255, 201, 4));

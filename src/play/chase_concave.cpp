@@ -24,7 +24,7 @@ static AstMatrix3x3 rotationMatrix;
 static float lastAnimatedTime = 0;
 
 ChaseConcave::ChaseConcave(PlayState* playState) : ChaseAlien(playState) {
-	this->alienType = CHASE_CONCAVE;
+	this->setAlienType(CHASE_CONCAVE);
 	this->setSpriteDefinition("chase_concave");
 	this->setSpriteColor(NovaColor(255, 169, 0));
 	this->setExplosionColor(this->getSpriteColor());

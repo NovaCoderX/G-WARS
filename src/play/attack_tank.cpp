@@ -22,18 +22,18 @@
 #define FIRE_INTERVAL 20
 #define READY_TO_FIRE_DELAY 3
 #define MAXIMUM_TARGET_ANGLE 30
+#define MUZZLE_VERTEX_ANCHOR 9
 
 AttackTank::AttackTank(PlayState* playState) : Alien(playState) {
-	this->alienType = ATTACK_TANK;
-	totalElapsedTime = lastFireTime = 0;
-	readyToFire = false;
-	readyToFireTime = 0;
+	this->setAlienType(ATTACK_TANK);
 	defaultColorTurret = NovaColor(169, 169, 169);
 	defaultColorBase = defaultColorTurret;
 	defaultColorBase.rebase(80);
 	readyToFireColorTurret = NovaColor(255, 201, 4);
 	readyToFireColorBase = readyToFireColorTurret;
 	readyToFireColorBase.rebase(80);
+	readyToFire = false;
+	totalElapsedTime = lastFireTime = readyToFireTime = 0;
 
 	this->setSpriteDefinition("attack_tank_base");
 	this->setSpriteColor(defaultColorBase);
@@ -52,20 +52,20 @@ AttackTank::~AttackTank() {
 }
 
 void AttackTank::setActive(bool active) {
+	// Base processing.
+	Alien::setActive(active);
+
 	if (active) {
+		// Rotate the sprite towards the direction of travel.
+		double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
+		this->setFacingTowardsDirection(movementDirection);
+
 		// Reset.
 		readyToFire = false;
 		this->setSpriteColor(defaultColorBase);
 		gunTurret->setSpriteColor(defaultColorTurret);
 		totalElapsedTime = lastFireTime = readyToFireTime = 0;
-
-		// Rotate the sprite towards the direction of travel.
-		double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
-		this->setFacingTowardsDirection(movementDirection);
 	}
-
-	// Base processing.
-	Alien::setActive(active);
 }
 
 void AttackTank::update(float elapsedTime) {
@@ -110,19 +110,12 @@ void AttackTank::update(float elapsedTime) {
 	// Mark this object visible/invisible for this frame.
 	this->calculateVisibility();
 
-	Player *player = playState->getPlayer();
-	if (!player->isActive()) {
-		// Player has died, reset.
-		readyToFire = false;
-		this->setSpriteColor(defaultColorBase);
-		gunTurret->setSpriteColor(defaultColorTurret);
-	}
-
 	if (this->visible) {
+		gunTurret->moveTo(this->getPositionWCS());
+		Player *player = playState->getPlayer();
 		if (player->isActive() && (!player->isShieldActive())) {
 			NovaVertex playerPosition = player->getPositionWCS();
-			NovaVertex alienPosition = this->getPositionWCS();
-
+			NovaVertex alienPosition = gunTurret->getPositionWCS();
 			double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
 					(playerPosition.y - alienPosition.y));
 
@@ -130,11 +123,12 @@ void AttackTank::update(float elapsedTime) {
 			gunTurret->setFacingTowardsDirection(playerDirection);
 
 			if (readyToFire) {
-				// This is just so that we stay green for a couple of seconds before firing.
+				// This is just so that we stay highlighted for a couple of seconds before firing.
 				if ((totalElapsedTime - readyToFireTime) >= READY_TO_FIRE_DELAY) {
 					// Need to check to see if we are traveling roughly in the correct direction to fire.
 					if (fabs(this->getFacingTowardsDirection() - playerDirection) < MAXIMUM_TARGET_ANGLE) {
-						playState->getMissileController()->launchMissile(this, playerDirection, alienPosition);
+						playState->getMissileController()->launchMissile(gunTurret->getAnchorPointWCS(MUZZLE_VERTEX_ANCHOR),
+															playerDirection, this->getTotalVelocity());
 
 						// Reset.
 						readyToFire = false;
@@ -169,7 +163,6 @@ void AttackTank::draw() {
 	Sprite::draw();
 
 	// If the base is visible, then so is the gun turret.
-	gunTurret->moveTo(this->getPositionWCS());
 	gunTurret->draw();
 }
 

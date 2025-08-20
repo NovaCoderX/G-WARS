@@ -24,7 +24,7 @@ static AstMatrix3x3 rotationMatrix;
 static float lastAnimatedTime = 0;
 
 BounceStar::BounceStar(PlayState* playState) : BounceAlien(playState) {
-	this->alienType = BOUNCE_STAR;
+	this->setAlienType(BOUNCE_STAR);
 	this->setSpriteDefinition("bounce_star");
 	this->setSpriteColor(NovaColor(197, 122, 250));
 	this->setExplosionColor(this->getSpriteColor());

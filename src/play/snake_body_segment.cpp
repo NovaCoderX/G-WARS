@@ -19,28 +19,23 @@
 
 #include "poly_nova.h"
 
-#define DAMAGE_FACTOR 0.05
+#define DAMAGE_FACTOR 0.25
 
-SnakeBodySegment::SnakeBodySegment(PlayState* playState, const NovaColor &highColor) : SnakeSegment(playState) {
-	parent = NULL;
-	disabled = false;
-	this->setSpriteDefinition("snake_segment");
-	this->highColor = highColor;
-	this->lowColor = highColor;
-	this->lowColor.rebase(80);
-	this->setSpriteColor(highColor);
-	this->setExplosionColor(this->getSpriteColor());
+SnakeBodySegment::SnakeBodySegment(PlayState* playState, Sprite* parent, const NovaColor &color,
+		bool explosive) : SnakeSegment(playState, parent, color, explosive) {
+	defaultColor = color;
+	disabledColor = NovaColor(64, 64, 64);
 }
 
-void SnakeBodySegment::setActive(bool active) {
-	if (active) {
-		// Reset.
-		this->setDisabled(false);
-		this->setSpriteColor(highColor);
-	}
-
+void SnakeBodySegment::setDisabled(bool disabled) {
 	// Base processing.
-	SnakeSegment::setActive(active);
+	SnakeSegment::setDisabled(disabled);
+
+	if (disabled) {
+		this->setSpriteColor(disabledColor);
+	} else {
+		this->setSpriteColor(defaultColor);
+	}
 }
 
 void SnakeBodySegment::update(float elapsedTime) {
@@ -66,22 +61,21 @@ void SnakeBodySegment::update(float elapsedTime) {
 	this->calculateVisibility();
 }
 
-void SnakeBodySegment::youHit(Player *player) {
-	// This segment was hit by the player, optionally destroy the player.
-	player->youHit(this);
-}
+bool SnakeBodySegment::checkCollision(Missile* missile) {
+	bool collision = false;
 
-void SnakeBodySegment::youHit(Missile *missile) {
-	static NovaColor darkGrey = NovaColor(64, 64, 64);
+	NovaVertex between = (missile->getPositionWCS() - this->getPositionWCS());
+	if (between.magnitude() < (missile->getBoundingSphere() + this->getBoundingSphere())) {
+		// This segment was hit by the player's missile.
+		collision = true;
 
-	// This segment was hit by the player's missile.
-	if (!this->isDisabled()) {
-		if (this->spriteColor.fade(DAMAGE_FACTOR, lowColor)) {
-			this->setSpriteColor(darkGrey);
-			this->setDisabled(true);
+		if (!this->isDisabled()) {
+			if (this->spriteColor.fade(DAMAGE_FACTOR, disabledColor)) {
+				this->setDisabled(true);
+			}
 		}
 	}
 
-	// Missile has been destroyed.
-	playState->getMissileController()->deactivate(missile);
+	return collision;
 }
+

@@ -24,18 +24,19 @@ Missile::Missile(PlayState* playState) : Sprite(playState) {
 	this->playState = playState;
 	missileType = UNDEFINED_MISSILE;
 	nextInList = priorInList = NULL;
+	this->setExplosionColor(NovaColor(255, 255, 255));
 }
 
 void Missile::setActive(bool active) {
-	if (this->active && (!active)) {
-		// We are being destroyed.
+	// Base processing.
+	Sprite::setActive(active);
+
+	if (!active) {
+		// We have been destroyed.
 		if (this->isVisible()) {
 			playState->getExplosionController()->createExplosion(this);
 		}
 	}
-
-	// Base processing.
-	Sprite::setActive(active);
 }
 
 void Missile::update(float elapsedTime) {

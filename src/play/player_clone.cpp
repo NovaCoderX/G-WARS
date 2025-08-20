@@ -25,12 +25,13 @@
 #define AUTOFIRE_INTERVAL 12
 
 PlayerClone::PlayerClone(PlayState* playState) : Alien(playState) {
-	this->alienType = PLAYER_CLONE;
-	autofireTimer = 0;
-
+	this->setAlienType(PLAYER_CLONE);
 	this->setSpriteDefinition("player");
 	this->setSpriteColor(NovaColor(255, 255, 255));
 	this->setExplosionColor(this->getSpriteColor());
+	this->setExplosionSize(MEDIUM_EXPLOSION);
+	this->setNuggetSpawnType(POWER_UP);
+	autofireTimer = 0;
 
 	// Create the shield definition.
 	shieldDefinition = new SpriteDefinition();
@@ -58,7 +59,7 @@ PlayerClone::PlayerClone(PlayState* playState) : Alien(playState) {
 	int startVertex = 0;
 	int endVertex = 1;
 	for (int i = 0; i < numPoints; i++) {
-		shieldDefinition->setLineMapping(i, startVertex++, endVertex);
+		shieldDefinition->setLineVertexMapping(i, startVertex++, endVertex);
 
 		if (endVertex < (numPoints - 1)) {
 			endVertex++;
@@ -87,13 +88,13 @@ PlayerClone::~PlayerClone() {
 }
 
 void PlayerClone::setActive(bool active) {
+	// Base processing.
+	Alien::setActive(active);
+
 	if (active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_PLAYER_CLONE);
 	}
-
-	// Base processing.
-	Alien::setActive(active);
 }
 
 void PlayerClone::update(float elapsedTime) {
@@ -150,7 +151,8 @@ void PlayerClone::update(float elapsedTime) {
 				// We need to check that we are within firing range.
 				if ((between > MINIMUM_FIRE_DISTANCE) && (between < MAXIMUM_FIRE_DISTANCE)) {
 					if (autofireTimer >= AUTOFIRE_INTERVAL) {
-						playState->getMissileController()->launchMissile(this, playerDirection, alienPosition);
+						playState->getMissileController()->launchMissile(this->getPositionWCS(),
+								this->getFacingTowardsDirection(), this->getTotalVelocity());
 
 						// Reset.
 						autofireTimer = 0;
@@ -161,11 +163,15 @@ void PlayerClone::update(float elapsedTime) {
 	}
 }
 
-void PlayerClone::checkCollision(Player *player) {
+bool PlayerClone::checkCollision(Player *player) {
+	bool collision = false;
+
 	// See if this alien has just hit the player.
 	NovaVertex between = (player->getPositionWCS() - this->getPositionWCS());
 	if (between.magnitude() < (playState->getPlayer()->getBoundingSphere() + this->getBoundingSphere())) {
 		// This alien was hit by the player.
+		collision = true;
+
 		if (!alienShield->isActive()) {
 			playState->getAlienController()->deactivate(this);
 		}
@@ -173,23 +179,31 @@ void PlayerClone::checkCollision(Player *player) {
 		// Optionally destroy the player.
 		player->youHit(this);
 	}
+
+	return collision;
 }
 
-void PlayerClone::checkCollision(Missile *missile) {
+bool PlayerClone::checkCollision(Missile *missile) {
+	bool collision = false;
+
 	// See if this alien has just hit this missile.
 	NovaVertex between = (missile->getPositionWCS() - this->getPositionWCS());
 	if (between.magnitude() < (missile->getBoundingSphere() + this->getBoundingSphere())) {
 		// This alien was hit by the player's missile.
-		if (!alienShield->isActive()) {
-			playState->getAlienController()->deactivate(this);
+		collision = true;
 
+		if (!alienShield->isActive()) {
 			// This alien was destroyed by a player's missile.
+			playState->getAlienController()->deactivate(this);
+			playState->getNuggetController()->spawnNugget(this);
 			playState->getPlayer()->increaseScore(this);
 		}
 
-		// Missile has also been destroyed.
+		// Missile has been destroyed.
 		playState->getMissileController()->deactivate(missile);
 	}
+
+	return collision;
 }
 
 void PlayerClone::draw() {

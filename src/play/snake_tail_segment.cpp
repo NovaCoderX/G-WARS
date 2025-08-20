@@ -21,7 +21,8 @@
 
 #define NUMBER_OF_TAIL_VERTICES 4
 
-SnakeTailSegment::SnakeTailSegment(PlayState* playState, const NovaColor &highColor) : SnakeBodySegment(playState, highColor) {
+SnakeTailSegment::SnakeTailSegment(PlayState* playState, Sprite* parent, const NovaColor& color, bool explosive) :
+		SnakeBodySegment(playState, parent, color, explosive) {
 	// Create the tail data.
 	tailData.color = NovaColor(255, 82, 15);
 	tailData.staticVertices = new NovaVertex[NUMBER_OF_TAIL_VERTICES];
@@ -45,17 +46,17 @@ SnakeTailSegment::SnakeTailSegment(PlayState* playState, const NovaColor &highCo
 SnakeTailSegment::~SnakeTailSegment() {
 	if (tailData.staticVertices) {
 		delete[] tailData.staticVertices;
-		tailData.staticVertices  = NULL;
+		tailData.staticVertices = NULL;
 	}
 
 	if (tailData.renderVertices) {
 		delete[] tailData.renderVertices;
-		tailData.renderVertices  = NULL;
+		tailData.renderVertices = NULL;
 	}
 
 	if (tailData.displayVertices) {
 		delete[] tailData.displayVertices;
-		tailData.displayVertices  = NULL;
+		tailData.displayVertices = NULL;
 	}
 }
 
@@ -69,16 +70,14 @@ void SnakeTailSegment::draw() {
 	// Base processing.
 	SnakeBodySegment::draw();
 
-	// Then draw the teeth.
+	// Then draw the tail.
 	for (int i = 0; i < NUMBER_OF_TAIL_VERTICES; i++) {
 		// Transform.
 		tailData.renderVertices[i] = tailData.staticVertices[i] * objectToCameraMatrix;
 
 		// Project.
-		tailData.displayVertices[i].x = horizontalProject(tailData.renderVertices[i].x,
-				tailData.renderVertices[i].z);
-		tailData.displayVertices[i].y = verticalProject(tailData.renderVertices[i].y,
-				tailData.renderVertices[i].z);
+		tailData.displayVertices[i].x = horizontalProject(tailData.renderVertices[i].x, tailData.renderVertices[i].z);
+		tailData.displayVertices[i].y = verticalProject(tailData.renderVertices[i].y, tailData.renderVertices[i].z);
 	}
 
 	// Loop through the display vertex array and create line segments for each pair of vertices.

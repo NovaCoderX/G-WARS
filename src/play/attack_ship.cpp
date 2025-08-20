@@ -95,21 +95,18 @@ static bool checkLaserHit(double x0, double y0, double radians, double targetX, 
 }
 
 AttackShip::AttackShip(PlayState* playState) : Alien(playState) {
-	this->alienType = ATTACK_SHIP;
-	totalElapsedTime = lastFireTime = 0;
-	readyToFire = false;
-	readyToFireTime = 0;
+	this->setAlienType(ATTACK_SHIP);
 	defaultColor = NovaColor(169, 169, 169);
 	readyToFireColor = NovaColor(201, 255, 4);
+	readyToFire = false;
+	totalElapsedTime = lastFireTime = readyToFireTime = 0;
 
 	this->setSpriteDefinition("attack_ship");
 	this->setSpriteColor(defaultColor);
 	this->setExplosionColor(readyToFireColor);
 
 	laser = new Laser(playState);
-	laser->laserColor[BEGIN] = readyToFireColor;
-	laser->laserColor[END] = readyToFireColor;
-	laser->laserColor[END].rebase(50);
+	laser->setColor(readyToFireColor);
 }
 
 AttackShip::~AttackShip() {
@@ -120,40 +117,23 @@ AttackShip::~AttackShip() {
 }
 
 void AttackShip::setActive(bool active) {
-	if (active) {
-		// Reset.
-		readyToFire = false;
-		deactivateLaser();
-		totalElapsedTime = lastFireTime = readyToFireTime = 0;
+	// Base processing.
+	Alien::setActive(active);
 
+	if (active) {
 		// Rotate the sprite towards the direction of travel.
 		double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
 		this->setFacingTowardsDirection(movementDirection);
+
+		// Reset.
+		readyToFire = false;
+		laser->setActive(false);
+		this->setSpriteColor(defaultColor);
+		totalElapsedTime = lastFireTime = readyToFireTime = 0;
 	}
-
-	// Base processing.
-	Alien::setActive(active);
-}
-
-void AttackShip::activateLaser() {
-	// Fire.
-	laser->setActive(true);
-
-	// Reset.
-	readyToFire = false;
-
-	// Store the last time that we fired.
-	lastFireTime = totalElapsedTime;
-}
-
-void AttackShip::deactivateLaser() {
-	laser->setActive(false);
-	this->setSpriteColor(defaultColor);
 }
 
 void AttackShip::update(float elapsedTime) {
-	Player *player = playState->getPlayer();
-
 	totalElapsedTime += elapsedTime;
 
 	// Apply the velocity.
@@ -193,7 +173,8 @@ void AttackShip::update(float elapsedTime) {
 
 		// If the laser is currently active, deactivate it.
 		if (laser->isActive()) {
-			this->deactivateLaser();
+			laser->setActive(false);
+			this->setSpriteColor(defaultColor);
 		}
 	}
 
@@ -201,17 +182,18 @@ void AttackShip::update(float elapsedTime) {
 	this->calculateVisibility();
 
 	if (laser->isActive()) {
+		Player *player = playState->getPlayer();
+
 		// See if we need to expire the laser.
 		if ((!this->isVisible()) || ((totalElapsedTime - lastFireTime) > FIRE_DURATION)) {
-			this->deactivateLaser();
+			laser->setActive(false);
+			this->setSpriteColor(defaultColor);
 		} else {
 			// The laser is still active.
 			NovaVertex alienPosition = this->getPositionWCS();
 
 			// Update the laser's starting position based on the alien's current position.
-			laser->staticVertices[BEGIN].x = alienPosition.x;
-			laser->staticVertices[BEGIN].y = alienPosition.y;
-			laser->staticVertices[BEGIN].z = 0;
+			laser->setVertex(LINE_BEGIN, alienPosition.x, alienPosition.y, 0);
 
 			// Calculate the alien's direction of travel in radians.
 			double direction = atan2(verticalVelocity, horizontalVelocity);
@@ -234,9 +216,7 @@ void AttackShip::update(float elapsedTime) {
 					distanceToPlayer -= player->getBoundingSphere();
 
 					// Update laser end point.
-					laser->staticVertices[END].x = alienPosition.x + (distanceToPlayer * cos(direction));
-					laser->staticVertices[END].y = alienPosition.y + (distanceToPlayer * sin(direction));
-					laser->staticVertices[END].z = 0;
+					laser->setVertex(LINE_END, alienPosition.x  + (distanceToPlayer * cos(direction)), alienPosition.y + (distanceToPlayer * sin(direction)), 0);
 
 					if (player->isShieldActive()) {
 						// Create some pretty particles where the laser hits the shield.
@@ -251,9 +231,7 @@ void AttackShip::update(float elapsedTime) {
 			if (!laserHitPlayer) {
 				// We need to calculate which border we will hit first and then make that our end point.
 				auto result = first_border_hit(alienPosition.x, alienPosition.y, direction, VERTICAL_BORDER_POSITION, HORIZONTAL_BORDER_POSITION);
-				laser->staticVertices[END].x = result.first;
-				laser->staticVertices[END].y = result.second;
-				laser->staticVertices[END].z = 0;
+				laser->setVertex(LINE_END, result.first, result.second, 0);
 
 				// Create some pretty particles where the laser hits the border.
 				playState->getExplosionController()->createExplosion(laser);
@@ -261,9 +239,10 @@ void AttackShip::update(float elapsedTime) {
 		}
 	} else {
 		// Laser isn't active, see if we are now ready to fire (even if the player's shield is active).
+		Player *player = playState->getPlayer();
 		if (this->isVisible() && player->isActive()) {
 			if (readyToFire) {
-				// This is just so that we stay green for a couple of seconds before firing.
+				// This is just so that we stay highlighted for a couple of seconds before firing.
 				if ((totalElapsedTime - readyToFireTime) >= READY_TO_FIRE_DELAY) {
 					NovaVertex alienPosition = this->getPositionWCS();
 					NovaVertex playerPosition = player->getPositionWCS();
@@ -276,7 +255,13 @@ void AttackShip::update(float elapsedTime) {
 								(playerPosition.y - alienPosition.y));
 
 						if (fabs(this->getFacingTowardsDirection() - playerDirection) < MAXIMUM_TARGET_ANGLE) {
-							this->activateLaser();
+							laser->setActive(true);
+
+							// Reset.
+							readyToFire = false;
+
+							// Store the last time that we fired.
+							lastFireTime = totalElapsedTime;
 						}
 					}
 				}

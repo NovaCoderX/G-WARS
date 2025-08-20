@@ -22,31 +22,32 @@
 #define SHIELD_FLASH_DELAY 30
 #define SHIELD_FLASH_INTERVAL 3
 
-PlayerShield::PlayerShield(PlayState* playState, SpriteDefinition* shieldDefinition) : Sprite (playState) {
-	this->playState = playState;
+PlayerShield::PlayerShield(PlayState* playState, SpriteDefinition* shieldDefinition) : Sprite(playState) {
 	this->setSpriteDefinition(shieldDefinition);
+	this->setSpriteColor(NovaColor(255, 255, 255));
 
-	// The shield should remain active until the timer reaches our shield duration time.
+	// The shield will remain active until the timer reaches our shield duration time.
 	totalElapsedTime = 0;
 	lastFlashTime = 0;
-
-	this->setSpriteColor(NovaColor(255, 255, 255));
-	this->setExplosionColor(this->getSpriteColor());
 }
 
-// Overridden.
 void PlayerShield::setActive(bool active) {
+	// Base processing.
+	Sprite::setActive(active);
+
 	if (active) {
-		// Reset.
-		totalElapsedTime = lastFlashTime = 0;
-		active = true;
+		// Shield is visible by default when activated.
+		this->setVisible(true);
 
 		// Make some sound.
 		g_worldManager->startSound(PLAYER_SHIELD_ON);
-	}
 
-	// Base processing.
-	Sprite::setActive(active);
+		// Reset.
+		totalElapsedTime = lastFlashTime = 0;
+	} else {
+		// Hide the shield.
+		this->setVisible(false);
+	}
 }
 
 void PlayerShield::update(float elapsedTime) {
@@ -55,20 +56,16 @@ void PlayerShield::update(float elapsedTime) {
 	// See if we need to turn off the shield.
 	if (totalElapsedTime > SHIELD_DURATION) {
 		// Turn off the shield.
-		active = false;
-		visible = false;
+		this->setActive(false);
 	} else {
 		// Flash the shield when time is running out.
 		if (totalElapsedTime > SHIELD_FLASH_DELAY) {
 			// Flash the shield when the shield duration is coming to an end.
 			if ((totalElapsedTime - lastFlashTime) >= SHIELD_FLASH_INTERVAL) {
-				bool visible = this->isVisible();
-
 				// Switch.
-				visible = (!visible);
-				this->setVisible(visible);
+				this->setVisible(!this->isVisible());
 
-				if (visible) {
+				if (this->isVisible()) {
 					g_worldManager->startSound(PLAYER_SHIELD_ON);
 				} else {
 					g_worldManager->startSound(PLAYER_SHIELD_OFF);
@@ -77,8 +74,6 @@ void PlayerShield::update(float elapsedTime) {
 				// Store.
 				lastFlashTime = totalElapsedTime;
 			}
-		} else {
-			visible = true;
 		}
 	}
 }

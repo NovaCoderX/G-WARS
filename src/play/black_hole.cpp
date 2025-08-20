@@ -24,10 +24,7 @@
 #define MAXIMUM_GRAVITAIONAL_PULL 4.0
 
 BlackHole::BlackHole(PlayState* playState) : Alien(playState) {
-	this->alienType = BLACK_HOLE;
-	innerRingDefinition = NULL;
-	outerRingDefinition = NULL;
-	outerRing = NULL;
+	this->setAlienType(BLACK_HOLE);
 
 	// Create the circle definitions.
 	innerRingDefinition = new SpriteDefinition();
@@ -55,7 +52,7 @@ BlackHole::BlackHole(PlayState* playState) : Alien(playState) {
 	int startVertex = 0;
 	int endVertex = 1;
 	for (int i = 0; i < numPoints; i++) {
-		innerRingDefinition->setLineMapping(i, startVertex++, endVertex);
+		innerRingDefinition->setLineVertexMapping(i, startVertex++, endVertex);
 		if (endVertex < (numPoints - 1)) {
 			endVertex++;
 		} else {
@@ -67,7 +64,9 @@ BlackHole::BlackHole(PlayState* playState) : Alien(playState) {
 	innerRingDefinition->calculateBoundingSphere();
 	this->setSpriteDefinition(innerRingDefinition);
 	this->setSpriteColor(NovaColor(255,255,255));
-	this->setExplosionColor(NovaColor(255,0,0));
+	this->setExplosionSize(MEDIUM_EXPLOSION);
+	this->setExplosionColor(this->getSpriteColor());
+	this->setNuggetSpawnType(POWER_UP);
 
 	// Outer circle.
 	outerRingDefinition = new SpriteDefinition();
@@ -95,7 +94,7 @@ BlackHole::BlackHole(PlayState* playState) : Alien(playState) {
 	startVertex = 0;
 	endVertex = 1;
 	for (int i = 0; i < numPoints; i++) {
-		outerRingDefinition->setLineMapping(i, startVertex++, endVertex);
+		outerRingDefinition->setLineVertexMapping(i, startVertex++, endVertex);
 		if (endVertex < (numPoints - 1)) {
 			endVertex++;
 		} else {
@@ -105,7 +104,7 @@ BlackHole::BlackHole(PlayState* playState) : Alien(playState) {
 	}
 
 	outerRingDefinition->calculateBoundingSphere();
-	outerRing = new BlackHoleRing(playState, outerRingDefinition, NovaColor(255,0,0));
+	outerRing = new BlackHoleRing(playState, this, outerRingDefinition, NovaColor(255,0,0));
 }
 
 BlackHole::~BlackHole() {
@@ -126,6 +125,9 @@ BlackHole::~BlackHole() {
 }
 
 void BlackHole::setActive(bool active) {
+	// Base processing.
+	Alien::setActive(active);
+
 	if (active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_BLACK_HOLE);
@@ -134,8 +136,7 @@ void BlackHole::setActive(bool active) {
 		this->setSpriteColor(NovaColor(255,255,255));
 	}
 
-	// Base processing.
-	Alien::setActive(active);
+	outerRing->setActive(active);
 }
 
 void BlackHole::update(float elapsedTime) {
@@ -172,39 +173,51 @@ void BlackHole::update(float elapsedTime) {
 	}
 }
 
-void BlackHole::checkCollision(Player *player) {
+bool BlackHole::checkCollision(Player *player) {
+	bool collision = false;
+
 	// See if this alien has just hit the player.
 	NovaVertex between = (player->getPositionWCS() - this->getPositionWCS());
 	if (between.magnitude() < (playState->getPlayer()->getBoundingSphere() + this->getBoundingSphere())) {
+		// This alien was hit by the player.
+		collision = true;
+
 		// Optionally destroy the player.
 		player->youHit(this);
 	}
+
+	return collision;
 }
 
-void BlackHole::checkCollision(Missile *missile) {
+bool BlackHole::checkCollision(Missile *missile) {
 	static NovaColor darkGrey = NovaColor(64, 64, 64);
+	bool collision = false;
 
 	// This alien was hit by the player's missile.
 	NovaVertex between = (missile->getPositionWCS() - this->getPositionWCS());
 	if (between.magnitude() < (missile->getBoundingSphere() + this->getBoundingSphere())) {
 		// This alien was hit by the player's missile.
-		if (this->spriteColor.fade((DAMAGE_FACTOR), darkGrey)) {
-			playState->getAlienController()->deactivate(this);
+		collision = true;
 
+		if (this->spriteColor.fade((DAMAGE_FACTOR), darkGrey)) {
 			// This alien was destroyed by the player's missile.
+			playState->getAlienController()->deactivate(this);
+			playState->getNuggetController()->spawnNugget(this);
 			playState->getPlayer()->increaseScore(this);
 		}
 
 		// Missile has also been destroyed.
 		playState->getMissileController()->deactivate(missile);
 	}
+
+	return collision;
 }
 
 void BlackHole::draw() {
 	// Do base class processing (draw the inner ring).
 	Alien::draw();
 
-	// Then drawn the circles.
+	// Then drawn the outer ring.
 	outerRing->moveTo(this->getPositionWCS());
 	outerRing->draw();
 }
@@ -244,14 +257,16 @@ void BlackHole::applyGravitionalPull(Player *player) {
 /*****************************************************************************
  BlackHoleRing
 *****************************************************************************/
-BlackHoleRing::BlackHoleRing(PlayState *playState, SpriteDefinition *definition,
-		const NovaColor &highColor) : Sprite(playState) {
+BlackHoleRing::BlackHoleRing(PlayState* playState, Alien* parent, SpriteDefinition *definition,
+		const NovaColor &color) : AlienComponent(playState, parent) {
 	this->setSpriteDefinition(definition);
 	increasingColor = true;
-	this->highColor = highColor;
-	lowColor = this->highColor;
+	highColor = color;
+	lowColor = highColor;
 	lowColor.rebase(30);
 	this->setSpriteColor(lowColor);
+	this->setExplosionSize(MEDIUM_EXPLOSION);
+	this->setExplosionColor(this->highColor);
 }
 
 void BlackHoleRing::update(float elapsedTime) {

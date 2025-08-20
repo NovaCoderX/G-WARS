@@ -24,7 +24,7 @@ static AstMatrix3x3 rotationMatrix;
 static float lastAnimatedTime = 0;
 
 ChaseShuriken::ChaseShuriken(PlayState* playState) : ChaseAlien(playState) {
-	this->alienType = CHASE_SHURIKEN;
+	this->setAlienType(CHASE_SHURIKEN);
 	this->setSpriteDefinition("chase_shuriken");
 	this->setSpriteColor(NovaColor(122, 229, 250));
 	this->setExplosionColor(this->getSpriteColor());

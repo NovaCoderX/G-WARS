@@ -21,7 +21,7 @@
 Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, float duration, bool lightEmitting) {
 	this->playState = playState;
 	nextInList = priorInList = NULL;
-	
+
 	if (numParticles <= 0) {
 		fatalError("Invalid number of particles\n");
 	}
@@ -43,7 +43,8 @@ Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, 
 	}
 
 	this->duration = duration;
-	colorDegredationFactor = 0;
+	currentFadeAmount = 0;
+	totalFadeAmount = 0;
 
 	/*
 	 ** Iterate through the particles
@@ -68,7 +69,6 @@ Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, 
 	boundingSphereExpansionFactor = (farthest / duration);
 
 	this->lightEmitting = lightEmitting;
-
 	totalElapsedTime = 0;
 }
 
@@ -79,29 +79,44 @@ Explosion::~Explosion() {
 	}
 }
 
-void Explosion::setExplosionColor(const NovaColor &color) {
+void Explosion::setExplosionColor(const NovaColor& color) {
 	this->explosionColor = color;
 
 	// Seed.
-	float highest = explosionColor.data[ColorIndex::RED];
+	float hightest = explosionColor.data[ColorIndex::RED];
 
-	if (explosionColor.data[ColorIndex::GREEN] > highest) {
-		highest = explosionColor.data[ColorIndex::GREEN];
+	if (explosionColor.data[ColorIndex::GREEN] > hightest) {
+		hightest = explosionColor.data[ColorIndex::GREEN];
 	}
 
-	if (explosionColor.data[ColorIndex::BLUE] > highest) {
-		highest = explosionColor.data[ColorIndex::BLUE];
+	if (explosionColor.data[ColorIndex::BLUE] > hightest) {
+		hightest = explosionColor.data[ColorIndex::BLUE];
 	}
 
-	if (highest <= 0) {
+	if (hightest <= 0) {
 		fatalError("Invalid explosion starting color\n");
 	}
 
-	// Calculate how much color we need to degrade (each update) to get to zero at 'max elapsed time'.
-	colorDegredationFactor = (highest / duration);
-
-	// Reset.
+	currentFadeAmount = 0;
+	totalFadeAmount = hightest;
 	totalElapsedTime = 0;
+}
+
+void Explosion::update(float elapsedTime) {
+	static NovaColor black;
+
+	totalElapsedTime += elapsedTime;
+
+	if (totalElapsedTime >= duration) {
+		playState->getExplosionController()->deactivate(this);
+	} else {
+		float fadeAmount = ((totalElapsedTime / duration) * totalFadeAmount);
+		explosionColor.fade((fadeAmount - currentFadeAmount), black);
+		currentFadeAmount = fadeAmount;
+
+		// Mark this object visible/invisible for this frame.
+		this->calculateVisibility();
+	}
 }
 
 void Explosion::calculateVisibility() {
@@ -113,30 +128,8 @@ void Explosion::calculateVisibility() {
 	} else {
 		// Take the objects extents into account.
 		NovaVertex topR = NovaVertex(getBoundingSphere() + positionCCS.x, getBoundingSphere() + positionCCS.y, positionCCS.z);
-		NovaVertex botL = NovaVertex(-getBoundingSphere() + positionCCS.x, -getBoundingSphere() + positionCCS.y,
-				positionCCS.z);
+		NovaVertex botL = NovaVertex(-getBoundingSphere() + positionCCS.x, -getBoundingSphere() + positionCCS.y, positionCCS.z);
 		visible = playState->getCamera()->checkProjectedPoints(topR, botL);
-	}
-}
-
-void Explosion::update(float elapsedTime) {
-	static NovaColor black;
-
-	// Based on the elapsed time, update the position of everything.
-	totalElapsedTime += elapsedTime;
-
-	if (totalElapsedTime >= duration) {
-		// All of the particles should have now faded to black.
-		playState->getExplosionController()->deactivate(this);
-
-		// Reset.
-		totalElapsedTime = 0;
-	} else {
-		// Mark this object visible/invisible for this frame.
-		this->calculateVisibility();
-
-		// Degrade the explosionColor (even if he explosion isn't currently visible to stay in sync).
-		explosionColor.fade(colorDegredationFactor * elapsedTime, black);
 	}
 }
 
@@ -153,7 +146,7 @@ void Explosion::draw() {
 
 		// Transform.
 		displayVertex.x = horizontalProject(particle.x, particle.z);
-	   	displayVertex.y = verticalProject(particle.y, particle.z);
+		displayVertex.y = verticalProject(particle.y, particle.z);
 
 		glVertex2i(displayVertex.x, displayVertex.y);
 	}

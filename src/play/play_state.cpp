@@ -18,6 +18,7 @@
  *****************************************************************/
 #include "poly_nova.h"
 
+#define RESPAWN_INTERVAL 33
 
 static Uint32 lastFrameTime = 0;
 
@@ -31,6 +32,7 @@ PlayState::PlayState() {
 	missileController = NULL;
 	explosionController = NULL;
 	hudController = NULL;
+	resurrectionTimer = 0;
 }
 
 PlayState::~PlayState() {
@@ -152,7 +154,11 @@ void PlayState::processInput() {
 			break;
 		case SDL_JOYBUTTONDOWN:
 			if (event.jbutton.button == 0) {
-				player->fireMissileRequest(true);
+				if ((!player->isActive()) && (!player->getNumLives())) {
+					g_worldManager->setActiveState(MENU_STATE);
+				} else {
+					player->fireMissileRequest(true);
+				}
 			}
 
 			if (event.jbutton.button == 1) {
@@ -182,13 +188,32 @@ void PlayState::update() {
 	Uint32 currentFrameTime = SDL_GetTicks();
 	float elapsedTime = (currentFrameTime - lastFrameTime) / 1000.0;
 
-	player->update(elapsedTime);
+	// First update the player.
+	if (player->isActive()) {
+		player->update(elapsedTime);
+	} else if (player->getNumLives()) {
+		// Player died but will be reborn....
+		resurrectionTimer += elapsedTime;
+		if (resurrectionTimer >= RESPAWN_INTERVAL) {
+			// Back to life.
+			player->setActive(true);
+
+			// Reset.
+			resurrectionTimer = 0;
+		}
+	}
+
+	// Base updates.
 	missileController->update(elapsedTime);
 	alienController->update(elapsedTime);
 	nuggetController->update(elapsedTime);
+
+	// See if any collisions resulted from the base updates.
 	missileController->checkCollisions();
 	alienController->checkCollisions();
 	nuggetController->checkCollisions();
+
+	// Show the results of any collisions.
 	explosionController->update(elapsedTime);
 	playAreaController->update(elapsedTime);
 	starfieldController->update(elapsedTime);
@@ -208,7 +233,6 @@ void PlayState::draw() {
 	glBegin(GL_LINES);
 	playAreaController->draw();
 
-	// If the player is active then it is also visible (implied).
 	if (player->isActive()) {
 		player->draw();
 	}
@@ -275,7 +299,7 @@ void PlayState::reset() {
 }
 
 void PlayState::enterState() {
-	if (this->getPlayer()->isActive()) {
+	if (player->isActive()) {
 		// Only resume the music if there is a game in progress.
 		g_worldManager->resumeMusic();
 	}
@@ -285,7 +309,7 @@ void PlayState::enterState() {
 }
 
 void PlayState::leaveState() {
-	if (this->getPlayer()->isActive()) {
+	if (player->isActive()) {
 		// Only pause the music if there is a game in progress.
 		g_worldManager->pauseMusic();
 	}

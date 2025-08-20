@@ -20,15 +20,9 @@
 
 #include <limits>
 
-#define FIRE_INTERVAL 40
-#define FIRE_DURATION 3
-#define READY_TO_FIRE_DELAY 3
+#define MAX_DAMAGE 5
 #define MAXIMUM_TARGET_ANGLE 20
-#define MAXIMUM_TARGET_DISTANCE 40
-#define SPIN_ANIMATION_SPEED 16.0f
-
-static AstMatrix3x3 rotationMatrix;
-static float lastAnimatedTime = 0;
+#define MAXIMUM_TARGET_DISTANCE 60
 
 // Function to calculate the first border hit by the laser.
 static std::pair<int, int> first_border_hit(double x0, double y0, double radians, double width, double height) {
@@ -98,139 +92,67 @@ static bool checkLaserHit(double x0, double y0, double radians, double targetX, 
 	return false;  // No hit detected
 }
 
-AttackNeutron::AttackNeutron(PlayState* playState) : Alien(playState) {
-	this->setAlienType(ATTACK_NEUTRON);
-	defaultColorCenter = NovaColor(169, 169, 169);
-	defaultColorBase = defaultColorCenter;
-	defaultColorBase.rebase(80);
-	readyToFireColor = NovaColor(201, 255, 4);
-	readyToFire = false;
-	totalElapsedTime = lastFireTime = readyToFireTime = 0;
-
-	this->setSpriteDefinition("attack_neutron_base");
-	this->setSpriteColor(defaultColorBase);
-	this->setExplosionColor(readyToFireColor);
-
-	center = new Sprite(playState);
-	center->setSpriteDefinition("attack_neutron_center");
-	center->setSpriteColor(defaultColorCenter);
+TentacleNematocyst::TentacleNematocyst(PlayState* playState, Sprite* parent, float radius, const NovaColor& color, bool explosive) :
+		TentacleSegment(playState, parent, radius, color, explosive) {
+	lowColor = color;
+	lowColor.rebase(10);
+	increasingColor = false;
+	damage = 0;
 
 	laser = new Laser(playState);
-	laser->setColor(readyToFireColor);
+	laser->setColor(color);
 }
 
-AttackNeutron::~AttackNeutron() {
-	if (center) {
-		delete center;
-		center = NULL;
-	}
-
+TentacleNematocyst::~TentacleNematocyst() {
 	if (laser) {
 		delete laser;
 		laser = NULL;
 	}
 }
 
-void AttackNeutron::setActive(bool active) {
+void TentacleNematocyst::setActive(bool active) {
 	// Base processing.
-	Alien::setActive(active);
+	TentacleSegment::setActive(active);
 
 	if (active) {
 		// Reset.
-		readyToFire = false;
+		this->setSpriteColor(defaultColor);
+		increasingColor = false;
+		damage = 0;
 		laser->setActive(false);
-		center->setSpriteColor(defaultColorCenter);
-		totalElapsedTime = lastFireTime = readyToFireTime = 0;
 	}
 }
 
-void AttackNeutron::update(float elapsedTime) {
-	totalElapsedTime += elapsedTime;
-
-	// Apply the velocity.
-	this->applyVelocity(elapsedTime);
-
-	// See if we have just moved outside the play area.
-	bool borderViolated = false;
-	if (this->getHorizontalVelocity() > 0) {
-		if (!playState->getPlayAreaController()->isWithinPlayArea(RIGHT_BORDER, this)) {
-			borderViolated = true;
-			this->reverseHorizontalVelocity();
-		}
-	} else {
-		if (!playState->getPlayAreaController()->isWithinPlayArea(LEFT_BORDER, this)) {
-			borderViolated = true;
-			this->reverseHorizontalVelocity();
-		}
-	}
-
-	if (this->getVerticalVelocity() > 0) {
-		if (!playState->getPlayAreaController()->isWithinPlayArea(TOP_BORDER, this)) {
-			borderViolated = true;
-			this->reverseVerticalVelocity();
-		}
-	} else {
-		if (!playState->getPlayAreaController()->isWithinPlayArea(BOTTOM_BORDER, this)) {
-			borderViolated = true;
-			this->reverseVerticalVelocity();
-		}
-	}
-
-	if (borderViolated) {
-		// If the laser is currently active, deactivate it.
-		if (laser->isActive()) {
-			laser->setActive(false);
-			center->setSpriteColor(defaultColorCenter);
-		}
-	}
-
-	// Mark this object visible/invisible for this frame.
-	this->calculateVisibility();
-
-	// If the star is visible...see if the center is also visible.
-	if (this->isVisible()) {
-		center->moveTo(this->getPositionWCS());
-		center->calculateVisibility();
-
-		// Apply animation.
-		if (elapsedTime != lastAnimatedTime) {
-			// Apply the rotation angle.
-			rotationMatrix.MakeZRotation(-(SPIN_ANIMATION_SPEED * elapsedTime));
-
-			for (int i = 0; i < this->definition->getNumVertices(); i++) {
-				this->definition->staticVertices[i] = (this->definition->staticVertices[i] * rotationMatrix);
-			}
-
-			lastAnimatedTime = elapsedTime;
-		}
-	} else {
-		center->setVisible(false);
-	}
-
+void TentacleNematocyst::update(float elapsedTime) {
 	if (laser->isActive()) {
-		Player *player = playState->getPlayer();
-
 		// See if we need to expire the laser.
-		if ((!center->isVisible()) || ((totalElapsedTime - lastFireTime) > FIRE_DURATION)) {
+		if ((!this->isVisible()) || (this->isDisabled())) {
 			laser->setActive(false);
-			center->setSpriteColor(defaultColorCenter);
-		} else {
+		}
+
+		if (parent->getVerticalVelocity() > 0) {
+			// Jelly moving back up the grid.
+			laser->setActive(false);
+		}
+
+		if (laser->isActive()) {
 			// The laser is still active.
-			NovaVertex alienPosition = center->getPositionWCS();
+			Player* player = playState->getPlayer();
+			NovaVertex playerPosition = player->getPositionWCS();
+			NovaVertex alienPosition = this->getPositionWCS();
 
 			// Update the laser's starting position based on the alien's current position.
 			laser->setVertex(LINE_BEGIN, alienPosition.x, alienPosition.y, 0);
 
-			// Calculate the alien's direction of travel in radians.
-			double direction = atan2(verticalVelocity, horizontalVelocity);
+			// Always fire straight down.
+			double direction = atan2(parent->getVerticalVelocity(), 0);
 
 			// See if we hit the player.
 			bool laserHitPlayer = false;
 
 			if (player->isActive()) {
-				NovaVertex playerPosition = player->getPositionWCS();
 				if (checkLaserHit(alienPosition.x, alienPosition.y, direction, playerPosition.x, playerPosition.y,
-											player->getBoundingSphere())) {
+						player->getBoundingSphere())) {
 					laserHitPlayer = true;
 
 					// We need to work out the distance from the alien to the player (minus the player's bounding sphere)
@@ -242,7 +164,8 @@ void AttackNeutron::update(float elapsedTime) {
 					distanceToPlayer -= player->getBoundingSphere();
 
 					// Update laser end point.
-					laser->setVertex(LINE_END, alienPosition.x  + (distanceToPlayer * cos(direction)), alienPosition.y + (distanceToPlayer * sin(direction)), 0);
+					laser->setVertex(LINE_END, alienPosition.x + (distanceToPlayer * cos(direction)),
+							alienPosition.y + (distanceToPlayer * sin(direction)), 0);
 
 					if (player->isShieldActive()) {
 						// Create some pretty particles where the laser hits the shield.
@@ -256,7 +179,8 @@ void AttackNeutron::update(float elapsedTime) {
 
 			if (!laserHitPlayer) {
 				// We need to calculate which border we will hit first and then make that our end point.
-				auto result = first_border_hit(alienPosition.x, alienPosition.y, direction, VERTICAL_BORDER_POSITION, HORIZONTAL_BORDER_POSITION);
+				auto result = first_border_hit(alienPosition.x, alienPosition.y, direction, VERTICAL_BORDER_POSITION,
+						HORIZONTAL_BORDER_POSITION);
 				laser->setVertex(LINE_END, result.first, result.second, 0);
 
 				// Create some pretty particles where the laser hits the border.
@@ -265,51 +189,68 @@ void AttackNeutron::update(float elapsedTime) {
 		}
 	} else {
 		// Laser isn't active, see if we are now ready to fire (even if the player's shield is active).
-		Player *player = playState->getPlayer();
-		if (center->isVisible() && player->isActive()) {
-			if (readyToFire) {
-				// This is just so that we stay highlighted for a couple of seconds before firing.
-				if ((totalElapsedTime - readyToFireTime) >= READY_TO_FIRE_DELAY) {
-					NovaVertex alienPosition = center->getPositionWCS();
-					NovaVertex playerPosition = player->getPositionWCS();
+		Player* player = playState->getPlayer();
+		if (this->isVisible() && (!this->isDisabled()) && player->isActive()) {
+			if (parent->getVerticalVelocity() < 0) {
+				NovaVertex alienPosition = this->getPositionWCS();
+				NovaVertex playerPosition = player->getPositionWCS();
 
-					// Can't fire when too far away from the player.
-					float between = (playerPosition - alienPosition).magnitude();
-					if (between < MAXIMUM_TARGET_DISTANCE) {
-						// Need to check to see if we are traveling roughly in the correct direction to fire.
-						double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
-								(playerPosition.y - alienPosition.y));
-
-						if (fabs(this->getFacingTowardsDirection() - playerDirection) < MAXIMUM_TARGET_ANGLE) {
-							laser->setActive(true);
-
-							// Reset.
-							readyToFire = false;
-
-							// Store the last time that we fired.
-							lastFireTime = totalElapsedTime;
-						}
+				// Can't fire when too far away from the player.
+				float between = (playerPosition - alienPosition).magnitude();
+				if (between < MAXIMUM_TARGET_DISTANCE) {
+					// Need to check to see if we are traveling roughly in the correct direction to fire.
+					double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
+											(playerPosition.y - alienPosition.y));
+					if (playerDirection < MAXIMUM_TARGET_ANGLE) {
+						laser->setActive(true);
 					}
 				}
+			}
+		}
+	}
+
+	// Need to flash green when heading down the screen to warn the player.
+	if (this->isVisible() && (!this->isDisabled())) {
+		if (parent->getVerticalVelocity() > 0) {
+			// Jelly moving back up the grid.
+			this->setSpriteColor(defaultColor);
+		} else {
+			// Do some simple color cycling.
+			if (increasingColor) {
+				if (spriteColor.brighten((elapsedTime / 5), defaultColor)) {
+					increasingColor = false;
+				}
 			} else {
-				if ((totalElapsedTime - lastFireTime) >= FIRE_INTERVAL) {
-					// Ready to fire again, change color to let the player know.
-					readyToFire = true;
-					readyToFireTime = totalElapsedTime;
-					center->setSpriteColor(readyToFireColor);
+				if (spriteColor.fade((elapsedTime / 5), lowColor)) {
+					increasingColor = true;
 				}
 			}
 		}
 	}
 }
 
-void AttackNeutron::draw() {
-	// Do base processing to draw the base.
-	Sprite::draw();
+bool TentacleNematocyst::checkCollision(Missile* missile) {
+	bool collision = false;
 
-	if (center->isVisible()) {
-		center->draw();
+	NovaVertex between = (missile->getPositionWCS() - this->getPositionWCS());
+	if (between.magnitude() < (missile->getBoundingSphere() + this->getBoundingSphere())) {
+		// This segment was hit by the player's missile.
+		collision = true;
+
+		if (!this->isDisabled()) {
+			damage++;
+			if (damage >= MAX_DAMAGE) {
+				this->setDisabled(true);
+			}
+		}
 	}
+
+	return collision;
+}
+
+void TentacleNematocyst::draw() {
+	// Base processing.
+	TentacleSegment::draw();
 
 	// Draw the laser if it is active (implied visibility).
 	if (laser->isActive()) {

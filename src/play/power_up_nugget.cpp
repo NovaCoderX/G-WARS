@@ -21,26 +21,26 @@
 #define NUGGET_DURATION 40
 
 PowerUpNugget::PowerUpNugget(PlayState* playState) : Nugget(playState) {
-	nuggetType = POWER_UP_NUGGET;
-	increasingColor = false;
-	totalElapsedTime = 0;
+	nuggetType = POWER_UP;
 	this->setSpriteDefinition("alien_nugget");
 	highColor = NovaColor(37, 147, 245);
 	lowColor = highColor;
 	lowColor.rebase(60);
 	this->setSpriteColor(highColor);
+	increasingColor = false;
+	totalElapsedTime = 0;
 }
 
 void PowerUpNugget::setActive(bool active) {
-	if (active) {
-		// Reset.
-		totalElapsedTime = 0;
-		this->setSpriteColor(highColor);
-		increasingColor = false;
-	}
-
 	// Base processing.
 	Nugget::setActive(active);
+
+	if (active) {
+		// Reset.
+		this->setSpriteColor(highColor);
+		increasingColor = false;
+		totalElapsedTime = 0;
+	}
 }
 
 void PowerUpNugget::update(float elapsedTime) {

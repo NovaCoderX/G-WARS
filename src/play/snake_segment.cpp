@@ -19,22 +19,12 @@
 
 #include "poly_nova.h"
 
-SnakeSegment::SnakeSegment(PlayState* playState) : Alien(playState) {
-	// Empty.
-}
+SnakeSegment::SnakeSegment(PlayState* playState, Sprite* parent, const NovaColor &color, bool explosive) : AlienComponent(playState, parent) {
+	this->setSpriteDefinition("snake_segment");
+	this->setSpriteColor(color);
 
-NovaVertex SnakeSegment::getAnchorPointWCS(AnchorPointIndex anchorIndex) const {
-	// Transform.
-	return (this->definition->staticVertices[anchorIndex] * objectToWorldMatrix);
-}
-
-NovaVertex SnakeSegment::getAnchorPointCCS(AnchorPointIndex anchorIndex) const {
-	static AstMatrix4x3 objectToCameraMatrix;
-
-	// Update our composite LCS to CCS matrix that consists of the product of the object to world matrix and the
-	// global world to camera matrix.
-	objectToCameraMatrix = objectToWorldMatrix * playState->getCamera()->getWorldToCameraMatrix();
-
-	// Transform.
-	return (this->definition->staticVertices[anchorIndex] * objectToCameraMatrix);
+	if (explosive) {
+		this->setExplosionSize(MEDIUM_EXPLOSION);
+		this->setExplosionColor(color);
+	}
 }

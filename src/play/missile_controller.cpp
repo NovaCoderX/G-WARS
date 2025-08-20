@@ -53,7 +53,7 @@ void MissileController::init() {
 	}
 
 	additionalPlayerMissileVelocity = yamlish->getFloat("missiles.player.additional.velocity",
-	DEFAULT_PLAYER_MISSILE_ADDITIONAL_VELOCITY);
+			DEFAULT_PLAYER_MISSILE_ADDITIONAL_VELOCITY);
 
 	numMissiles = yamlish->getInt("missiles.alien.max.instances", DEFAULT_NUM_ALIEN_MISSILES);
 	for (int i = 0; i < numMissiles; i++) {
@@ -61,7 +61,7 @@ void MissileController::init() {
 	}
 
 	additionalAlienMissileVelocity = yamlish->getFloat("missiles.alien.additional.velocity",
-	DEFAULT_PLAYER_MISSILE_ADDITIONAL_VELOCITY);
+			DEFAULT_ALIEN_MISSILE_ADDITIONAL_VELOCITY);
 }
 
 void MissileController::launchMissile(const Player* player) {
@@ -152,7 +152,7 @@ void MissileController::launchMissile(const Player* player) {
 	}
 }
 
-void MissileController::launchMissile(const Alien* alien, double direction, const NovaVertex& origin) {
+void MissileController::launchMissile(const NovaVertex& origin, double direction, double exitVelocity) {
 	AlienMissile* missile = NULL;
 
 	// Find an empty slot.
@@ -167,7 +167,7 @@ void MissileController::launchMissile(const Alien* alien, double direction, cons
 		missile->moveTo(origin);
 
 		// Set the velocity and direction.
-		missile->setVelocityFromDirection(direction, alien->getTotalVelocity() + additionalAlienMissileVelocity);
+		missile->setVelocityFromDirection(direction, exitVelocity + additionalAlienMissileVelocity);
 
 		// Rotate the sprite to match the direction of travel.
 		missile->setFacingTowardsDirection(direction);
@@ -191,10 +191,10 @@ void MissileController::update(float elapsedTime) {
 }
 
 void MissileController::checkCollisions() {
-	Missile* missile = missileListHead;
 	Player* player = playState->getPlayer();
 
 	// Check for collisions.
+	Missile* missile = missileListHead;
 	while (missile) {
 		if (missile->isVisible()) {
 			if (missile->getMissileType() == PLAYER_MISSILE) {
@@ -202,7 +202,10 @@ void MissileController::checkCollisions() {
 				while (alien) {
 					if (alien->isVisible()) {
 						// See if this alien has just hit this missile.
-						alien->checkCollision(missile);
+						if (alien->checkCollision(missile)) {
+							// No point continuing because the missile would have been destroyed.
+							break;
+						}
 					}
 
 					alien = alien->nextInList;

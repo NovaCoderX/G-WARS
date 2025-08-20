@@ -22,26 +22,33 @@
 #define MINIMUM_CHASE_DISTANCE 10
 
 FlyingSaucer::FlyingSaucer(PlayState* playState) : Alien(playState) {
-	this->alienType = FLYING_SAUCER;
-	increasingColor = true;
-	highColorTimer = 0;
-	highColorDisplayed = false;
+	this->setAlienType(FLYING_SAUCER);
 	this->setSpriteDefinition("flying_saucer");
 	highColor = NovaColor(255, 95, 31);
 	lowColor = highColor;
-	lowColor.rebase(10);
+	lowColor.rebase(30);
 	this->setSpriteColor(lowColor);
+	increasingColor = true;
+	highColorTimer = 0;
+	highColorDisplayed = false;
+	this->setExplosionSize(MEDIUM_EXPLOSION);
 	this->setExplosionColor(highColor);
+	this->setNuggetSpawnType(POWER_UP);
 }
 
 void FlyingSaucer::setActive(bool active) {
+	// Base processing.
+	Alien::setActive(active);
+
 	if (active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_FLYING_SAUCER);
-	}
 
-	// Base processing.
-	Alien::setActive(active);
+		this->setSpriteColor(lowColor);
+		increasingColor = true;
+		highColorTimer = 0;
+		highColorDisplayed = false;
+	}
 }
 
 void FlyingSaucer::update(float elapsedTime) {

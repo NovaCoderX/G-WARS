@@ -29,15 +29,24 @@ T clamp(T value, T minVal, T maxVal) {
 }
 
 MiniGate::MiniGate(PlayState* playState) : Alien(playState) {
-	this->alienType = MINI_GATE;
-	head = new Alien(playState);
+	this->setAlienType(MINI_GATE);
+
+	// The alien container doesn't explode.
+	this->setExplosionSize(DO_NOT_EXPLODE);
+
+	// Does not spawn nuggets.
+	this->setNuggetSpawnType(DO_NOT_SPAWN);
+
+	head = new AlienComponent(playState, this);
 	head->setSpriteDefinition("mini_gate");
 	head->setSpriteColor(NovaColor(252, 152, 3));
+	head->setExplosionSize(MEDIUM_EXPLOSION);
 	head->setExplosionColor(head->getSpriteColor());
 
-	tail = new Alien(playState);
+	tail = new AlienComponent(playState, this);
 	tail->setSpriteDefinition("mini_gate");
 	tail->setSpriteColor(NovaColor(252, 152, 3));
+	tail->setExplosionSize(MEDIUM_EXPLOSION);
 	tail->setExplosionColor(tail->getSpriteColor());
 
 	laser = new Laser(playState);
@@ -65,6 +74,9 @@ MiniGate::~MiniGate() {
 }
 
 void MiniGate::setActive(bool active) {
+	// Base processing.
+	Alien::setActive(active);
+
 	if (active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_MINI_GATE);
@@ -90,16 +102,10 @@ void MiniGate::setActive(bool active) {
 		direction = calculateDirectionFromVelocityComponents((headPosition.x - tailPosition.x),
 				(headPosition.y - tailPosition.y));
 		tail->setFacingTowardsDirection(direction);
-	} else if (this->isActive()) {
-		// We are being destroyed.
-		if (head->isVisible() || tail->isVisible()) {
-			playState->getExplosionController()->createExplosion(head);
-			playState->getExplosionController()->createExplosion(tail);
-		}
 	}
 
-	// Base processing - Note, we do not want to use the base Alien logic.
-	Sprite::setActive(active);
+	head->setActive(active);
+	tail->setActive(active);
 }
 
 void MiniGate::update(float elapsedTime) {
@@ -197,40 +203,30 @@ void MiniGate::update(float elapsedTime) {
 
 		// Need to update the laser start and end positions.
 		NovaVertex headPosition = head->getPositionWCS();
-		laser->staticVertices[BEGIN].x = headPosition.x;
-		laser->staticVertices[BEGIN].y = headPosition.y;
-		laser->staticVertices[BEGIN].z = 0;
-		laser->laserColor[BEGIN] = currentLaserColor;
+		laser->setVertex(LINE_BEGIN, headPosition.x, headPosition.y, 0);
+		laser->setColor(LINE_BEGIN, currentLaserColor);
 
 		NovaVertex tailPosition = tail->getPositionWCS();
-		laser->staticVertices[END].x = tailPosition.x;
-		laser->staticVertices[END].y = tailPosition.y;
-		laser->staticVertices[END].z = 0;
-		laser->laserColor[END] = currentLaserColor;
+		laser->setVertex(LINE_END, tailPosition.x, tailPosition.y, 0);
+		laser->setColor(LINE_END, currentLaserColor);
 	}
 }
 
-void MiniGate::checkCollision(Player* player) {
-	bool collison = false;
+bool MiniGate::checkCollision(Player* player) {
+	bool collision = false;
 	NovaVertex playerPosition = player->getPositionWCS();
 	NovaVertex headPosition = head->getPositionWCS();
 	NovaVertex tailPosition = tail->getPositionWCS();
 
 	// See if the head has just hit the player.
-	NovaVertex between = (playerPosition - headPosition);
-	if (between.magnitude() < (player->getBoundingSphere() + head->getBoundingSphere())) {
-		collison = true;
-	}
+	collision = head->checkCollision(player);
 
 	// Also check the tail.
-	if (!collison) {
-		between = (playerPosition - tailPosition);
-		if (between.magnitude() < (player->getBoundingSphere() + tail->getBoundingSphere())) {
-			collison = true;
-		}
+	if (!collision) {
+		collision = tail->checkCollision(player);
 	}
 
-	if (collison) {
+	if (collision) {
 		// This alien was hit by the player and destroyed.
 		playState->getAlienController()->deactivate(this);
 
@@ -251,39 +247,36 @@ void MiniGate::checkCollision(Player* player) {
 		float distSq = difference.magnitudeSquared();
 		if (distSq <= (player->getBoundingSphere() * player->getBoundingSphere())) {
 			// Player went through the gate.
-			playState->getPlayer()->increaseScore(this);
-			NuggetSpawnMode savedMode = playState->getNuggetController()->getSpawnMode();
-			playState->getNuggetController()->setSpawnMode(ALWAYS_SPAWN_NUGGETS);
-			playState->getAlienController()->destroyAllLife(); // Including this alien.
+			NuggetSpawnMode savedMode = playState->getNuggetController()->setSpawnMode(ALWAYS_SPAWN_NUGGETS);
+			playState->getAlienController()->destroyAliens();
 			playState->getNuggetController()->setSpawnMode(savedMode);
+			playState->getPlayer()->increaseScore(this);
 		}
 	}
+
+	return collision;
 }
 
-void MiniGate::checkCollision(Missile* missile) {
-	bool collison = false;
+bool MiniGate::checkCollision(Missile* missile) {
+	bool collision = false;
 
 	// See if the head has just hit this missile.
-	NovaVertex between = (missile->getPositionWCS() - head->getPositionWCS());
-	if (between.magnitude() < (missile->getBoundingSphere() + head->getBoundingSphere())) {
-		collison = true;
-	}
+	collision = head->checkCollision(missile);
 
 	// Also check the tail.
-	if (!collison) {
-		between = (missile->getPositionWCS() - tail->getPositionWCS());
-		if (between.magnitude() < (missile->getBoundingSphere() + tail->getBoundingSphere())) {
-			collison = true;
-		}
+	if (!collision) {
+		collision = tail->checkCollision(missile);
 	}
 
-	if (collison) {
+	if (collision) {
 		// This alien was hit by the player's missile.
 		playState->getAlienController()->deactivate(this);
 
 		// Missile has also been destroyed.
 		playState->getMissileController()->deactivate(missile);
 	}
+
+	return collision;
 }
 
 void MiniGate::draw() {

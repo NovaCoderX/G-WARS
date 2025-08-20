@@ -21,7 +21,7 @@
 
 Nugget::Nugget(PlayState *playState) : Sprite(playState) {
 	this->playState = playState;
-	nuggetType = UNDEFINED_NUGGET;
+	nuggetType = UNDEFINED;
 	nextInList = priorInList = NULL;
 }
 

@@ -29,20 +29,20 @@ void PlayAreaBorder::draw() {
 	// global world to camera matrix.
 	objectToCameraMatrix = objectToWorldMatrix * playState->getCamera()->getWorldToCameraMatrix();
 
-	renderVertices[BEGIN] = (*staticVertices[BEGIN]) * objectToCameraMatrix;
+	renderVertices[LINE_BEGIN] = (*staticVertices[LINE_BEGIN]) * objectToCameraMatrix;
 
-	displayVertices[BEGIN].x = horizontalProject(renderVertices[BEGIN].x, renderVertices[BEGIN].z);
-	displayVertices[BEGIN].y = verticalProject(renderVertices[BEGIN].y, renderVertices[BEGIN].z);;
+	displayVertices[LINE_BEGIN].x = horizontalProject(renderVertices[LINE_BEGIN].x, renderVertices[LINE_BEGIN].z);
+	displayVertices[LINE_BEGIN].y = verticalProject(renderVertices[LINE_BEGIN].y, renderVertices[LINE_BEGIN].z);;
 
-	renderVertices[END] = (*staticVertices[END]) * objectToCameraMatrix;
+	renderVertices[LINE_END] = (*staticVertices[LINE_END]) * objectToCameraMatrix;
 
-	displayVertices[END].x = horizontalProject(renderVertices[END].x, renderVertices[END].z);
-	displayVertices[END].y = verticalProject(renderVertices[END].y, renderVertices[END].z);
+	displayVertices[LINE_END].x = horizontalProject(renderVertices[LINE_END].x, renderVertices[LINE_END].z);
+	displayVertices[LINE_END].y = verticalProject(renderVertices[LINE_END].y, renderVertices[LINE_END].z);
 
-	glColor3fv(lineColors[BEGIN]->data);
-	glVertex2i(displayVertices[BEGIN].x, displayVertices[BEGIN].y);
+	glColor3fv(lineColors[LINE_BEGIN]->data);
+	glVertex2i(displayVertices[LINE_BEGIN].x, displayVertices[LINE_BEGIN].y);
 
-	glColor3fv(lineColors[END]->data);
-	glVertex2i(displayVertices[END].x, displayVertices[END].y);
+	glColor3fv(lineColors[LINE_END]->data);
+	glVertex2i(displayVertices[LINE_END].x, displayVertices[LINE_END].y);
 }
 

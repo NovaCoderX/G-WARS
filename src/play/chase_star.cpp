@@ -26,7 +26,7 @@ static float lastAnimatedTime = 0;
 
 
 ChaseStar::ChaseStar(PlayState* playState) : ChaseAlien(playState) {
-	this->alienType = CHASE_RHOMBUS;
+	this->setAlienType(CHASE_RHOMBUS);
 	this->setSpriteDefinition("chase_star");
 	this->setSpriteColor(NovaColor(255, 5, 104));
 	this->setExplosionColor(this->getSpriteColor());
