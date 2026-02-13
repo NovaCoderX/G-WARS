@@ -41,7 +41,7 @@ public:
 	void setVisible(int activeDigit);
 
 	void init(const NovaColor &color);
-	void setSpriteColor(const NovaColor &color);
+	void setCurrentColor(const NovaColor &color);
 	void moveTo(float x, float y, float z);
 	void transform();
 	void draw();

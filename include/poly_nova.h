@@ -32,6 +32,10 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
+// Network stuff.
+#include <proto/amissl.h>
+#include <proto/amisslmaster.h>
+
 // Used by all game states.
 class GameState;
 #include <display_manager.h>
@@ -61,6 +65,8 @@ class PlayState;
 #include <play/grid_line.h>
 #include <play/play_area_grid.h>
 #include <play/play_area_border.h>
+#include <play/nova_particle.h>
+#include <play/explosion.h>
 #include <play/star.h>
 #include <play/missile.h>
 #include <play/alien_missile.h>
@@ -69,6 +75,8 @@ class PlayState;
 #include <play/nugget.h>
 #include <play/multiplier_nugget.h>
 #include <play/power_up_nugget.h>
+#include <play/extra_life_nugget.h>
+#include <play/extra_bomb_nugget.h>
 #include <play/alien.h>
 #include <play/alien_component.h>
 #include <play/bounding_sphere.h>
@@ -82,6 +90,7 @@ class PlayState;
 #include <play/chase_star.h>
 #include <play/chase_shuriken.h>
 #include <play/chase_concave.h>
+#include <play/attack_alien.h>
 #include <play/attack_tank.h>
 #include <play/attack_ship.h>
 #include <play/attack_artillery.h>
@@ -92,6 +101,7 @@ class PlayState;
 #include <play/player_clone.h>
 #include <play/black_hole.h>
 #include <play/mini_gate.h>
+#include <play/mini_crusher.h>
 #include <play/snake_segment.h>
 #include <play/snake_head_segment.h>
 #include <play/snake_body_segment.h>
@@ -108,11 +118,10 @@ class PlayState;
 #include <play/player.h>
 #include <play/hud_panel.h>
 #include <play/game_over_panel.h>
+#include <play/mission_complete_panel.h>
 #include <play/current_score_panel.h>
 #include <play/high_score_panel.h>
 #include <play/player_stats_panel.h>
-#include <play/nova_particle.h>
-#include <play/explosion.h>
 #include <play/play_area_controller.h>
 #include <play/starfield_controller.h>
 #include <play/alien_controller.h>

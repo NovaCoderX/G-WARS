@@ -19,11 +19,6 @@
 #ifndef __WORLD_MANAGER_H
 #define __WORLD_MANAGER_H
 
-enum StateType {
-	MENU_STATE = 0,
-	PLAY_STATE = 1
-};
-
 class WorldManager {
 public:
 	WorldManager();
@@ -76,16 +71,24 @@ public:
 	}
 
 	void setActiveState(StateType state, bool reset = false);
+	StateType getActiveState() { return activeState->getStateType(); }
 
-	bool isGameOver() {
-		// Or not started yet!
-	    bool gameOver = true;
+	bool isGameInProgress() {
+	    bool inProgress = false;
 
 	    if (playState) {
-	        gameOver = playState->isGameOver();
+	    	inProgress = playState->isGameInProgress();
 	    }
 
-	    return gameOver;
+	    return inProgress;
+	}
+
+	void grabMouse(bool enable) {
+		displayManager->grabMouse(enable);
+	}
+
+	void toggleFullScreen() {
+		displayManager->toggleFullScreen();
 	}
 
 	void load(const char *baseDirectory);

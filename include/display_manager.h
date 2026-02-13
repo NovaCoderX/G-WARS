@@ -22,7 +22,7 @@
 
 #define DISPLAY_WITDH 640
 #define DISPLAY_HEIGHT 480
-#define DISPLAY_DEPTH 16
+#define DISPLAY_DEPTH 32
 
 class DisplayManager {
 public:
@@ -30,6 +30,9 @@ public:
 	~DisplayManager();
 
 	void init();
+	void grabMouse(bool enable);
+	void toggleMouseGrab();
+	void toggleFullScreen();
 
 	void begin() {
 		// Clear the back buffer ready for the next frame.
@@ -38,13 +41,15 @@ public:
 
 	void end() {
 		// Show the new frame.
-		glFlush();
 		SDL_GL_SwapBuffers();
 		numFrames++;
 	}
 
 private:
+	SDL_Surface* screen;
 	uint numFrames;
+	bool fullscreen;
+	bool mouseCaptured;
 
 	void displayFrameRate();
 };

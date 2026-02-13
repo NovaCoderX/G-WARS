@@ -19,10 +19,15 @@
 #ifndef __GAME_STATE_H
 #define __GAME_STATE_H
 
+enum StateType {
+	MENU_STATE = 0,
+	PLAY_STATE = 1
+};
+
 // Base class for the different states of the game.
 class GameState {
 public:
-	GameState() {}
+	GameState(StateType stateType) { this->stateType = stateType; }
 	virtual ~GameState() {}
 
 	virtual Camera* getCamera() const = 0;
@@ -30,11 +35,16 @@ public:
 	virtual void processInput() = 0;
 	virtual void update() = 0;
 	virtual void draw() = 0;
-	virtual void reset() {} // Return to the initial state, can be used to start a new game...not the same as a refresh!
+	virtual void reset() {}
+	virtual void enterState() {}
+	virtual void leaveState() {}
 
-	// Functions called when a state is entered or left
-	virtual void enterState() {} // Treated like a refresh, highscores can be updated etc
-	virtual void leaveState() {} // Prob never used but maybe to stop playing music
+	StateType getStateType() const {
+		return stateType;
+	}
+
+private:
+	StateType stateType;
 };
 
 #endif  // __GAME_STATE_H

@@ -46,12 +46,12 @@ public:
 	void setSpriteDefinition(SpriteDefinition *definition);
 	void setSpriteDefinition(const char *name);
 
-	const NovaColor& getSpriteColor() const {
-		return spriteColor;
+	const NovaColor& getCurrentColor() const {
+		return currentColor;
 	}
 
-	void setSpriteColor(const NovaColor &color) {
-		this->spriteColor = color;
+	void setCurrentColor(const NovaColor &color) {
+		this->currentColor = color;
 	}
 
 	float getBoundingSphere() const {
@@ -118,9 +118,8 @@ protected:
 	// Line data uses the (shared) vertex data.
 	NovaLine *lines;
 
-	NovaColor spriteColor;
+	NovaColor currentColor;
 	NovaVertex positionCCS;
-
 	double facingTowardsDirection;
 	double horizontalVelocity;
 	double verticalVelocity;

@@ -19,11 +19,19 @@
 #ifndef __NOVA_UTILS_H
 #define __NOVA_UTILS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void logMessage(const char *fmtString, ...);
 extern void logWarningMessage(const char *fmtString, ...);
 extern void logErrorMessage(const char *message);
 extern void logShutdown(void);
 extern void fatalError(const char *fmtString, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 static inline float float_rand(float minValue, float maxValue) {
 	return minValue + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxValue-(minValue))));

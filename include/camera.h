@@ -37,10 +37,6 @@ public:
 		return object->getPositionWCS() * worldToCamera;
 	}
 
-	bool checkProjectedPoint(const NovaVertex& point) const;
-	bool checkProjectedPoints(const NovaVertex& topRight, const NovaVertex& botLeft) const;
-	bool checkProjectedPoints(const DisplayVertex& topRight, const DisplayVertex& botLeft) const;
-
 private:
 	AstMatrix4x3 worldToCamera; // LCS->WCS (inverse).
 };
@@ -53,5 +49,43 @@ static inline GLint horizontalProject(float value, float z) {
 static inline GLint verticalProject(float value, float z) {
 	return (GLint)((value * CAMERA_VDF) / z) + (DISPLAY_HEIGHT / 2);
 }
+
+static inline bool checkProjectedPoint(const NovaVertex &location) {
+	DisplayVertex dest;
+
+	dest.x = horizontalProject(location.x, location.z);
+	dest.y = verticalProject(location.y, location.z);
+
+	if ((dest.x < 0 || dest.x > (DISPLAY_WITDH - 1)) || (dest.y < 0 || dest.y > (DISPLAY_HEIGHT - 1))) {
+		return false;
+	}
+
+	return true;
+}
+
+static inline bool checkProjectedPoints(const NovaVertex &topRight, const NovaVertex &botLeft) {
+	DisplayVertex topR, botL;
+
+	topR.x = horizontalProject(topRight.x, topRight.z);
+	topR.y = verticalProject(topRight.y, topRight.z);
+
+	botL.x = horizontalProject(botLeft.x, botLeft.z);
+	botL.y = verticalProject(botLeft.y, botLeft.z);
+
+	if ((topR.x >= 0) && (botL.y < (DISPLAY_HEIGHT - 1)) && (botL.x < (DISPLAY_WITDH - 1)) && (topR.y >= 0)) {
+		return true;
+	}
+
+	return false;
+}
+
+static inline bool checkProjectedPoints(const DisplayVertex &topRight, const  DisplayVertex &botLeft) {
+	if ((topRight.x >= 0) && (botLeft.y < (DISPLAY_HEIGHT - 1)) && (botLeft.x < (DISPLAY_WITDH - 1)) && (topRight.y >= 0)) {
+		return true;
+	}
+
+	return false;
+}
+
 
 #endif // __CAMERA_H

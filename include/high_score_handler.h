@@ -21,10 +21,12 @@
 
 struct HighScoreData
 {
+	uint id;
 	std::string name;
 	uint score;
 
-	HighScoreData(std::string name, uint score) {
+	HighScoreData(uint id, std::string name, uint score) {
+		this->id = id;
 		this->name = name;
 		this->score = score;
 	}
@@ -40,19 +42,52 @@ struct HighScoreData
 	}
 };
 
+struct PlayerHighScoreData {
+	std::string name;
+	uint score;
+};
+
 class HighScoreHandler {
 public:
 	HighScoreHandler();
 	~HighScoreHandler();
 
-	bool load(const std::string &filename);
-	bool save(const std::string &filename);
-	uint getHighScore();
-	void addScore(uint score);
+	void init();
+
+	bool isOnline() const {
+		return online;
+	}
+
+	uint getPlayerToken() const {
+		return playerToken;
+	}
+
+	uint getHighestScore();
 	std::vector<HighScoreData> getHighScores() { return highScores; }
+
+	void syncOptions();
+	void setPlayerScore(uint score);
+	void save();
 
 private:
 	std::vector<HighScoreData> highScores;
+	bool online;
+	uint playerToken;
+	PlayerHighScoreData localPlayerData;
+	PlayerHighScoreData registeredPlayerData;
+
+	void loadPlayerToken(const std::string &filename);
+	void loadLocalPlayerData(const std::string &filename);
+	void loadRegisteredPlayerData(const std::string &filename);
+	void loadLocalScores(const std::string &filename);
+	void loadOnlineScores();
+
+	void registerPlayer();
+	void syncRegisteredPlayer();
+	void savePlayerToken(const std::string &filename);
+	void saveLocalPlayerData(const std::string &filename);
+	void saveRegisteredPlayerData(const std::string &filename);
+	void saveLocalScores(const std::string &filename);
 };
 
 #endif  // __HIGH_SCORE_HANDLER_H
