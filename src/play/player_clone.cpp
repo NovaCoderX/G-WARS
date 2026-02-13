@@ -19,18 +19,16 @@
 
 #include "poly_nova.h"
 
-#define MINIMUM_DISTANCE_TO_PLAYER 60
-#define MINIMUM_FIRE_DISTANCE 20
-#define MAXIMUM_FIRE_DISTANCE 100
+#define MIN_DISTANCE_TO_PLAYER 60
+#define MIN_FIRE_DISTANCE 20
+#define MAX_FIRE_DISTANCE 100
 #define AUTOFIRE_INTERVAL 12
+#define MIN_INITIAL_VELOCITY 1
+#define MAX_INITIAL_VELOCITY 3
 
-PlayerClone::PlayerClone(PlayState* playState) : Alien(playState) {
-	this->setAlienType(PLAYER_CLONE);
+PlayerClone::PlayerClone(PlayState* playState) : Alien(playState, PLAYER_CLONE_ALIEN) {
 	this->setSpriteDefinition("player");
-	this->setSpriteColor(NovaColor(255, 255, 255));
-	this->setExplosionColor(this->getSpriteColor());
-	this->setExplosionSize(MEDIUM_EXPLOSION);
-	this->setNuggetSpawnType(POWER_UP);
+	this->setDefaultColor(NovaColor(255, 255, 255));
 	autofireTimer = 0;
 
 	// Create the shield definition.
@@ -88,12 +86,39 @@ PlayerClone::~PlayerClone() {
 }
 
 void PlayerClone::setActive(bool active) {
+	static bool verticalSwitch = true;
+
 	// Base processing.
 	Alien::setActive(active);
 
 	if (active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_PLAYER_CLONE);
+
+		// Find out which spawn zone we should be using (based on the players current location).
+		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
+			// Spawn the alien in the right zone.
+			this->moveTo(RIGHT_SPAWN_POINT_X, RIGHT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+		} else {
+			// Spawn the alien in the left zone.
+			this->moveTo(LEFT_SPAWN_POINT_X, LEFT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+		}
+
+		verticalSwitch = (!verticalSwitch);
 	}
 }
 
@@ -118,7 +143,7 @@ void PlayerClone::update(float elapsedTime) {
 
 		// Cannot get too close to the player.
 		float between = (playerPosition - alienPosition).magnitude();
-		if (between > MINIMUM_DISTANCE_TO_PLAYER) {
+		if (between > MIN_DISTANCE_TO_PLAYER) {
 			this->applyVelocity(elapsedTime);
 		}
 	}
@@ -149,7 +174,7 @@ void PlayerClone::update(float elapsedTime) {
 				float between = (playerPosition - alienPosition).magnitude();
 
 				// We need to check that we are within firing range.
-				if ((between > MINIMUM_FIRE_DISTANCE) && (between < MAXIMUM_FIRE_DISTANCE)) {
+				if ((between > MIN_FIRE_DISTANCE) && (between < MAX_FIRE_DISTANCE)) {
 					if (autofireTimer >= AUTOFIRE_INTERVAL) {
 						playState->getMissileController()->launchMissile(this->getPositionWCS(),
 								this->getFacingTowardsDirection(), this->getTotalVelocity());
@@ -183,6 +208,13 @@ bool PlayerClone::checkCollision(Player *player) {
 	return collision;
 }
 
+void PlayerClone::smartBombNotification() {
+	if (!alienShield->isActive()) {
+		// We have been destroyed.
+		playState->getAlienController()->deactivate(this);
+	}
+}
+
 bool PlayerClone::checkCollision(Missile *missile) {
 	bool collision = false;
 
@@ -195,7 +227,7 @@ bool PlayerClone::checkCollision(Missile *missile) {
 		if (!alienShield->isActive()) {
 			// This alien was destroyed by a player's missile.
 			playState->getAlienController()->deactivate(this);
-			playState->getNuggetController()->spawnNugget(this);
+			playState->getNuggetController()->spawnNugget(EXTRA_BOMB_NUGGET, this->getPositionWCS());
 			playState->getPlayer()->increaseScore(this);
 		}
 

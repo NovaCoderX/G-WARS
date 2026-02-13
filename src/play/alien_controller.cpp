@@ -58,9 +58,9 @@ enum BossType {
 	FIRST_BOSS = 0, SECOND_BOSS = 1, LAST_BOSS = 2
 };
 
-static Alien::AlienType spawnMatrix[3][4];
-static Alien::AlienType specialAliens[8];
-static Alien::AlienType bossAliens[3];
+static AlienType spawnMatrix[3][4];
+static AlienType specialAliens[10];
+static AlienType bossAliens[3];
 
 AlienController::AlienController(PlayState* playState) {
 	this->playState = playState;
@@ -74,6 +74,7 @@ AlienController::AlienController(PlayState* playState) {
 	playerClone = NULL;
 	blackHole = NULL;
 	miniGate = NULL;
+	miniCrusher = NULL;
 
 	// Bosses.
 	snake = NULL;
@@ -198,6 +199,11 @@ AlienController::~AlienController() {
 		miniGate = NULL;
 	}
 
+	if (miniCrusher) {
+		delete miniCrusher;
+		miniCrusher = NULL;
+	}
+
 	if (snake) {
 		delete snake;
 		snake = NULL;
@@ -242,6 +248,7 @@ void AlienController::init() {
 	playerClone = new PlayerClone(playState);
 	blackHole = new BlackHole(playState);
 	miniGate = new MiniGate(playState);
+	miniCrusher = new MiniCrusher(playState);
 
 	// Boss aliens.
 	snake = new Snake(playState);
@@ -249,41 +256,43 @@ void AlienController::init() {
 	crusher = new Crusher(playState);
 
 	// First and second waves of standard alien types.
-	spawnMatrix[BOUNCE_ALIEN][FIRST_WAVE] = Alien::BOUNCE_CUBE;
-	spawnMatrix[BOUNCE_ALIEN][SECOND_WAVE] = Alien::BOUNCE_WANDERER;
-	spawnMatrix[CHASE_ALIEN][FIRST_WAVE] = Alien::CHASE_RHOMBUS;
-	spawnMatrix[CHASE_ALIEN][SECOND_WAVE] = Alien::CHASE_STAR;
-	spawnMatrix[ATTACK_ALIEN][FIRST_WAVE] = Alien::ATTACK_TANK;
-	spawnMatrix[ATTACK_ALIEN][SECOND_WAVE] = Alien::ATTACK_SHIP;
+	spawnMatrix[BOUNCE_ALIEN][FIRST_WAVE] = BOUNCE_CUBE_ALIEN;
+	spawnMatrix[BOUNCE_ALIEN][SECOND_WAVE] = BOUNCE_WANDERER_ALIEN;
+	spawnMatrix[CHASE_ALIEN][FIRST_WAVE] = CHASE_RHOMBUS_ALIEN;
+	spawnMatrix[CHASE_ALIEN][SECOND_WAVE] = CHASE_STAR_ALIEN;
+	spawnMatrix[ATTACK_ALIEN][FIRST_WAVE] = ATTACK_TANK_ALIEN;
+	spawnMatrix[ATTACK_ALIEN][SECOND_WAVE] = ATTACK_SHIP_ALIEN;
 
 	// Second and third waves of standard aliens types.
-	spawnMatrix[BOUNCE_ALIEN][SECOND_WAVE] = Alien::BOUNCE_WANDERER;
-	spawnMatrix[BOUNCE_ALIEN][THIRD_WAVE] = Alien::BOUNCE_STAR;
-	spawnMatrix[CHASE_ALIEN][SECOND_WAVE] = Alien::CHASE_STAR;
-	spawnMatrix[CHASE_ALIEN][THIRD_WAVE] = Alien::CHASE_SHURIKEN;
-	spawnMatrix[ATTACK_ALIEN][SECOND_WAVE] = Alien::ATTACK_SHIP;
-	spawnMatrix[ATTACK_ALIEN][THIRD_WAVE] = Alien::ATTACK_ARTILLERY;
+	spawnMatrix[BOUNCE_ALIEN][SECOND_WAVE] = BOUNCE_WANDERER_ALIEN;
+	spawnMatrix[BOUNCE_ALIEN][THIRD_WAVE] = BOUNCE_STAR_ALIEN;
+	spawnMatrix[CHASE_ALIEN][SECOND_WAVE] = CHASE_STAR_ALIEN;
+	spawnMatrix[CHASE_ALIEN][THIRD_WAVE] = CHASE_SHURIKEN_ALIEN;
+	spawnMatrix[ATTACK_ALIEN][SECOND_WAVE] = ATTACK_SHIP_ALIEN;
+	spawnMatrix[ATTACK_ALIEN][THIRD_WAVE] = ATTACK_ARTILLERY_ALIEN;
 
 	// Third and fourth waves of standard aliens types.
-	spawnMatrix[BOUNCE_ALIEN][THIRD_WAVE] = Alien::BOUNCE_STAR;
-	spawnMatrix[BOUNCE_ALIEN][LAST_WAVE] = Alien::BOUNCE_HEXAGON;
-	spawnMatrix[CHASE_ALIEN][THIRD_WAVE] = Alien::CHASE_SHURIKEN;
-	spawnMatrix[CHASE_ALIEN][LAST_WAVE] = Alien::CHASE_CONCAVE;
-	spawnMatrix[ATTACK_ALIEN][THIRD_WAVE] = Alien::ATTACK_ARTILLERY;
-	spawnMatrix[ATTACK_ALIEN][LAST_WAVE] = Alien::ATTACK_NEUTRON;
+	spawnMatrix[BOUNCE_ALIEN][THIRD_WAVE] = BOUNCE_STAR_ALIEN;
+	spawnMatrix[BOUNCE_ALIEN][LAST_WAVE] = BOUNCE_HEXAGON_ALIEN;
+	spawnMatrix[CHASE_ALIEN][THIRD_WAVE] = CHASE_SHURIKEN_ALIEN;
+	spawnMatrix[CHASE_ALIEN][LAST_WAVE] = CHASE_CONCAVE_ALIEN;
+	spawnMatrix[ATTACK_ALIEN][THIRD_WAVE] = ATTACK_ARTILLERY_ALIEN;
+	spawnMatrix[ATTACK_ALIEN][LAST_WAVE] = ATTACK_NEUTRON_ALIEN;
 
-	specialAliens[0] = Alien::ROCKET_SHIP;
-	specialAliens[1] = Alien::ROCKET_SHIP;
-	specialAliens[2] = Alien::ROCKET_SHIP;
-	specialAliens[3] = Alien::FLYING_SAUCER;
-	specialAliens[4] = Alien::FLYING_SAUCER;
-	specialAliens[5] = Alien::PLAYER_CLONE;
-	specialAliens[6] = Alien::BLACK_HOLE;
-	specialAliens[7] = Alien::MINI_GATE;
+	specialAliens[0] = ROCKET_SHIP_ALIEN;
+	specialAliens[1] = ROCKET_SHIP_ALIEN;
+	specialAliens[2] = ROCKET_SHIP_ALIEN;
+	specialAliens[3] = FLYING_SAUCER_ALIEN;
+	specialAliens[4] = FLYING_SAUCER_ALIEN;
+	specialAliens[5] = PLAYER_CLONE_ALIEN;
+	specialAliens[6] = BLACK_HOLE_ALIEN;
+	specialAliens[7] = MINI_GATE_ALIEN;
+	specialAliens[8] = MINI_CRUSHER_ALIEN;
+	specialAliens[9] = MINI_CRUSHER_ALIEN;
 
-	bossAliens[0] = Alien::SNAKE;
-	bossAliens[1] = Alien::JELLY;
-	bossAliens[2] = Alien::CRUSHER;
+	bossAliens[0] = SNAKE_ALIEN ;
+	bossAliens[1] = JELLY_ALIEN ;
+	bossAliens[2] = CRUSHER_ALIEN ;
 
 	spawnLogic.intervalIncrement = (float) (MAX_STANDARD_ALIEN_SPAWN_INTERVAL - MIN_STANDARD_ALIEN_SPAWN_INTERVAL)
 			/ WAVE_INTENSITY_INCREMENT_DURATION;
@@ -305,7 +314,12 @@ void AlienController::init() {
 	spawnLogic.currentWave[ATTACK_ALIEN] = FIRST_WAVE;
 
 	// Timers.
-	stageStartDelay = STAGE_START_DELAY;
+#ifdef TIME_DEMO_ENABLED
+		stageStartDelay = 0;
+#else
+		stageStartDelay = STAGE_START_DELAY;
+#endif
+
 	totalElapsedTime = 0;
 }
 
@@ -322,19 +336,18 @@ void AlienController::update(float elapsedTime) {
 
 	if (currentGameStage == SPAWN_STAGE_STARTUP) {
 		if (totalElapsedTime > stageStartDelay) {
-			// Ready to spawn if all other aliens have been destroyed and the player is active.
-			if ((!alienListHead) && (playState->getPlayer()->isActive())) {
+			// Ready to spawn when the player is active.
+			if (playState->getPlayer()->isActive()) {
 				// We have now moved to the spawn stage.
 				currentGameStage = SPAWN_STAGE;
 				spawnLogic.currentAlienType = BOUNCE_ALIEN;
 				spawnLogic.intensity = INCREASING_SPAWN_INTENSITY;
 				spawnLogic.currentIntervalStandard = MAX_STANDARD_ALIEN_SPAWN_INTERVAL;
 				spawnLogic.currentIntervalSpecial = SPECIAL_ALIEN_SPAWN_INTERVAL;
-				spawnLogic.lastSpawnedStandard = 0;
-				spawnLogic.lastSpawnedSpecial = 0;
+				spawnLogic.lastSpawnedStandard = totalElapsedTime;
+				spawnLogic.lastSpawnedSpecial = totalElapsedTime;
 
-				// Start playing standard music.
-				g_worldManager->setMusicType(STANDARD_MUSIC);
+				// Start playing music.
 				g_worldManager->startMusic();
 			}
 		}
@@ -352,16 +365,18 @@ void AlienController::update(float elapsedTime) {
 			}
 		}
 		
+#ifndef TIME_DEMO_ENABLED
 		// See if we need to create more special aliens.
 		if ((totalElapsedTime - spawnLogic.lastSpawnedSpecial) >= spawnLogic.currentIntervalSpecial) {
 			// Ready to spawn another special alien (if the player is active).
 			if (playState->getPlayer()->isActive()) {
-				spawnSpecialAlien(specialAliens[int_rand(0, 7)]);
+				spawnSpecialAlien(specialAliens[int_rand(0, 9)]);
 
 				// Store the time of the last spawn attempt (may not have actually spawned).
 				spawnLogic.lastSpawnedSpecial = totalElapsedTime;
 			}
 		}
+#endif
 
 		if (spawnLogic.intensity == INCREASING_SPAWN_INTENSITY) {
 			// Build intensity by reducing the spawn frequency.
@@ -454,40 +469,41 @@ void AlienController::draw() {
 void AlienController::deactivate(Alien* alien) {
 	this->removeFromList(alien);
 
-	if (currentGameStage == BOSS_STAGE) {
-		// The boss has been killed, move back to the spawn stage.
+	if (alien->getAlienCategory() == Alien::BOSS_ALIEN) {
+		// A boss has been killed, move back to the spawn stage.
 		currentGameStage = SPAWN_STAGE_STARTUP;
 		stageStartDelay = (totalElapsedTime + STAGE_START_DELAY);
 		g_worldManager->stopMusic();
+		g_worldManager->setMusicType(GAMEPLAY_MUSIC);
 
-		// Make each stage harder than the one before.
+		// Make each spawn stage harder than the one before.
 		spawnLogic.midPointDuration += WAVE_INTENSITY_MIDPOINT_DURATION_INCREMENT;
 
 		if (currentBossType < LAST_BOSS) {
 			// Move to the next boss type.
 			currentBossType++;
 		} else {
-			// This is the end of the game, start a new game.
+			// This is the end of the game, display a message to the user.
+			if (playState->getPlayer()->getNumLives()) {
+				// Only display this message if the player is still alive.
+				playState->getHudController()->getMissionCompletePanel()->setVisible(true);
+			}
+
+			// start a new (harder) game.
 			currentBossType = FIRST_BOSS;
 			spawnLogic.currentWave[BOUNCE_ALIEN] = FIRST_WAVE;
 			spawnLogic.currentWave[CHASE_ALIEN] = FIRST_WAVE;
 			spawnLogic.currentWave[ATTACK_ALIEN] = FIRST_WAVE;
-
-			// Make the new game more interesting.
-			playState->getNuggetController()->setSpawnMode(ALWAYS_SPAWN_NUGGETS);
 		}
 	}
 }
 
-void AlienController::destroyAliens() {
-	if (currentGameStage != BOSS_STAGE) {
-		Alien* alien = alienListHead;
-		while (alien) {
-			this->deactivate(alien);
-			playState->getNuggetController()->spawnNugget(alien);
+void AlienController::smartBombNotification() {
+	Alien* alien = alienListHead;
+	while (alien) {
+		alien->smartBombNotification();
 
-			alien = alien->nextInList;
-		}
+		alien = alien->nextInList;
 	}
 }
 
@@ -501,36 +517,39 @@ Alien* AlienController::findBestTarget(Missile* missile) {
 
 	Alien* alien = alienListHead;
 	while (alien) {
-		// Only consider targets that the missile is heading towards.
 		bool candidate = false;
 
-		alienPosition = alien->getPositionWCS();
+		// Only consider standard aliens as targets.
+		if (alien->getAlienCategory() == Alien::STANDARD_ALIEN) {
+			// Only consider targets that the missile is heading towards.
+			alienPosition = alien->getPositionWCS();
 
-		if ((alienPosition.x - missilePosition.x) > 0) {
-			if (missile->getHorizontalVelocity() > 0) {
-				candidate = true;
-			}
-		}
-
-		if ((alienPosition.x - missilePosition.x) < 0) {
-			if (missile->getHorizontalVelocity() < 0) {
-				candidate = true;
-			}
-		}
-
-		if (candidate) {
-			// Also need to check vertical velocity.
-			candidate = false;
-
-			if ((alienPosition.y - missilePosition.y) > 0) {
-				if (missile->getVerticalVelocity() > 0) {
+			if ((alienPosition.x - missilePosition.x) > 0) {
+				if (missile->getHorizontalVelocity() > 0) {
 					candidate = true;
 				}
 			}
 
-			if ((alienPosition.y - missilePosition.y) < 0) {
-				if (missile->getVerticalVelocity() < 0) {
+			if ((alienPosition.x - missilePosition.x) < 0) {
+				if (missile->getHorizontalVelocity() < 0) {
 					candidate = true;
+				}
+			}
+
+			if (candidate) {
+				// Also need to check vertical velocity.
+				candidate = false;
+
+				if ((alienPosition.y - missilePosition.y) > 0) {
+					if (missile->getVerticalVelocity() > 0) {
+						candidate = true;
+					}
+				}
+
+				if ((alienPosition.y - missilePosition.y) < 0) {
+					if (missile->getVerticalVelocity() < 0) {
+						candidate = true;
+					}
 				}
 			}
 		}
@@ -636,91 +655,53 @@ void AlienController::removeFromList(Alien* alien) {
 	alien->setActive(false);
 }
 
-void AlienController::spawnHelper(Alien* alien, float miniumVelocity, float maximumVelocity) {
-	static bool verticalSwitch = true;
-	double horizontalVelocity = 0;
-	double verticalVelocity = 0;
-
-	// Find out which spawn zone we should be using (based on the players current location).
-	if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
-		// Spawn the alien in the right zone.
-		alien->moveTo(RIGHT_SPAWN_POINT_X, RIGHT_SPAWN_POINT_Y, 0);
-		horizontalVelocity = -float_rand(miniumVelocity, maximumVelocity);
-
-		if (verticalSwitch) {
-			verticalVelocity = float_rand(miniumVelocity, maximumVelocity);
-		} else {
-			verticalVelocity = -float_rand(miniumVelocity, maximumVelocity);
-		}
-
-		alien->setVelocityFromComponents(horizontalVelocity, verticalVelocity);
-	} else {
-		// Spawn the alien in the left zone.
-		alien->moveTo(LEFT_SPAWN_POINT_X, LEFT_SPAWN_POINT_Y, 0);
-		horizontalVelocity = float_rand(miniumVelocity, maximumVelocity);
-
-		if (verticalSwitch) {
-			verticalVelocity = float_rand(miniumVelocity, maximumVelocity);
-		} else {
-			verticalVelocity = -float_rand(miniumVelocity, maximumVelocity);
-		}
-
-		alien->setVelocityFromComponents(horizontalVelocity, verticalVelocity);
-	}
-
-	verticalSwitch = (!verticalSwitch);
-
-	// Then add it to the processing loop.
-	this->addToList(alien);
-}
-
-void AlienController::spawnStandardAlien(Alien::AlienType type) {
+void AlienController::spawnStandardAlien(AlienType type) {
 	switch (type) {
-	case Alien::BOUNCE_CUBE:
+	case BOUNCE_CUBE_ALIEN:
 		spawnBounceCube();
 		break;
 
-	case Alien::BOUNCE_WANDERER:
+	case BOUNCE_WANDERER_ALIEN:
 		spawnBounceWanderer();
 		break;
 
-	case Alien::BOUNCE_STAR:
+	case BOUNCE_STAR_ALIEN:
 		spawnBounceStar();
 		break;
 
-	case Alien::BOUNCE_HEXAGON:
+	case BOUNCE_HEXAGON_ALIEN:
 		spawnBounceHexagon();
 		break;
 
-	case Alien::CHASE_RHOMBUS:
+	case CHASE_RHOMBUS_ALIEN:
 		spawnChaseRhombus();
 		break;
 
-	case Alien::CHASE_STAR:
+	case CHASE_STAR_ALIEN:
 		spawnChaseStar();
 		break;
 
-	case Alien::CHASE_SHURIKEN:
+	case CHASE_SHURIKEN_ALIEN:
 		spawnChaseShuriken();
 		break;
 
-	case Alien::CHASE_CONCAVE:
+	case CHASE_CONCAVE_ALIEN:
 		spawnChaseConcave();
 		break;
 
-	case Alien::ATTACK_TANK:
+	case ATTACK_TANK_ALIEN:
 		spawnAttackTank();
 		break;
 
-	case Alien::ATTACK_SHIP:
+	case ATTACK_SHIP_ALIEN:
 		spawnAttackShip();
 		break;
 
-	case Alien::ATTACK_ARTILLERY:
+	case ATTACK_ARTILLERY_ALIEN:
 		spawnAttackArtillery();
 		break;
 
-	default: // ATTACK_NEUTRON
+	default: // ATTACK_NEUTRON_ALIEN
 		spawnAttackNeutron();
 	}
 }
@@ -729,8 +710,8 @@ void AlienController::spawnBounceCube() {
 	// Find an empty slot.
 	for (Alien* alien : bounceCubes) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 3, 6);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -740,8 +721,8 @@ void AlienController::spawnBounceWanderer() {
 	// Find an empty slot.
 	for (Alien* alien : bounceWanderers) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 3, 6);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -751,8 +732,8 @@ void AlienController::spawnBounceStar() {
 	// Find an empty slot.
 	for (Alien* alien : bounceStars) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 3, 6);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -762,8 +743,8 @@ void AlienController::spawnBounceHexagon() {
 	// Find an empty slot.
 	for (Alien* alien : bounceHexagons) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 3, 6);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -773,8 +754,8 @@ void AlienController::spawnChaseRhombus() {
 	// Find an empty slot.
 	for (Alien* alien : chaseRhombi) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 2, 4);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -784,8 +765,8 @@ void AlienController::spawnChaseStar() {
 	// Find an empty slot.
 	for (Alien* alien : chaseStars) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 2, 4);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -795,8 +776,8 @@ void AlienController::spawnChaseShuriken() {
 	// Find an empty slot.
 	for (Alien* alien : chaseShurikens) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 2, 4);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -806,8 +787,8 @@ void AlienController::spawnChaseConcave() {
 	// Find an empty slot.
 	for (Alien* alien : chaseConcaves) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 2, 4);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -817,8 +798,8 @@ void AlienController::spawnAttackTank() {
 	// Find an empty slot.
 	for (Alien* alien : attackTanks) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 2, 4);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -828,8 +809,8 @@ void AlienController::spawnAttackShip() {
 	// Find an empty slot.
 	for (Alien* alien : attackShips) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 2, 4);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -839,8 +820,8 @@ void AlienController::spawnAttackArtillery() {
 	// Find an empty slot.
 	for (Alien* alien : attackArtillery) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 2, 4);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
@@ -850,145 +831,116 @@ void AlienController::spawnAttackNeutron() {
 	// Find an empty slot.
 	for (Alien* alien : attackNeutrons) {
 		if (!alien->isActive()) {
-			// Setup initial position, direction and velocity of the new alien.
-			spawnHelper(alien, 2, 4);
+			// Add it to the processing loop.
+			this->addToList(alien);
 			break;
 		}
 	}
 }
 
-void AlienController::spawnSpecialAlien(Alien::AlienType type) {
+void AlienController::spawnSpecialAlien(AlienType type) {
 	switch (type) {
-	case Alien::ROCKET_SHIP:
+	case ROCKET_SHIP_ALIEN:
 		spawnRocketShip();
 		break;
 
-	case Alien::FLYING_SAUCER:
+	case FLYING_SAUCER_ALIEN:
 		spawnFlyingSaucer();
 		break;
 
-	case Alien::PLAYER_CLONE:
+	case PLAYER_CLONE_ALIEN:
 		spawnPlayerClone();
 		break;
 
-	case Alien::BLACK_HOLE:
+	case BLACK_HOLE_ALIEN:
 		spawnBlackHole();
 		break;
 
-	default: // SMALL_GATE
+	case MINI_GATE_ALIEN:
 		spawnMiniGate();
+		break;
+
+	default: // MINI_CRUSHER_ALIEN
+		spawnMiniCrusher();
 	}
 }
 
 void AlienController::spawnRocketShip() {
 	if (!rocketShip->isActive()) {
-		// Setup initial position, direction and velocity of the new alien.
-		float miniumVelocity = 8;
-		float maximumVelocity = 16;
-
-		// Find out which spawn zone we should be using (based on the players current location).
-		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
-			// Spawn the alien in the right zone.
-			rocketShip->moveTo(RIGHT_SPAWN_POINT_X, float_rand(-60, 60), 0);
-			rocketShip->setVelocityFromComponents(-float_rand(miniumVelocity, maximumVelocity), 0);
-
-			// Rotate the sprite to match the direction of travel.
-			rocketShip->setFacingTowardsDirection(LEFT);
-		} else {
-			// Spawn the alien in the left zone.
-			rocketShip->moveTo(LEFT_SPAWN_POINT_X, float_rand(-60, 60), 0);
-			rocketShip->setVelocityFromComponents(float_rand(miniumVelocity, maximumVelocity), 0);
-
-			// Rotate the sprite to match the direction of travel.
-			rocketShip->setFacingTowardsDirection(RIGHT);
-		}
-
-		// Then add it to the processing loop.
+		// Add it to the processing loop.
 		this->addToList(rocketShip);
 	}
 }
 
 void AlienController::spawnFlyingSaucer() {
 	if (!flyingSaucer->isActive()) {
-		// Setup initial position, direction and velocity of the new alien.
-		spawnHelper(flyingSaucer, 2, 3);
+		// Add it to the processing loop.
+		this->addToList(flyingSaucer);
 	}
 }
 
 void AlienController::spawnPlayerClone() {
 	if (!playerClone->isActive()) {
-		// Setup initial position, direction and velocity of the new alien.
-		spawnHelper(playerClone, 1, 3);
+		// Add it to the processing loop.
+		this->addToList(playerClone);
 	}
 }
 
 void AlienController::spawnBlackHole() {
 	if (!blackHole->isActive()) {
-		// Setup initial position, direction and velocity of the new alien.
-		spawnHelper(blackHole, 0.1, 0.3);
+		// Add it to the processing loop.
+		this->addToList(blackHole);
 	}
 }
 
 void AlienController::spawnMiniGate() {
 	if (!miniGate->isActive()) {
-		// Setup initial position, direction and velocity of the new alien.
-		spawnHelper(miniGate, 1, 3);
+		// Add it to the processing loop.
+		this->addToList(miniGate);
 	}
 }
 
-void AlienController::spawnBossAlien(Alien::AlienType type) {
+void AlienController::spawnMiniCrusher() {
+	if (!miniCrusher->isActive()) {
+		// Add it to the processing loop.
+		this->addToList(miniCrusher);
+	}
+}
+
+void AlienController::spawnBossAlien(AlienType type) {
 	switch (type) {
-		case Alien::SNAKE:
+		case SNAKE_ALIEN :
 			spawnSnake();
 			break;
 
-		case Alien::JELLY:
+		case JELLY_ALIEN :
 			spawnJelly();
 			break;
 
-		default: // CRUSHER
+		default: // CRUSHER_ALIEN
 			spawnCrusher();
 			break;
 	}
 }
 
 void AlienController::spawnSnake() {
-	// Setup initial position, direction and velocity of the new alien.
-	spawnHelper(snake, 6, 9);
+	if (!snake->isActive()) {
+		// Add it to the processing loop.
+		this->addToList(snake);
+	}
 }
 
 void AlienController::spawnJelly() {
-	// Setup initial position, direction and velocity of the new alien.
-	float miniumVelocity = 2;
-	float maximumVelocity = 4;
-	double horizontalVelocity = 0;
-	double verticalVelocity = 0;
-
-	// Find out which spawn zone we should be using (based on the players current location).
-	if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
-		// Spawn the alien in the right zone.
-		jelly->moveTo(RIGHT_SPAWN_POINT_X, HORIZONTAL_BORDER_POSITION, 0);
-		horizontalVelocity = -float_rand(miniumVelocity, maximumVelocity);
-		verticalVelocity = -float_rand(miniumVelocity, maximumVelocity);
-		jelly->setVelocityFromComponents(-horizontalVelocity, verticalVelocity);
-	} else {
-		// Spawn the alien in the left zone.
-		jelly->moveTo(LEFT_SPAWN_POINT_X, HORIZONTAL_BORDER_POSITION, 0);
-		horizontalVelocity = float_rand(miniumVelocity, maximumVelocity);
-		verticalVelocity = -float_rand(miniumVelocity, maximumVelocity);
-		jelly->setVelocityFromComponents(horizontalVelocity, verticalVelocity);
+	if (!jelly->isActive()) {
+		// Add it to the processing loop.
+		this->addToList(jelly);
 	}
-
-	// Then add it to the processing loop.
-	this->addToList(jelly);
 }
 
 void AlienController::spawnCrusher() {
-	// Setup initial position, direction and velocity of the new alien.
-	crusher->moveTo(0, 0, 0);
-	crusher->setVelocityFromComponents(0, 0);
-
-	// Then add it to the processing loop.
-	this->addToList(crusher);
+	if (!crusher->isActive()) {
+		// Add it to the processing loop.
+		this->addToList(crusher);
+	}
 }
 

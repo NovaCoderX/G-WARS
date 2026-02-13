@@ -24,7 +24,11 @@ Missile::Missile(PlayState* playState) : Sprite(playState) {
 	this->playState = playState;
 	missileType = UNDEFINED_MISSILE;
 	nextInList = priorInList = NULL;
-	this->setExplosionColor(NovaColor(255, 255, 255));
+
+	// Set up how this object will explode.
+	this->setExplosionSize(SMALL_EXPLOSION);
+	this->setExplosionSound(MISSILE_EXPLODE);
+	this->setLightEmittingExplosion(false);
 }
 
 void Missile::setActive(bool active) {
@@ -33,9 +37,7 @@ void Missile::setActive(bool active) {
 
 	if (!active) {
 		// We have been destroyed.
-		if (this->isVisible()) {
-			playState->getExplosionController()->createExplosion(this);
-		}
+		playState->getExplosionController()->createExplosion(this);
 	}
 }
 

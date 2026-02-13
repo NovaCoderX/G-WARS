@@ -27,38 +27,27 @@
 GunPlatform::GunPlatform(PlayState* playState, Sprite* parent, int anchorIndex) : AlienComponent(playState, parent) {
 	this->anchorIndex = anchorIndex;
 	this->setSpriteDefinition("gun_platform");
-	defaultPlatformColor = NovaColor(105, 19, 176);
-	this->setSpriteColor(defaultPlatformColor);
-	this->setExplosionSize(MEDIUM_EXPLOSION);
-	this->setExplosionColor(this->getSpriteColor());
+	this->setDefaultColor(NovaColor(129, 20, 219));
+
+	// Set up how this object will explode.
+	this->setExplosionSize(LARGE_EXPLOSION);
+	this->setExplosionColor(this->getDefaultColor());
+
 	damage = 0;
 	totalElapsedTime = lastFireTime = 0;
 
 	// Create turret.
-	gunTurret = new Sprite(playState);
+	gunTurret = new AlienComponent(playState, this);
 	gunTurret->setSpriteDefinition("platform_gun");
-	defaultGunColor = NovaColor(247, 5, 49);
-	gunTurret->setSpriteColor(defaultGunColor);
-	disabledColor = NovaColor(64, 64, 64);
+	gunTurret->setDefaultColor(NovaColor(247, 5, 49));
+	gunTurret->setExplosionSize(MEDIUM_EXPLOSION);
+	gunTurret->setExplosionColor(gunTurret->getDefaultColor());
 }
 
 GunPlatform::~GunPlatform() {
 	if (gunTurret) {
 		delete gunTurret;
 		gunTurret = NULL;
-	}
-}
-
-void GunPlatform::setDisabled(bool disabled) {
-	// Base processing.
-	AlienComponent::setDisabled(disabled);
-
-	if (disabled) {
-		this->setSpriteColor(disabledColor);
-		gunTurret->setSpriteColor(disabledColor);
-	} else {
-		this->setSpriteColor(defaultPlatformColor);
-		gunTurret->setSpriteColor(defaultGunColor);
 	}
 }
 
@@ -71,6 +60,8 @@ void GunPlatform::setActive(bool active) {
 		damage = 0;
 		totalElapsedTime = lastFireTime = 0;
 	}
+
+	gunTurret->setActive(active);
 }
 
 void GunPlatform::update(float elapsedTime) {
@@ -83,7 +74,7 @@ void GunPlatform::update(float elapsedTime) {
 
 	if (this->visible) {
 		gunTurret->moveTo(this->getPositionWCS());
-		if (!this->isDisabled()) {
+		if (this->isActive()) {
 			Player *player = playState->getPlayer();
 			if (player->isActive()) {
 				NovaVertex playerPosition = player->getPositionWCS();
@@ -120,10 +111,10 @@ bool GunPlatform::checkCollision(Missile* missile) {
 		// This segment was hit by the player's missile.
 		collision = true;
 
-		if (!this->isDisabled()) {
+		if (this->isActive()) {
 			damage++;
 			if (damage >= MAX_DAMAGE) {
-				this->setDisabled(true);
+				this->setActive(false);
 			}
 		}
 	}

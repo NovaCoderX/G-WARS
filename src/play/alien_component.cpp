@@ -22,10 +22,15 @@
 AlienComponent::AlienComponent(PlayState* playState, Sprite* parent) : Sprite(playState) {
 	this->playState = playState;
 	this->parent = parent;
-	this->setVulnerable(false);
-	this->setDisabled(false);
-	this->setExplosionSize(DO_NOT_EXPLODE);
-	this->setExplosionColor(NovaColor(255, 255, 255));
+	defaultColor = NovaColor(255, 255, 255);
+	disabledColor = NovaColor(64, 64, 64);
+	explosionColor = NovaColor(255, 255, 255);
+	exploded = false;
+
+	// Set up how this object will explode.
+	this->setExplosionSize(NO_EXPLOSION);
+	this->setExplosionSound(SILENCE);
+	this->setLightEmittingExplosion(true);
 }
 
 void AlienComponent::setActive(bool active) {
@@ -34,12 +39,15 @@ void AlienComponent::setActive(bool active) {
 
 	if (active) {
 		// Reset.
-		this->setVulnerable(false);
-		this->setDisabled(false);
+		this->setCurrentColor(this->getDefaultColor());
+		exploded = false;
 	} else {
-		// We have been destroyed.
-		if (this->isVisible()) {
+		this->setCurrentColor(disabledColor);
+
+		// We only want to explode when we are first deactivated.
+		if (!exploded) {
 			playState->getExplosionController()->createExplosion(this);
+			exploded = true;
 		}
 	}
 }
@@ -67,3 +75,4 @@ bool AlienComponent::checkCollision(Missile* missile) {
 
 	return collision;
 }
+

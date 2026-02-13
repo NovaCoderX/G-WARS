@@ -22,7 +22,6 @@
 AlienMissile::AlienMissile(PlayState *playState) : Missile(playState) {
 	missileType = ALIEN_MISSILE;
 	this->setSpriteDefinition("missile");
-	this->setSpriteColor(NovaColor(255, 201, 4));
-	this->setExplosionColor(this->getSpriteColor());
+	this->setCurrentColor(NovaColor(255, 201, 4));
 }
 

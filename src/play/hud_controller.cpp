@@ -25,6 +25,7 @@ HudController::HudController(PlayState* playState) {
 	highScorePanel = NULL;
 	playerStatsPanel = NULL;
 	gameOverPanel = NULL;
+	missionCompletePanel = NULL;
 }
 
 HudController::~HudController() {
@@ -47,6 +48,11 @@ HudController::~HudController() {
 		delete gameOverPanel;
 		gameOverPanel = NULL;
 	}
+
+	if (missionCompletePanel) {
+		delete missionCompletePanel;
+		missionCompletePanel = NULL;
+	}
 }
 
 void HudController::init() {
@@ -64,6 +70,9 @@ void HudController::init() {
 
 	gameOverPanel = new GameOverPanel(playState);
 	gameOverPanel->init();
+
+	missionCompletePanel = new MissionCompletePanel(playState);
+	missionCompletePanel->init();
 }
 
 void HudController::update(float elapsedTime) {
@@ -82,6 +91,10 @@ void HudController::update(float elapsedTime) {
 	if (gameOverPanel->isVisible()) {
 		gameOverPanel->update(elapsedTime);
 	}
+
+	if (missionCompletePanel->isVisible()) {
+		missionCompletePanel->update(elapsedTime);
+	}
 }
 
 void HudController::draw() {
@@ -91,5 +104,9 @@ void HudController::draw() {
 
 	if (gameOverPanel->isVisible()) {
 		gameOverPanel->draw();
+	}
+
+	if (missionCompletePanel->isVisible()) {
+		missionCompletePanel->draw();
 	}
 }

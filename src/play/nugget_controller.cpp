@@ -19,13 +19,14 @@
 
 #include "poly_nova.h"
 
-#define NUMBER_OF_MULTIPLIER_NUGGETS 20
-#define NUMBER_OF_POWER_UP_NUGGETS 5
+#define NUMBER_OF_MULTIPLIER_NUGGETS 18
+#define NUMBER_OF_POWER_UP_NUGGETS 3
+#define NUMBER_OF_EXTRA_LIFE_NUGGETS 3
+#define NUMBER_OF_EXTRA_BOMB_NUGGETS 3
 
 NuggetController::NuggetController(PlayState* playState) {
 	this->playState = playState;
 	nuggetListHead = NULL;
-	spawnMode = RANDOMLY_SPAWN_NUGGETS;
 }
 
 NuggetController::~NuggetController() {
@@ -40,6 +41,18 @@ NuggetController::~NuggetController() {
 	}
 
 	powerUpNuggets.clear();
+
+	for (Nugget* nugget : extraLifeNuggets) {
+		delete nugget;
+	}
+
+	extraLifeNuggets.clear();
+
+	for (Nugget* nugget : extraBombNuggets) {
+		delete nugget;
+	}
+
+	extraBombNuggets.clear();
 }
 
 void NuggetController::init() {
@@ -49,6 +62,14 @@ void NuggetController::init() {
 
 	for (int i = 0; i < NUMBER_OF_POWER_UP_NUGGETS; i++) {
 		powerUpNuggets.push_back(new PowerUpNugget(playState));
+	}
+
+	for (int i = 0; i < NUMBER_OF_EXTRA_LIFE_NUGGETS; i++) {
+		extraLifeNuggets.push_back(new ExtraLifeNugget(playState));
+	}
+
+	for (int i = 0; i < NUMBER_OF_EXTRA_BOMB_NUGGETS; i++) {
+		extraBombNuggets.push_back(new ExtraBombNugget(playState));
 	}
 }
 
@@ -89,26 +110,22 @@ void NuggetController::draw() {
 	}
 }
 
-void NuggetController::spawnNugget(Alien* alien) {
-	// Different aliens spawn different types of nugget, some don't spawn any.
-	if (alien->getNuggetSpawnType() != Alien::DO_NOT_SPAWN) {
-		bool shouldSpawn = false;
+void NuggetController::spawnNugget(NuggetType nuggetType, const NovaVertex &location) {
+	switch (nuggetType) {
+	case MULTIPLIER_NUGGET:
+		this->spawnMultiplierNugget(location);
+		break;
 
-		if (spawnMode == RANDOMLY_SPAWN_NUGGETS) {
-			if (int_rand(0, 3) == 2) {
-				shouldSpawn = true;
-			}
-		} else if (spawnMode == ALWAYS_SPAWN_NUGGETS) {
-			shouldSpawn = true;
-		}
+	case POWER_UP_NUGGET:
+		this->spawnPowerUpNugget(location);
+		break;
 
-		if (shouldSpawn) {
-			if (alien->getNuggetSpawnType() == Alien::MULTIPLIER) {
-				this->spawnMultiplierNugget(alien);
-			} else {
-				this->spawnPowerUpNugget(alien);
-			}
-		}
+	case EXTRA_LIFE_NUGGET:
+		this->spawnExtraLifeNugget(location);
+		break;
+
+	default: // EXTRA_BOMB_NUGGET
+		this->spawnExtraBombNugget(location);
 	}
 }
 
@@ -180,7 +197,7 @@ void NuggetController::removeFromList(Nugget* nugget) {
 	nugget->setActive(false);
 }
 
-void NuggetController::spawnMultiplierNugget(Alien* alien) {
+void NuggetController::spawnMultiplierNugget(const NovaVertex &location) {
 	MultiplierNugget* nugget = NULL;
 
 	// Find an empty slot.
@@ -192,14 +209,14 @@ void NuggetController::spawnMultiplierNugget(Alien* alien) {
 	}
 
 	if (nugget) {
-		nugget->moveTo(alien->getPositionWCS());
+		nugget->moveTo(location);
 
 		// Then add it to the processing loop.
 		this->addToList(nugget);
 	}
 }
 
-void NuggetController::spawnPowerUpNugget(Alien* alien) {
+void NuggetController::spawnPowerUpNugget(const NovaVertex &location) {
 	PowerUpNugget* nugget = NULL;
 
 	// Find an empty slot.
@@ -211,13 +228,50 @@ void NuggetController::spawnPowerUpNugget(Alien* alien) {
 	}
 
 	if (nugget) {
-		nugget->moveTo(alien->getPositionWCS());
+		nugget->moveTo(location);
 
 		// Then add it to the processing loop.
 		this->addToList(nugget);
 	}
 }
 
+void NuggetController::spawnExtraLifeNugget(const NovaVertex &location) {
+	ExtraLifeNugget* nugget = NULL;
+
+	// Find an empty slot.
+	for (uint i = 0; i < extraLifeNuggets.size(); i++) {
+		if (!extraLifeNuggets[i]->isActive()) {
+			nugget = extraLifeNuggets[i];
+			break;
+		}
+	}
+
+	if (nugget) {
+		nugget->moveTo(location);
+
+		// Then add it to the processing loop.
+		this->addToList(nugget);
+	}
+}
+
+void NuggetController::spawnExtraBombNugget(const NovaVertex &location) {
+	ExtraBombNugget* nugget = NULL;
+
+	// Find an empty slot.
+	for (uint i = 0; i < extraBombNuggets.size(); i++) {
+		if (!extraBombNuggets[i]->isActive()) {
+			nugget = extraBombNuggets[i];
+			break;
+		}
+	}
+
+	if (nugget) {
+		nugget->moveTo(location);
+
+		// Then add it to the processing loop.
+		this->addToList(nugget);
+	}
+}
 
 
 

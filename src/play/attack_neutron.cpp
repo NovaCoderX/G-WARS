@@ -98,22 +98,20 @@ static bool checkLaserHit(double x0, double y0, double radians, double targetX, 
 	return false;  // No hit detected
 }
 
-AttackNeutron::AttackNeutron(PlayState* playState) : Alien(playState) {
-	this->setAlienType(ATTACK_NEUTRON);
-	defaultColorCenter = NovaColor(169, 169, 169);
-	defaultColorBase = defaultColorCenter;
-	defaultColorBase.rebase(80);
-	readyToFireColor = NovaColor(201, 255, 4);
-	readyToFire = false;
-	totalElapsedTime = lastFireTime = readyToFireTime = 0;
-
+AttackNeutron::AttackNeutron(PlayState* playState) : AttackAlien(playState, ATTACK_NEUTRON_ALIEN) {
 	this->setSpriteDefinition("attack_neutron_base");
-	this->setSpriteColor(defaultColorBase);
-	this->setExplosionColor(readyToFireColor);
+	NovaColor defaultColorBase = NovaColor(169, 169, 169);
+	defaultColorBase.rebase(80);
+	this->setDefaultColor(defaultColorBase);
 
 	center = new Sprite(playState);
 	center->setSpriteDefinition("attack_neutron_center");
-	center->setSpriteColor(defaultColorCenter);
+	defaultColorCenter = NovaColor(169, 169, 169);
+	center->setCurrentColor(defaultColorCenter);
+
+	readyToFireColor = NovaColor(201, 255, 4);
+	readyToFire = false;
+	totalElapsedTime = lastFireTime = readyToFireTime = 0;
 
 	laser = new Laser(playState);
 	laser->setColor(readyToFireColor);
@@ -133,13 +131,13 @@ AttackNeutron::~AttackNeutron() {
 
 void AttackNeutron::setActive(bool active) {
 	// Base processing.
-	Alien::setActive(active);
+	AttackAlien::setActive(active);
 
 	if (active) {
 		// Reset.
 		readyToFire = false;
 		laser->setActive(false);
-		center->setSpriteColor(defaultColorCenter);
+		center->setCurrentColor(defaultColorCenter);
 		totalElapsedTime = lastFireTime = readyToFireTime = 0;
 	}
 }
@@ -180,7 +178,7 @@ void AttackNeutron::update(float elapsedTime) {
 		// If the laser is currently active, deactivate it.
 		if (laser->isActive()) {
 			laser->setActive(false);
-			center->setSpriteColor(defaultColorCenter);
+			center->setCurrentColor(defaultColorCenter);
 		}
 	}
 
@@ -213,7 +211,7 @@ void AttackNeutron::update(float elapsedTime) {
 		// See if we need to expire the laser.
 		if ((!center->isVisible()) || ((totalElapsedTime - lastFireTime) > FIRE_DURATION)) {
 			laser->setActive(false);
-			center->setSpriteColor(defaultColorCenter);
+			center->setCurrentColor(defaultColorCenter);
 		} else {
 			// The laser is still active.
 			NovaVertex alienPosition = center->getPositionWCS();
@@ -296,7 +294,7 @@ void AttackNeutron::update(float elapsedTime) {
 					// Ready to fire again, change color to let the player know.
 					readyToFire = true;
 					readyToFireTime = totalElapsedTime;
-					center->setSpriteColor(readyToFireColor);
+					center->setCurrentColor(readyToFireColor);
 				}
 			}
 		}

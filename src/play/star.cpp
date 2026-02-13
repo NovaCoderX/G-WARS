@@ -42,7 +42,7 @@ void Star::update(float elapsedTime) {
 	// We can use this center point to create 4 edges of the star and then project and draw all 5 points.
 	positionCCS = playState->getCamera()->getPositionCCS(this);
 
-	visible = playState->getCamera()->checkProjectedPoint(positionCCS);
+	visible = checkProjectedPoint(positionCCS);
 	if (visible) {
 		// Twinkle - color cycle
 		if (increasingColor) {

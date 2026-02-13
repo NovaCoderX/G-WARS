@@ -23,11 +23,9 @@
 static AstMatrix3x3 rotationMatrix;
 static float lastAnimatedTime = 0;
 
-BounceWanderer::BounceWanderer(PlayState* playState) : BounceAlien(playState) {
-	this->setAlienType(BOUNCE_WANDERER);
+BounceWanderer::BounceWanderer(PlayState* playState) : BounceAlien(playState, BOUNCE_WANDERER_ALIEN) {
 	this->setSpriteDefinition("bounce_wanderer");
-	this->setSpriteColor(NovaColor(255, 105, 180));
-	this->setExplosionColor(this->getSpriteColor());
+	this->setDefaultColor(NovaColor(255, 105, 180));
 }
 
 void BounceWanderer::update(float elapsedTime) {

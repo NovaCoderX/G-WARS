@@ -19,12 +19,9 @@
 
 #include "poly_nova.h"
 
-SnakeSegment::SnakeSegment(PlayState* playState, Sprite* parent, const NovaColor &color, bool explosive) : AlienComponent(playState, parent) {
+SnakeSegment::SnakeSegment(PlayState* playState, Sprite* parent, const NovaColor& color) :
+		AlienComponent(playState, parent) {
 	this->setSpriteDefinition("snake_segment");
-	this->setSpriteColor(color);
-
-	if (explosive) {
-		this->setExplosionSize(MEDIUM_EXPLOSION);
-		this->setExplosionColor(color);
-	}
+	this->setDefaultColor(color);
 }
+

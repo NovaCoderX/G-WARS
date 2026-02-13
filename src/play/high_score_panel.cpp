@@ -19,7 +19,7 @@
 #include "poly_nova.h"
 
 
-#define NUM_PANEL_CHARACTERS 8
+#define NUM_TOP_CHARACTERS 8
 #define NUM_PANEL_DIGITS 9
 
 static std::string formatStringWithCommas(int value) {
@@ -58,7 +58,7 @@ HighScorePanel::~HighScorePanel() {
 
 void HighScorePanel::init() {
 	// Setup the score text.
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
 		characters.push_back(new CharacterSprite(playState));
 	}
 
@@ -76,7 +76,7 @@ void HighScorePanel::init() {
 	int y = 65;
 
 	// Position the letters then transform and project in advance.
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
 		characters[i]->moveTo(x, y, 0);
 		characters[i]->transform();
 
@@ -107,7 +107,7 @@ void HighScorePanel::init() {
 }
 
 void HighScorePanel::update(float elapsedTime) {
-	std::string formattedNumber = formatStringWithCommas(playState->getPlayer()->getHighScore());
+	std::string formattedNumber = formatStringWithCommas(g_worldManager->getHighScoreHandler()->getHighestScore());
 
 	// Need to check for overflow.
 	if (formattedNumber.size() > NUM_PANEL_DIGITS) {
@@ -160,7 +160,7 @@ void HighScorePanel::update(float elapsedTime) {
 
 void HighScorePanel::draw() {
 	// First draw the text.
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
 		characters[i]->draw();
 	}
 

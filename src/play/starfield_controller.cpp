@@ -35,65 +35,89 @@ StarfieldController::~StarfieldController() {
 }
 
 void StarfieldController::init() {
-	float depth, horizontalExtents, verticalExtents;
-	int red, green, blue;
-
 	Yamlish* yamlish = g_worldManager->getYamlish();
 
-	int numStarsLayer1 = yamlish->getInt("starfield.background.density", DEFULT_NUM_STARS);
-	int numStarsLayer2 = yamlish->getInt("starfield.middleground.density", DEFULT_NUM_STARS);
-	int numStarsLayer3 = yamlish->getInt("starfield.foreground.density", DEFULT_NUM_STARS);
+	// Create the starfield if enabled.
+	bool enabled = yamlish->getBool("starfield.enabled", true);
+	if (enabled) {
+		float depth, horizontalExtents, verticalExtents;
+		int red, green, blue;
 
-	int numStars = (numStarsLayer1 + numStarsLayer2 + numStarsLayer3);
-	for (int i = 0; i < numStars; i++) {
-		stars.push_back(new Star(playState));
-	}
+		int numStarsLayer1 = yamlish->getInt("starfield.background.density", DEFULT_NUM_STARS);
+		int numStarsLayer2 = yamlish->getInt("starfield.middleground.density", DEFULT_NUM_STARS);
+		int numStarsLayer3 = yamlish->getInt("starfield.foreground.density", DEFULT_NUM_STARS);
 
-	if (numStarsLayer1 > 0) {
-		depth = yamlish->getInt("starfield.background.depth", DEFAULT_STARFIELD_DEPTH);
+		int numStars = (numStarsLayer1 + numStarsLayer2 + numStarsLayer3);
+		for (int i = 0; i < numStars; i++) {
+			stars.push_back(new Star(playState));
+		}
 
-		std::vector<float> extents = yamlish->getFloatList("starfield.background.extents");
-		horizontalExtents = extents[0];
-		verticalExtents = extents[1];
+		if (numStarsLayer1 > 0) {
+			depth = yamlish->getInt("starfield.background.depth", DEFAULT_STARFIELD_DEPTH);
 
-		std::vector<int> colors = yamlish->getIntList("starfield.background.colors");
-		red = colors[0];
-		green = colors[1];
-		blue = colors[2];
-		for (int i = 0; i < numStarsLayer1; i++) {
-			stars[i]->init(NovaColor(red, green, blue), depth, horizontalExtents, verticalExtents);
+			std::vector<float> extents = yamlish->getFloatList("starfield.background.extents");
+			horizontalExtents = extents[0];
+			verticalExtents = extents[1];
+
+			std::vector<int> colors = yamlish->getIntList("starfield.background.colors");
+			red = colors[0];
+			green = colors[1];
+			blue = colors[2];
+			for (int i = 0; i < numStarsLayer1; i++) {
+				stars[i]->init(NovaColor(red, green, blue), depth, horizontalExtents, verticalExtents);
+			}
+		}
+
+		if (numStarsLayer2 > 0) {
+			depth = yamlish->getInt("starfield.middleground.depth", DEFAULT_STARFIELD_DEPTH);
+
+			std::vector<float> extents = yamlish->getFloatList("starfield.middleground.extents");
+			horizontalExtents = extents[0];
+			verticalExtents = extents[1];
+
+			std::vector<int> colors = yamlish->getIntList("starfield.middleground.colors");
+			red = colors[0];
+			green = colors[1];
+			blue = colors[2];
+			for (int i = numStarsLayer1; i < (numStarsLayer1 + numStarsLayer2); i++) {
+				stars[i]->init(NovaColor(red, green, blue), depth, horizontalExtents, verticalExtents);
+			}
+		}
+
+		if (numStarsLayer3 > 0) {
+			depth = yamlish->getInt("starfield.foreground.depth", DEFAULT_STARFIELD_DEPTH);
+
+			std::vector<float> extents = yamlish->getFloatList("starfield.foreground.extents");
+			horizontalExtents = extents[0];
+			verticalExtents = extents[1];
+
+			std::vector<int> colors = yamlish->getIntList("starfield.foreground.colors");
+			red = colors[0];
+			green = colors[1];
+			blue = colors[2];
+			for (int i = (numStarsLayer1 + numStarsLayer2); i < numStars; i++) {
+				stars[i]->init(NovaColor(red, green, blue), depth, horizontalExtents, verticalExtents);
+			}
 		}
 	}
+}
 
-	if (numStarsLayer2 > 0) {
-		depth = yamlish->getInt("starfield.middleground.depth", DEFAULT_STARFIELD_DEPTH);
-
-		std::vector<float> extents = yamlish->getFloatList("starfield.middleground.extents");
-		horizontalExtents = extents[0];
-		verticalExtents = extents[1];
-
-		std::vector<int> colors = yamlish->getIntList("starfield.middleground.colors");
-		red = colors[0];
-		green = colors[1];
-		blue = colors[2];
-		for (int i = numStarsLayer1; i < (numStarsLayer1 + numStarsLayer2); i++) {
-			stars[i]->init(NovaColor(red, green, blue), depth, horizontalExtents, verticalExtents);
+void StarfieldController::syncOptions() {
+	Yamlish* yamlish = g_worldManager->getYamlish();
+	bool enabled = yamlish->getBool("starfield.enabled", true);
+	if (enabled) {
+		logMessage("Starfield enabled\n");
+		if (stars.empty()) {
+			this->init();
 		}
-	}
+	} else {
+		logMessage("Starfield disabled\n");
+		if (!stars.empty()) {
+			for (Star* star : stars) {
+				delete star;
+			}
 
-	if (numStarsLayer3 > 0) {
-		depth = yamlish->getInt("starfield.foreground.depth", DEFAULT_STARFIELD_DEPTH);
-
-		std::vector<float> extents = yamlish->getFloatList("starfield.foreground.extents");
-		horizontalExtents = extents[0];
-		verticalExtents = extents[1];
-
-		std::vector<int> colors = yamlish->getIntList("starfield.foreground.colors");
-		red = colors[0];
-		green = colors[1];
-		blue = colors[2];
-		for (int i = (numStarsLayer1 + numStarsLayer2); i < numStars; i++) {
-			stars[i]->init(NovaColor(red, green, blue), depth, horizontalExtents, verticalExtents);
+			stars.clear();
 		}
 	}
 }

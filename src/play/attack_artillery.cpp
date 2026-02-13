@@ -18,28 +18,26 @@
  *****************************************************************/
 #include "poly_nova.h"
 
-#define MINIMUM_CHASE_DISTANCE 10
-#define MAXIMUM_CHASE_ANGLE 60
+#define MIN_CHASE_DISTANCE 10
+#define MAX_CHASE_ANGLE 60
 #define INITIAL_FIRE_DELAY 30
 #define FIRE_INTERVAL 20
 #define READY_TO_FIRE_DELAY 6
 #define MAXIMUM_TARGET_ANGLE 30
 #define MUZZLE_VERTEX_ANCHOR 14
 
-AttackArtillery::AttackArtillery(PlayState* playState) : Alien(playState) {
-	this->setAlienType(ATTACK_ARTILLERY);
+AttackArtillery::AttackArtillery(PlayState* playState) : AttackAlien(playState, ATTACK_ARTILLERY_ALIEN) {
 	this->setSpriteDefinition("attack_artillery");
-	defaultColor = NovaColor(169, 169, 169);
+	this->setDefaultColor(NovaColor(169, 169, 169));
+
 	readyToFireColor = NovaColor(255, 201, 4);
-	this->setSpriteColor(defaultColor);
-	this->setExplosionColor(readyToFireColor);
 	readyToFire = false;
 	totalElapsedTime = lastFireTime = readyToFireTime = 0;
 }
 
 void AttackArtillery::setActive(bool active) {
 	// Base processing.
-	Alien::setActive(active);
+	AttackAlien::setActive(active);
 
 	if (active) {
 		// Rotate the sprite towards the direction of travel.
@@ -48,7 +46,6 @@ void AttackArtillery::setActive(bool active) {
 
 		// Reset.
 		readyToFire = false;
-		this->setSpriteColor(defaultColor);
 		totalElapsedTime = lastFireTime = readyToFireTime = 0;
 	}
 }
@@ -63,13 +60,13 @@ void AttackArtillery::update(float elapsedTime) {
 		NovaVertex alienPosition = this->getPositionWCS();
 
 		float between = (playerPosition - alienPosition).magnitude();
-		if (between > MINIMUM_CHASE_DISTANCE) {
+		if (between > MIN_CHASE_DISTANCE) {
 			double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
 					(playerPosition.y - alienPosition.y));
 			double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
 
 			float diff = fabs(movementDirection - playerDirection);
-			if (diff < MAXIMUM_CHASE_ANGLE) {
+			if (diff < MAX_CHASE_ANGLE) {
 				// Change our velocity to chase the player.
 				this->setVelocityFromDirection(playerDirection, this->getTotalVelocity());
 				this->setFacingTowardsDirection(playerDirection);
@@ -131,7 +128,7 @@ void AttackArtillery::update(float elapsedTime) {
 
 					// Reset.
 					readyToFire = false;
-					this->setSpriteColor(defaultColor);
+					this->setCurrentColor(this->getDefaultColor());
 
 					// Store the last time that we fired.
 					lastFireTime = totalElapsedTime;
@@ -144,7 +141,7 @@ void AttackArtillery::update(float elapsedTime) {
 					// Ready to fire another missile, change the color to let the player know.
 					readyToFire = true;
 					readyToFireTime = totalElapsedTime;
-					this->setSpriteColor(readyToFireColor);
+					this->setCurrentColor(readyToFireColor);
 				}
 			}
 		}

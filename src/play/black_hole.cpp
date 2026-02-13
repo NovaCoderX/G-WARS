@@ -19,13 +19,14 @@
 
 #include "poly_nova.h"
 
-#define DAMAGE_FACTOR 0.05
+#define MISSILE_DAMAGE_FACTOR 0.05
+#define SMART_BOMB_DAMAGE_FACTOR 0.2
 #define GRAVITY_WELL_RADIUS 100
-#define MAXIMUM_GRAVITAIONAL_PULL 4.0
+#define MAX_GRAVITAIONAL_PULL 4.0
+#define MIN_INITIAL_VELOCITY 0.1
+#define MAX_INITIAL_VELOCITY 0.3
 
-BlackHole::BlackHole(PlayState* playState) : Alien(playState) {
-	this->setAlienType(BLACK_HOLE);
-
+BlackHole::BlackHole(PlayState* playState) : Alien(playState, BLACK_HOLE_ALIEN) {
 	// Create the circle definitions.
 	innerRingDefinition = new SpriteDefinition();
 
@@ -63,10 +64,7 @@ BlackHole::BlackHole(PlayState* playState) : Alien(playState) {
 
 	innerRingDefinition->calculateBoundingSphere();
 	this->setSpriteDefinition(innerRingDefinition);
-	this->setSpriteColor(NovaColor(255,255,255));
-	this->setExplosionSize(MEDIUM_EXPLOSION);
-	this->setExplosionColor(this->getSpriteColor());
-	this->setNuggetSpawnType(POWER_UP);
+	this->setDefaultColor(NovaColor(255,255,255));
 
 	// Outer circle.
 	outerRingDefinition = new SpriteDefinition();
@@ -125,6 +123,8 @@ BlackHole::~BlackHole() {
 }
 
 void BlackHole::setActive(bool active) {
+	static bool verticalSwitch = true;
+
 	// Base processing.
 	Alien::setActive(active);
 
@@ -132,8 +132,30 @@ void BlackHole::setActive(bool active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_BLACK_HOLE);
 
-		// Reset.
-		this->setSpriteColor(NovaColor(255,255,255));
+		// Find out which spawn zone we should be using (based on the players current location).
+		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
+			// Spawn the alien in the right zone.
+			this->moveTo(RIGHT_SPAWN_POINT_X, RIGHT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+		} else {
+			// Spawn the alien in the left zone.
+			this->moveTo(LEFT_SPAWN_POINT_X, LEFT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+		}
+
+		verticalSwitch = (!verticalSwitch);
 	}
 
 	outerRing->setActive(active);
@@ -199,10 +221,10 @@ bool BlackHole::checkCollision(Missile *missile) {
 		// This alien was hit by the player's missile.
 		collision = true;
 
-		if (this->spriteColor.fade((DAMAGE_FACTOR), darkGrey)) {
+		if (this->currentColor.fade((MISSILE_DAMAGE_FACTOR), darkGrey)) {
 			// This alien was destroyed by the player's missile.
 			playState->getAlienController()->deactivate(this);
-			playState->getNuggetController()->spawnNugget(this);
+			playState->getNuggetController()->spawnNugget(EXTRA_LIFE_NUGGET, this->getPositionWCS());
 			playState->getPlayer()->increaseScore(this);
 		}
 
@@ -211,6 +233,15 @@ bool BlackHole::checkCollision(Missile *missile) {
 	}
 
 	return collision;
+}
+
+void BlackHole::smartBombNotification() {
+	static NovaColor darkGrey = NovaColor(64, 64, 64);
+
+	if (this->currentColor.fade((SMART_BOMB_DAMAGE_FACTOR), darkGrey)) {
+		// We have been destroyed.
+		playState->getAlienController()->deactivate(this);
+	}
 }
 
 void BlackHole::draw() {
@@ -235,7 +266,7 @@ void BlackHole::applyGravitionalPull(Player *player) {
 				(alienPosition.y - playerPosition.y));
 
 		// Calculate the gravitation pull based on the distance (the closer, the higher).
-		double gravitationalPull = (GRAVITY_WELL_RADIUS - between) / (GRAVITY_WELL_RADIUS / MAXIMUM_GRAVITAIONAL_PULL);
+		double gravitationalPull = (GRAVITY_WELL_RADIUS - between) / (GRAVITY_WELL_RADIUS / MAX_GRAVITAIONAL_PULL);
 
 		// Apply the gravitational velocity.
 		double radians = (alienDirection + 90) * (M_PI / 180.0);
@@ -260,23 +291,36 @@ void BlackHole::applyGravitionalPull(Player *player) {
 BlackHoleRing::BlackHoleRing(PlayState* playState, Alien* parent, SpriteDefinition *definition,
 		const NovaColor &color) : AlienComponent(playState, parent) {
 	this->setSpriteDefinition(definition);
-	increasingColor = true;
 	highColor = color;
 	lowColor = highColor;
 	lowColor.rebase(30);
-	this->setSpriteColor(lowColor);
-	this->setExplosionSize(MEDIUM_EXPLOSION);
-	this->setExplosionColor(this->highColor);
+	this->setDefaultColor(lowColor);
+	increasingColor = true;
+
+	// Set up how this object will explode.
+	this->setExplosionSize(LARGE_EXPLOSION);
+	this->setExplosionSound(SPECIAL_ALIEN_EXPLODE);
+	this->setExplosionColor(highColor);
+}
+
+void BlackHoleRing::setActive(bool active) {
+	// Base processing.
+	AlienComponent::setActive(active);
+
+	if (active) {
+		// Reset.
+		increasingColor = true;
+	}
 }
 
 void BlackHoleRing::update(float elapsedTime) {
 	// Do some simple color cycling.
 	if (increasingColor) {
-		if (spriteColor.brighten((elapsedTime / 30), highColor)) {
+		if (currentColor.brighten((elapsedTime / 30), highColor)) {
 			increasingColor = false;
 		}
 	} else {
-		if (spriteColor.fade((elapsedTime / 30), lowColor)) {
+		if (currentColor.fade((elapsedTime / 30), lowColor)) {
 			increasingColor = true;
 		}
 	}

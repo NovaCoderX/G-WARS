@@ -23,7 +23,7 @@
 #include <sstream>
 #include <algorithm>
 
-#define NUM_PANEL_CHARACTERS 5
+#define NUM_TOP_CHARACTERS 5
 #define NUM_PANEL_DIGITS 9
 
 static std::string formatStringWithCommas(int value) {
@@ -61,7 +61,7 @@ CurrentScorePanel::~CurrentScorePanel() {
 
 void CurrentScorePanel::init() {
 	// Setup the score text.
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
 		characters.push_back(new CharacterSprite(playState));
 	}
 
@@ -76,10 +76,10 @@ void CurrentScorePanel::init() {
 	int y = 65;
 
 	// Position the letters then transform and project in advance.
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
 		characters[i]->moveTo(x, y, 0);
 		characters[i]->transform();
-		x -= STANDARD_CHARACTER_WIDTH;
+		x -= SMALL_CHARACTER_WIDTH;
 	}
 
 	// Setup the score digits.
@@ -157,7 +157,7 @@ void CurrentScorePanel::update(float elapsedTime) {
 
 void CurrentScorePanel::draw() {
 	// First draw the text.
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
 		characters[i]->draw();
 	}
 

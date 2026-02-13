@@ -71,7 +71,6 @@ static std::pair<int, int> first_border_hit(double x0, double y0, double radians
 	return hit_coords;
 }
 
-// Function to check if the laser hits the target sphere.
 static bool checkLaserHit(double x0, double y0, double radians, double targetX, double targetY, double radius) {
 	// Laser direction components
 	double vx = cos(radians);
@@ -92,11 +91,18 @@ static bool checkLaserHit(double x0, double y0, double radians, double targetX, 
 	return false;  // No hit detected
 }
 
-TentacleNematocyst::TentacleNematocyst(PlayState* playState, Sprite* parent, float radius, const NovaColor& color, bool explosive) :
-		TentacleSegment(playState, parent, radius, color, explosive) {
-	lowColor = color;
+TentacleNematocyst::TentacleNematocyst(PlayState* playState, Sprite* parent, float radius, const NovaColor& color) :
+		TentacleSegment(playState, parent, radius, color) {
+	highColor = color;
+	lowColor = highColor;
 	lowColor.rebase(10);
-	increasingColor = false;
+	this->setDefaultColor(lowColor);
+	increasingColor = true;
+
+	// Set up how this object will explode.
+	this->setExplosionSize(LARGE_EXPLOSION);
+	this->setExplosionColor(highColor);
+
 	damage = 0;
 
 	laser = new Laser(playState);
@@ -116,8 +122,7 @@ void TentacleNematocyst::setActive(bool active) {
 
 	if (active) {
 		// Reset.
-		this->setSpriteColor(defaultColor);
-		increasingColor = false;
+		increasingColor = true;
 		damage = 0;
 		laser->setActive(false);
 	}
@@ -126,12 +131,12 @@ void TentacleNematocyst::setActive(bool active) {
 void TentacleNematocyst::update(float elapsedTime) {
 	if (laser->isActive()) {
 		// See if we need to expire the laser.
-		if ((!this->isVisible()) || (this->isDisabled())) {
+		if ((!this->isVisible()) || (!this->isActive())) {
 			laser->setActive(false);
 		}
 
 		if (parent->getVerticalVelocity() > 0) {
-			// Jelly moving back up the grid.
+			// Jelly moving back up the playfield.
 			laser->setActive(false);
 		}
 
@@ -190,7 +195,7 @@ void TentacleNematocyst::update(float elapsedTime) {
 	} else {
 		// Laser isn't active, see if we are now ready to fire (even if the player's shield is active).
 		Player* player = playState->getPlayer();
-		if (this->isVisible() && (!this->isDisabled()) && player->isActive()) {
+		if (this->isVisible() && (this->isActive()) && player->isActive()) {
 			if (parent->getVerticalVelocity() < 0) {
 				NovaVertex alienPosition = this->getPositionWCS();
 				NovaVertex playerPosition = player->getPositionWCS();
@@ -210,18 +215,15 @@ void TentacleNematocyst::update(float elapsedTime) {
 	}
 
 	// Need to flash green when heading down the screen to warn the player.
-	if (this->isVisible() && (!this->isDisabled())) {
+	if (this->isVisible() && (this->isActive())) {
 		if (parent->getVerticalVelocity() > 0) {
-			// Jelly moving back up the grid.
-			this->setSpriteColor(defaultColor);
-		} else {
 			// Do some simple color cycling.
 			if (increasingColor) {
-				if (spriteColor.brighten((elapsedTime / 5), defaultColor)) {
+				if (currentColor.brighten((elapsedTime / 10), highColor)) {
 					increasingColor = false;
 				}
 			} else {
-				if (spriteColor.fade((elapsedTime / 5), lowColor)) {
+				if (currentColor.fade((elapsedTime / 10), lowColor)) {
 					increasingColor = true;
 				}
 			}
@@ -237,10 +239,10 @@ bool TentacleNematocyst::checkCollision(Missile* missile) {
 		// This segment was hit by the player's missile.
 		collision = true;
 
-		if (!this->isDisabled()) {
+		if (this->isActive()) {
 			damage++;
 			if (damage >= MAX_DAMAGE) {
-				this->setDisabled(true);
+				this->setActive(false);
 			}
 		}
 	}

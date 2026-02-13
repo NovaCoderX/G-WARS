@@ -22,7 +22,7 @@
 #define NUMBER_OF_ROWS 7
 #define NUMBER_OF_COLUMN_VERTICES 9
 #define NUMBER_OF_COLUMNS 9
-#define SHAKE_DURATION 20
+#define HIGH_COLOR_INTERVAL 10
 
 static NovaVertex savedRowPositions[NUMBER_OF_ROWS];
 static NovaVertex savedColumnPositions[NUMBER_OF_COLUMNS];
@@ -33,6 +33,8 @@ PlayAreaGrid::PlayAreaGrid(PlayState* playState) {
 	columnData.staticVertices = NULL;
 	shaking = false;
 	shakeTimer = 0;
+	highColorTimer = 0;
+	highColorDisplayed = false;
 }
 
 PlayAreaGrid::~PlayAreaGrid() {
@@ -60,8 +62,9 @@ PlayAreaGrid::~PlayAreaGrid() {
 }
 
 void PlayAreaGrid::init() {
-	// Should come from the properties file.
-	NovaColor gridColor = NovaColor(32, 32, 32);
+	lowColor = NovaColor(16, 16, 16);
+	highColor = NovaColor(158, 2, 12);
+	lineColor = lowColor;
 
 	// Create the rows.
 	for (int i = 0; i < NUMBER_OF_ROWS; i++) {
@@ -84,7 +87,7 @@ void PlayAreaGrid::init() {
 	int y = 60;
 	for (int r = 0; r < NUMBER_OF_ROWS; r++) {
 		rows[r]->init(NUMBER_OF_ROW_VERTICES);
-		rows[r]->setLineColor(gridColor);
+		rows[r]->setColor(lineColor);
 
 		for (int v = 0; v < NUMBER_OF_ROW_VERTICES; v++) {
 			rows[r]->staticVertices[v] = &rowData.staticVertices[v];
@@ -122,7 +125,7 @@ void PlayAreaGrid::init() {
 	x = 80;
 	for (int r = 0; r < NUMBER_OF_COLUMNS; r++) {
 		columns[r]->init(NUMBER_OF_COLUMN_VERTICES);
-		columns[r]->setLineColor(gridColor);
+		columns[r]->setColor(lineColor);
 
 		for (int v = 0; v < NUMBER_OF_COLUMN_VERTICES; v++) {
 			columns[r]->staticVertices[v] = &columnData.staticVertices[v];
@@ -139,51 +142,59 @@ void PlayAreaGrid::init() {
 	}
 }
 
+void PlayAreaGrid::smartBombNotification() {
+	this->shaking = true;
+
+	// Reset.
+	shakeTimer = 0;
+	highColorTimer = 0;
+	highColorDisplayed = false;
+}
+
 void PlayAreaGrid::update(float elapsedTime) {
 	static NovaVertex positionCCS;
 	static bool verticalSwitch = true;
 
 	if (shaking) {
-		shakeTimer += elapsedTime;
-
-		// See if we need to stop shaking.
-		if (shakeTimer > SHAKE_DURATION) {
-			// Restore the row positions..
-			for (int i = 0; i < NUMBER_OF_ROWS; i++) {
-				rows[i]->moveTo(savedRowPositions[i]);
-			}
-
-			// Restore the column positions..
-			for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
-				columns[i]->moveTo(savedColumnPositions[i]);
-			}
-
-			// Reset.
-			shaking = false;
+		// Shake it baby.
+		float amount;
+		if (verticalSwitch) {
+			amount = float_rand(0, 3);
 		} else {
-			// Shake it baby.
-			float amount;
-			if (verticalSwitch) {
-				amount = float_rand(0, 3);
-			} else {
-				amount = -float_rand(0, 3);
-			}
-
-			for (int i = 0; i < NUMBER_OF_ROWS; i++) {
-				NovaVertex position = rows[i]->getPositionWCS();
-				position.y += amount;
-				rows[i]->moveTo(position);
-			}
-
-			for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
-				NovaVertex position = columns[i]->getPositionWCS();
-				position.x += amount;
-				columns[i]->moveTo(position);
-			}
-
-			// Switch.
-			verticalSwitch = (!verticalSwitch);
+			amount = -float_rand(0, 3);
 		}
+
+		if (highColorDisplayed) {
+			highColorTimer += elapsedTime;
+			if (highColorTimer >= HIGH_COLOR_INTERVAL) {
+				// Reset.
+				shaking = false;
+				lineColor = lowColor;
+			}
+		} else {
+			// Do some simple color cycling.
+			if (lineColor.brighten((elapsedTime / 30), highColor)) {
+				// Stay at the highest color for a few ticks.
+				highColorDisplayed = true;
+			}
+		}
+
+		for (int i = 0; i < NUMBER_OF_ROWS; i++) {
+			NovaVertex position = rows[i]->getPositionWCS();
+			position.y += amount;
+			rows[i]->moveTo(position);
+			rows[i]->setColor(lineColor);
+		}
+
+		for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
+			NovaVertex position = columns[i]->getPositionWCS();
+			position.x += amount;
+			columns[i]->moveTo(position);
+			columns[i]->setColor(lineColor);
+		}
+
+		// Switch.
+		verticalSwitch = (!verticalSwitch);
 	}
 
 	// Determine which rows are visible (has to be done after shaking because the positions would have changed).

@@ -26,11 +26,9 @@ static float currentWarpSize = 0;
 static float minWarpSize = 0;
 static float maxWarpSize = 0;
 
-ChaseRhombus::ChaseRhombus(PlayState* playState) : ChaseAlien(playState) {
-	this->setAlienType(CHASE_RHOMBUS);
+ChaseRhombus::ChaseRhombus(PlayState* playState) : ChaseAlien(playState, CHASE_RHOMBUS_ALIEN) {
 	this->setSpriteDefinition("chase_rhombus");
-	this->setSpriteColor(NovaColor(0, 150, 255));
-	this->setExplosionColor(this->getSpriteColor());
+	this->setDefaultColor(NovaColor(0, 150, 255));
 
 	if (!currentWarpSize) {
 		currentWarpSize = this->definition->staticVertices[2].y;

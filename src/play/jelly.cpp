@@ -23,26 +23,27 @@
 #define SECOND_TENTACLE_VERTEX_ANCHOR 20
 #define THIRD_TENTACLE_VERTEX_ANCHOR 21
 #define FOURTH_TENTACLE_VERTEX_ANCHOR 22
+#define MIN_INITIAL_VELOCITY 2
+#define MAX_INITIAL_VELOCITY 4
 
-Jelly::Jelly(PlayState* playState) : Alien(playState) {
-	this->setAlienType(JELLY);
+Jelly::Jelly(PlayState* playState) : Alien(playState, JELLY_ALIEN) {
 	this->setSpriteDefinition("jelly");
 	highColor = NovaColor(48, 160, 255);
 	lowColor = highColor;
 	lowColor.rebase(33);
-	this->setSpriteColor(highColor);
-	increasingColor = false;
-	this->setExplosionSize(LARGE_EXPLOSION);
-	this->setExplosionColor(this->getSpriteColor());
-
-	// Does not spawn nuggets.
-	this->setNuggetSpawnType(DO_NOT_SPAWN);
+	this->setDefaultColor(lowColor);
+	increasingColor = true;
 
 	// Create the tentacles.
 	tentacles.push_back(new Tentacle(this, FIRST_TENTACLE_ANCHOR, NovaColor(252, 7, 35)));
 	tentacles.push_back(new Tentacle(this, SECOND_TENTACLE_ANCHOR, NovaColor(251, 42, 245)));
 	tentacles.push_back(new Tentacle(this, THIRD_TENTACLE_ANCHOR, NovaColor(237, 49, 129)));
 	tentacles.push_back(new Tentacle(this, FOURTH_TENTACLE_ANCHOR, NovaColor(179, 83, 252)));
+
+	// Create an highlight to make the bell look more interesting.
+	highlight = new Sprite(playState);
+	highlight->setSpriteDefinition("jelly_highlight");
+	highlight->setCurrentColor(NovaColor(48, 255, 160));
 }
 
 Jelly::~Jelly() {
@@ -51,6 +52,11 @@ Jelly::~Jelly() {
 	}
 
 	tentacles.clear();
+
+	if (highlight) {
+		delete highlight;
+		highlight = NULL;
+	}
 }
 
 void Jelly::setActive(bool active) {
@@ -61,11 +67,26 @@ void Jelly::setActive(bool active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_BOSS);
 
+		// Find out which spawn zone we should be using (based on the players current location).
+		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
+			// Spawn the alien in the right zone.
+			this->moveTo(RIGHT_SPAWN_POINT_X, HORIZONTAL_BORDER_POSITION, 0);
+			horizontalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			this->setVelocityFromComponents(-horizontalVelocity, verticalVelocity);
+		} else {
+			// Spawn the alien in the left zone.
+			this->moveTo(LEFT_SPAWN_POINT_X, HORIZONTAL_BORDER_POSITION, 0);
+			horizontalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			this->setVelocityFromComponents(horizontalVelocity, verticalVelocity);
+		}
+
 		// Reset.
-		this->setSpriteColor(highColor);
-		increasingColor = false;
+		increasingColor = true;
 	}
 
+	// Set up all tentacles.
 	for (Tentacle* tentacle : tentacles) {
 		tentacle->setActive(active);
 	}
@@ -120,12 +141,12 @@ void Jelly::update(float elapsedTime) {
 	if (this->isVisible()) {
 		// Do some simple color cycling.
 		if (increasingColor) {
-			if (spriteColor.brighten((elapsedTime / 30), highColor)) {
+			if (currentColor.brighten((elapsedTime / 30), highColor)) {
 				// Wrap.
 				increasingColor = false;
 			}
 		} else {
-			if (spriteColor.fade((elapsedTime / 30), lowColor)) {
+			if (currentColor.fade((elapsedTime / 30), lowColor)) {
 				// Wrap.
 				increasingColor = true;
 			}
@@ -186,7 +207,7 @@ bool Jelly::checkCollision(Missile* missile) {
 	if (collision) {
 		bool disabled = true;
 		for (Tentacle* tentacle : tentacles) {
-			if (!tentacle->isDisabled()) {
+			if (tentacle->isActive()) {
 				disabled = false;
 				break;
 			}
@@ -205,15 +226,43 @@ bool Jelly::checkCollision(Missile* missile) {
 	return collision;
 }
 
-void Jelly::draw() {
-	// Base processing.
-	Alien::draw();
+void Jelly::smartBombNotification() {
+	for (Tentacle* tentacle : tentacles) {
+		if (tentacle->isActive()) {
+			tentacle->setActive(false);
+			break;
+		}
+	}
 
+	// Are we dead now?
+	bool disabled = true;
+	for (Tentacle* tentacle : tentacles) {
+		if (tentacle->isActive()) {
+			disabled = false;
+			break;
+		}
+	}
+
+	if (disabled) {
+		// All the tentacles are dead, therefore the jelly is dead.
+		playState->getAlienController()->deactivate(this);
+	}
+}
+
+void Jelly::draw() {
 	for (Tentacle* tentacle : tentacles) {
 		if (tentacle->isVisible()) {
 			tentacle->draw();
 		}
 	}
+
+	// Draw the highlight first (so it can be partially overwritten by the bell).
+	NovaVertex position = this->getPositionWCS();
+	highlight->moveTo(position);
+	highlight->draw();
+
+	// Base processing (draw the bell).
+	Alien::draw();
 }
 
 NovaVertex Jelly::getAnchorPointWCS(AnchorPoint anchor) const {

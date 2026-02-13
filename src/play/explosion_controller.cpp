@@ -24,47 +24,35 @@
 #define DEFAULT_PARTICILE_VELOCITY 4.0
 #define DEFAULT_PARTICILE_DURATION 10.0
 
-ExplosionController::ExplosionController(PlayState *playState) {
+ExplosionController::ExplosionController(PlayState* playState) {
 	this->playState = playState;
 	explosionListHead = NULL;
-	playerExplosion = NULL;
 }
 
 ExplosionController::~ExplosionController() {
-	if (playerExplosion) {
-		delete playerExplosion;
-		playerExplosion = NULL;
-	}
-
-	for (Explosion *explosion : smallAlienExplosions) {
+	for (Explosion* explosion : smallExplosions) {
 		delete explosion;
 	}
 
-	smallAlienExplosions.clear();
+	smallExplosions.clear();
 
-	for (Explosion *explosion : mediumAlienExplosions) {
+	for (Explosion* explosion : mediumExplosions) {
 		delete explosion;
 	}
 
-	mediumAlienExplosions.clear();
+	mediumExplosions.clear();
 
-	for (Explosion *explosion : largeAlienExplosions) {
+	for (Explosion* explosion : largeExplosions) {
 		delete explosion;
 	}
 
-	largeAlienExplosions.clear();
+	largeExplosions.clear();
 
-	for (Explosion *explosion : missileExplosions) {
+	for (Explosion* explosion : massiveExplosions) {
 		delete explosion;
 	}
 
-	missileExplosions.clear();
-
-	for (Explosion *explosion : laserExplosions) {
-		delete explosion;
-	}
-
-	laserExplosions.clear();
+	massiveExplosions.clear();
 }
 
 void ExplosionController::init() {
@@ -72,125 +60,56 @@ void ExplosionController::init() {
 	int numParticles;
 	float maxVelocity;
 	float duration;
-	bool lightEmitting;
 
-	Yamlish *yamlish = g_worldManager->getYamlish();
-	numParticles = yamlish->getInt("explosions.player.particle.density",
-	DEFAULT_NUM_PARTICILES);
-	maxVelocity = yamlish->getFloat("explosions.player.particle.velocity",
-	DEFAULT_PARTICILE_VELOCITY);
-	duration = yamlish->getFloat("explosions.player.particle.duration",
-	DEFAULT_PARTICILE_DURATION);
-	lightEmitting = yamlish->getBool("explosions.player.particle.lightsource",
-			false);
-	playerExplosion = new Explosion(playState, numParticles, maxVelocity,
-			duration, lightEmitting);
+	Yamlish* yamlish = g_worldManager->getYamlish();
 
-	numExplosions = yamlish->getInt("explosions.small.alien.max.instances",
-	DEFAULT_NUM_EXPLOSIONS);
+	numExplosions = yamlish->getInt("explosions.small.max.instances", DEFAULT_NUM_EXPLOSIONS);
 	if (numExplosions > 0) {
-		numParticles = yamlish->getInt(
-				"explosions.small.alien.particle.density",
-				DEFAULT_NUM_PARTICILES);
-		maxVelocity = yamlish->getFloat(
-				"explosions.small.alien.particle.velocity",
-				DEFAULT_PARTICILE_VELOCITY);
-		duration = yamlish->getFloat(
-				"explosions.small.alien.particle.duration",
-				DEFAULT_PARTICILE_DURATION);
-		lightEmitting = yamlish->getBool(
-				"explosions.small.alien.particle.lightsource", false);
+		numParticles = yamlish->getInt("explosions.small.particle.density",	DEFAULT_NUM_PARTICILES);
+		maxVelocity = yamlish->getFloat("explosions.small.particle.velocity", DEFAULT_PARTICILE_VELOCITY);
+		duration = yamlish->getFloat("explosions.small.particle.duration", DEFAULT_PARTICILE_DURATION);
 
 		for (int i = 0; i < numExplosions; i++) {
-			smallAlienExplosions.push_back(
-					new Explosion(playState, numParticles, maxVelocity,
-							duration, lightEmitting));
+			smallExplosions.push_back(new Explosion(playState, numParticles, maxVelocity, duration));
 		}
 	}
 
-	numExplosions = yamlish->getInt("explosions.medium.alien.max.instances",
-	DEFAULT_NUM_EXPLOSIONS);
+	numExplosions = yamlish->getInt("explosions.medium.max.instances", DEFAULT_NUM_EXPLOSIONS);
 	if (numExplosions > 0) {
-		numParticles = yamlish->getInt(
-				"explosions.medium.alien.particle.density",
-				DEFAULT_NUM_PARTICILES);
-		maxVelocity = yamlish->getFloat(
-				"explosions.medium.alien.particle.velocity",
-				DEFAULT_PARTICILE_VELOCITY);
-		duration = yamlish->getFloat(
-				"explosions.medium.alien.particle.duration",
-				DEFAULT_PARTICILE_DURATION);
-		lightEmitting = yamlish->getBool(
-				"explosions.medium.alien.particle.lightsource", false);
+		numParticles = yamlish->getInt("explosions.medium.particle.density", DEFAULT_NUM_PARTICILES);
+		maxVelocity = yamlish->getFloat("explosions.medium.particle.velocity", DEFAULT_PARTICILE_VELOCITY);
+		duration = yamlish->getFloat("explosions.medium.particle.duration", DEFAULT_PARTICILE_DURATION);
 
 		for (int i = 0; i < numExplosions; i++) {
-			mediumAlienExplosions.push_back(
-					new Explosion(playState, numParticles, maxVelocity,
-							duration, lightEmitting));
+			mediumExplosions.push_back(new Explosion(playState, numParticles, maxVelocity, duration));
 		}
 	}
 
-	numExplosions = yamlish->getInt("explosions.large.alien.max.instances",
-	DEFAULT_NUM_EXPLOSIONS);
+	numExplosions = yamlish->getInt("explosions.large.max.instances", DEFAULT_NUM_EXPLOSIONS);
 	if (numExplosions > 0) {
-		numParticles = yamlish->getInt("explosions.large.alien.particle.density",
-		DEFAULT_NUM_PARTICILES);
-		maxVelocity = yamlish->getFloat(
-				"explosions.large.alien.particle.velocity",
-				DEFAULT_PARTICILE_VELOCITY);
-		duration = yamlish->getFloat("explosions.large.alien.particle.duration",
-		DEFAULT_PARTICILE_DURATION);
-		lightEmitting = yamlish->getBool(
-				"explosions.large.alien.particle.lightsource", false);
+		numParticles = yamlish->getInt("explosions.large.particle.density", DEFAULT_NUM_PARTICILES);
+		maxVelocity = yamlish->getFloat("explosions.large.particle.velocity", DEFAULT_PARTICILE_VELOCITY);
+		duration = yamlish->getFloat("explosions.large.particle.duration", DEFAULT_PARTICILE_DURATION);
 
 		for (int i = 0; i < numExplosions; i++) {
-			largeAlienExplosions.push_back(
-					new Explosion(playState, numParticles, maxVelocity,
-							duration, lightEmitting));
+			largeExplosions.push_back(new Explosion(playState, numParticles, maxVelocity, duration));
 		}
 	}
 
-	numExplosions = yamlish->getInt("explosions.missile.max.instances",
-	DEFAULT_NUM_EXPLOSIONS);
+	numExplosions = yamlish->getInt("explosions.massive.max.instances", DEFAULT_NUM_EXPLOSIONS);
 	if (numExplosions > 0) {
-		numParticles = yamlish->getInt("explosions.missile.particle.density",
-		DEFAULT_NUM_PARTICILES);
-		maxVelocity = yamlish->getFloat("explosions.missile.particle.velocity",
-		DEFAULT_PARTICILE_VELOCITY);
-		duration = yamlish->getFloat("explosions.missile.particle.duration",
-		DEFAULT_PARTICILE_DURATION);
-		lightEmitting = yamlish->getBool(
-				"explosions.missile.particle.lightsource", false);
+		numParticles = yamlish->getInt("explosions.massive.particle.density", DEFAULT_NUM_PARTICILES);
+		maxVelocity = yamlish->getFloat("explosions.massive.particle.velocity", DEFAULT_PARTICILE_VELOCITY);
+		duration = yamlish->getFloat("explosions.massive.particle.duration", DEFAULT_PARTICILE_DURATION);
 
 		for (int i = 0; i < numExplosions; i++) {
-			missileExplosions.push_back(
-					new Explosion(playState, numParticles, maxVelocity,
-							duration, lightEmitting));
-		}
-	}
-
-	numExplosions = yamlish->getInt("explosions.laser.max.instances",
-	DEFAULT_NUM_EXPLOSIONS);
-	if (numExplosions > 0) {
-		numParticles = yamlish->getInt("explosions.laser.particle.density",
-		DEFAULT_NUM_PARTICILES);
-		maxVelocity = yamlish->getFloat("explosions.laser.particle.velocity",
-		DEFAULT_PARTICILE_VELOCITY);
-		duration = yamlish->getFloat("explosions.laser.particle.duration",
-		DEFAULT_PARTICILE_DURATION);
-		lightEmitting = yamlish->getBool(
-				"explosions.missile.particle.lightsource", false);
-
-		for (int i = 0; i < numExplosions; i++) {
-			laserExplosions.push_back(
-					new Explosion(playState, numParticles, maxVelocity,
-							duration, lightEmitting));
+			massiveExplosions.push_back(new Explosion(playState, numParticles, maxVelocity, duration));
 		}
 	}
 }
 
 void ExplosionController::update(float elapsedTime) {
-	Explosion *explosion = explosionListHead;
+	Explosion* explosion = explosionListHead;
 	while (explosion) {
 		explosion->update(elapsedTime);
 
@@ -199,7 +118,7 @@ void ExplosionController::update(float elapsedTime) {
 }
 
 void ExplosionController::draw() {
-	Explosion *explosion = explosionListHead;
+	Explosion* explosion = explosionListHead;
 	while (explosion) {
 		if (explosion->isVisible()) {
 			explosion->draw();
@@ -209,119 +128,13 @@ void ExplosionController::draw() {
 	}
 }
 
-void ExplosionController::createExplosion(const Player* player) {
-	if (!playerExplosion->isActive()) {
-		playerExplosion->moveTo(player->getPositionWCS());
-		playerExplosion->setExplosionColor(player->getExplosionColor());
-		g_worldManager->startSound(PLAYER_EXPLODE);
-		this->addToList(playerExplosion);
-	}
-}
-
-void ExplosionController::createExplosion(const Alien* alien) {
-	Explosion *explosion = NULL;
-
-	// Find an empty slot.
-	if (alien->getExplosionSize() == SMALL_EXPLOSION) {
-		for (uint i = 0; i < smallAlienExplosions.size(); i++) {
-			if (!smallAlienExplosions[i]->isActive()) {
-				explosion = smallAlienExplosions[i];
-				break;
-			}
-		}
-	} else if (alien->getExplosionSize() == MEDIUM_EXPLOSION) {
-		for (uint i = 0; i < mediumAlienExplosions.size(); i++) {
-			if (!mediumAlienExplosions[i]->isActive()) {
-				explosion = mediumAlienExplosions[i];
-				break;
-			}
-		}
-	} else if (alien->getExplosionSize() == LARGE_EXPLOSION) {
-		for (uint i = 0; i < largeAlienExplosions.size(); i++) {
-			if (!largeAlienExplosions[i]->isActive()) {
-				explosion = largeAlienExplosions[i];
-				break;
-			}
-		}
-	}
-
+void ExplosionController::createExplosion(const ExplosiveObject* explosiveObject) {
+	Explosion* explosion = this->getNextAvailable(explosiveObject->getExplosionSize());
 	if (explosion) {
-		explosion->moveTo(alien->getPositionWCS());
-		explosion->setExplosionColor(alien->getExplosionColor());
-		g_worldManager->startSound(ENEMY_EXPLODE);
-		this->addToList(explosion);
-	}
-}
-
-void ExplosionController::createExplosion(const AlienComponent* alien) {
-	Explosion *explosion = NULL;
-
-	// Find an empty slot.
-	if (alien->getExplosionSize() == SMALL_EXPLOSION) {
-		for (uint i = 0; i < smallAlienExplosions.size(); i++) {
-			if (!smallAlienExplosions[i]->isActive()) {
-				explosion = smallAlienExplosions[i];
-				break;
-			}
-		}
-	} else if (alien->getExplosionSize() == MEDIUM_EXPLOSION) {
-		for (uint i = 0; i < mediumAlienExplosions.size(); i++) {
-			if (!mediumAlienExplosions[i]->isActive()) {
-				explosion = mediumAlienExplosions[i];
-				break;
-			}
-		}
-	} else if (alien->getExplosionSize() == LARGE_EXPLOSION) {
-		for (uint i = 0; i < largeAlienExplosions.size(); i++) {
-			if (!largeAlienExplosions[i]->isActive()) {
-				explosion = largeAlienExplosions[i];
-				break;
-			}
-		}
-	}
-
-	if (explosion) {
-		explosion->moveTo(alien->getPositionWCS());
-		explosion->setExplosionColor(alien->getExplosionColor());
-		g_worldManager->startSound(ENEMY_EXPLODE);
-		this->addToList(explosion);
-	}
-}
-
-void ExplosionController::createExplosion(const Missile* missile) {
-	Explosion *explosion = NULL;
-
-	// Find an empty slot.
-	for (uint i = 0; i < missileExplosions.size(); i++) {
-		if (!missileExplosions[i]->isActive()) {
-			explosion = missileExplosions[i];
-			break;
-		}
-	}
-
-	if (explosion) {
-		explosion->moveTo(missile->getPositionWCS());
-		explosion->setExplosionColor(missile->getExplosionColor());
-		g_worldManager->startSound(MISSILE_EXPLODE);
-		this->addToList(explosion);
-	}
-}
-
-void ExplosionController::createExplosion(const Laser* laser) {
-	Explosion *explosion = NULL;
-
-	// Find an empty slot.
-	for (uint i = 0; i < laserExplosions.size(); i++) {
-		if (!laserExplosions[i]->isActive()) {
-			explosion = laserExplosions[i];
-			break;
-		}
-	}
-
-	if (explosion) {
-		explosion->moveTo(laser->getEndPoint());
-		explosion->setExplosionColor(laser->getExplosionColor());
-		g_worldManager->startSound(LASER_EXPLODE);
+		explosion->moveTo(explosiveObject->getExplosionOrigin());
+		explosion->setColor(explosiveObject->getExplosionColor());
+		explosion->setLightEmitting(explosiveObject->isLightEmittingExplosion());
+		g_worldManager->startSound(explosiveObject->getExplosionSound());
 		this->addToList(explosion);
 	}
 }
@@ -330,16 +143,16 @@ void ExplosionController::deactivate(Explosion* explosion) {
 	this->removeFromList(explosion);
 }
 
-void ExplosionController::applyLighting(RenderVertex &targetVertex) {
+void ExplosionController::applyLighting(RenderVertex& targetVertex) {
 	// Loop through all active explosions and see if our target vertex
 	// is within the explosion's bounding sphere (using the explosion origin's CCS).
 	// If it is within the bounding sphere then add its color to the vertex light sum.
-	Explosion *explosion = explosionListHead;
+	Explosion* explosion = explosionListHead;
 	while (explosion) {
 		if (explosion->isVisible() && explosion->isLightEmitting()) {
 			NovaVertex between = (targetVertex - explosion->getPositionCCS());
 			if (between.magnitude() < explosion->getBoundingSphere()) {
-				targetVertex.lightSum += explosion->getExplosionColor();
+				targetVertex.lightSum += explosion->getColor();
 			}
 
 			if (targetVertex.lightSum.isWhite()) {
@@ -352,7 +165,55 @@ void ExplosionController::applyLighting(RenderVertex &targetVertex) {
 	}
 }
 
-void ExplosionController::addToList(Explosion *explosion) {
+Explosion* ExplosionController::getNextAvailable(ExplosionSize size) {
+	Explosion* explosion = NULL;
+
+	// Find an empty slot.
+	switch (size) {
+	case SMALL_EXPLOSION:
+		for (uint i = 0; i < smallExplosions.size(); i++) {
+			if (!smallExplosions[i]->isActive()) {
+				explosion = smallExplosions[i];
+				break;
+			}
+		}
+		break;
+
+	case MEDIUM_EXPLOSION:
+		for (uint i = 0; i < mediumExplosions.size(); i++) {
+			if (!mediumExplosions[i]->isActive()) {
+				explosion = mediumExplosions[i];
+				break;
+			}
+		}
+		break;
+
+	case LARGE_EXPLOSION:
+		for (uint i = 0; i < largeExplosions.size(); i++) {
+			if (!largeExplosions[i]->isActive()) {
+				explosion = largeExplosions[i];
+				break;
+			}
+		}
+		break;
+
+	case MASSIVE_EXPLOSION:
+		for (uint i = 0; i < massiveExplosions.size(); i++) {
+			if (!massiveExplosions[i]->isActive()) {
+				explosion = massiveExplosions[i];
+				break;
+			}
+		}
+		break;
+
+	default: // NO_EXPLOSION
+		explosion = NULL; // Keep compiler happy.
+	}
+
+	return explosion;
+}
+
+void ExplosionController::addToList(Explosion* explosion) {
 	/*
 	 ** If no objects have been inserted into the world yet
 	 ** then make this object the head of the object list.
@@ -367,7 +228,7 @@ void ExplosionController::addToList(Explosion *explosion) {
 		 ** set the passed object as the new last object in the
 		 ** g_world.
 		 */
-		Explosion *last_in_list = explosionListHead;
+		Explosion* last_in_list = explosionListHead;
 
 		/*
 		 ** Find the last object in the g_world
@@ -394,9 +255,9 @@ void ExplosionController::addToList(Explosion *explosion) {
 	explosion->setActive(true);
 }
 
-void ExplosionController::removeFromList(Explosion *explosion) {
-	Explosion *previousObj = explosion->priorInList;
-	Explosion *nextObj = explosion->nextInList;
+void ExplosionController::removeFromList(Explosion* explosion) {
+	Explosion* previousObj = explosion->priorInList;
+	Explosion* nextObj = explosion->nextInList;
 
 	// Have to treat list head removal differently.
 	if (explosion == explosionListHead) {

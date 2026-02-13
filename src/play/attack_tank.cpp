@@ -24,24 +24,22 @@
 #define MAXIMUM_TARGET_ANGLE 30
 #define MUZZLE_VERTEX_ANCHOR 9
 
-AttackTank::AttackTank(PlayState* playState) : Alien(playState) {
-	this->setAlienType(ATTACK_TANK);
-	defaultColorTurret = NovaColor(169, 169, 169);
-	defaultColorBase = defaultColorTurret;
+AttackTank::AttackTank(PlayState* playState) : AttackAlien(playState, ATTACK_TANK_ALIEN) {
+	this->setSpriteDefinition("attack_tank_base");
+	NovaColor defaultColorBase = NovaColor(169, 169, 169);
 	defaultColorBase.rebase(80);
+	this->setDefaultColor(defaultColorBase);
+
 	readyToFireColorTurret = NovaColor(255, 201, 4);
 	readyToFireColorBase = readyToFireColorTurret;
 	readyToFireColorBase.rebase(80);
 	readyToFire = false;
 	totalElapsedTime = lastFireTime = readyToFireTime = 0;
 
-	this->setSpriteDefinition("attack_tank_base");
-	this->setSpriteColor(defaultColorBase);
-	this->setExplosionColor(readyToFireColorTurret);
-
 	gunTurret = new Sprite(playState);
 	gunTurret->setSpriteDefinition("attack_tank_turret");
-	gunTurret->setSpriteColor(defaultColorTurret);
+	defaultColorTurret = NovaColor(169, 169, 169);
+	gunTurret->setCurrentColor(defaultColorTurret);
 }
 
 AttackTank::~AttackTank() {
@@ -53,7 +51,7 @@ AttackTank::~AttackTank() {
 
 void AttackTank::setActive(bool active) {
 	// Base processing.
-	Alien::setActive(active);
+	AttackAlien::setActive(active);
 
 	if (active) {
 		// Rotate the sprite towards the direction of travel.
@@ -62,8 +60,7 @@ void AttackTank::setActive(bool active) {
 
 		// Reset.
 		readyToFire = false;
-		this->setSpriteColor(defaultColorBase);
-		gunTurret->setSpriteColor(defaultColorTurret);
+		gunTurret->setCurrentColor(defaultColorTurret);
 		totalElapsedTime = lastFireTime = readyToFireTime = 0;
 	}
 }
@@ -132,8 +129,8 @@ void AttackTank::update(float elapsedTime) {
 
 						// Reset.
 						readyToFire = false;
-						this->setSpriteColor(defaultColorBase);
-						gunTurret->setSpriteColor(defaultColorTurret);
+						this->setCurrentColor(this->getDefaultColor());
+						gunTurret->setCurrentColor(defaultColorTurret);
 
 						// Store the last time that we fired.
 						lastFireTime = totalElapsedTime;
@@ -146,8 +143,8 @@ void AttackTank::update(float elapsedTime) {
 						// Ready to fire another missile, change the color to let the player know.
 						readyToFire = true;
 						readyToFireTime = totalElapsedTime;
-						this->setSpriteColor(readyToFireColorBase);
-						gunTurret->setSpriteColor(readyToFireColorTurret);
+						this->setCurrentColor(readyToFireColorBase);
+						gunTurret->setCurrentColor(readyToFireColorTurret);
 					}
 				}
 			}

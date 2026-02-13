@@ -22,7 +22,7 @@
 #include <string>
 #include <sstream>
 
-#define NUM_PANEL_CHARACTERS 3
+#define NUM_TOP_CHARACTERS 3
 #define MAX_NUM_VALUE 9
 
 PlayerStatsPanel::PlayerStatsPanel(PlayState* playState) : HudPanel(playState) {
@@ -50,7 +50,7 @@ PlayerStatsPanel::~PlayerStatsPanel() {
 
 void PlayerStatsPanel::init() {
 	// Setup the stats.
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
 		characters.push_back(new CharacterSprite(playState));
 	}
 
@@ -119,7 +119,7 @@ void PlayerStatsPanel::update(float elapsedTime) {
 
 void PlayerStatsPanel::draw() {
 	// First draw the text.
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
 		characters[i]->draw();
 	}
 

@@ -21,21 +21,18 @@
 
 #define SEGMENT_SPAWN_INTERVAL 0.3
 #define NUMBER_OF_SEGMENTS 21
+#define MIN_INITIAL_VELOCITY 6
+#define MAX_INITIAL_VELOCITY 9
 
-Snake::Snake(PlayState* playState) : Alien(playState) {
-	this->setAlienType(SNAKE);
-
+Snake::Snake(PlayState* playState) : Alien(playState, SNAKE_ALIEN) {
 	// The alien container doesn't explode.
-	this->setExplosionSize(DO_NOT_EXPLODE);
-
-	// Does not spawn nuggets.
-	this->setNuggetSpawnType(DO_NOT_SPAWN);
+	this->setExplosionSize(NO_EXPLOSION);
 
 	NovaColor firstSegmentColor = NovaColor(255, 243, 2);
 	NovaColor secondSegmentColor = NovaColor(255, 82, 15);
 
 	// Create the head segment (the first segment).
-	headSegment = new SnakeHeadSegment(playState, this, firstSegmentColor, true);
+	headSegment = new SnakeHeadSegment(playState, this, firstSegmentColor);
 	segments.push_back(headSegment);
 
 	// The first body segment's parent will be the head.
@@ -43,12 +40,6 @@ Snake::Snake(PlayState* playState) : Alien(playState) {
 
 	// Create the body segments.
 	for (int i = 1; i < NUMBER_OF_SEGMENTS; i++) {
-		// Make every 3rd segment explosive.
-		bool explosive = false;
-		if (i % 3 == 0) {
-			explosive = true;
-		}
-
 		// Swap colors.
 		NovaColor segmentColor = secondSegmentColor;
 		if (i % 2 == 0) {
@@ -57,9 +48,9 @@ Snake::Snake(PlayState* playState) : Alien(playState) {
 
 		SnakeBodySegment* bodySegment = NULL;
 		if (i < (NUMBER_OF_SEGMENTS - 1)) {
-			bodySegment = new SnakeBodySegment(playState, parentSegment, segmentColor, explosive);
+			bodySegment = new SnakeBodySegment(playState, parentSegment, segmentColor);
 		} else {
-			bodySegment = new SnakeTailSegment(playState, parentSegment, segmentColor, explosive);
+			bodySegment = new SnakeTailSegment(playState, parentSegment, segmentColor);
 		}
 
 		// Add to the list of segments.
@@ -91,6 +82,8 @@ Snake::~Snake() {
 }
 
 void Snake::setActive(bool active) {
+	static bool verticalSwitch = true;
+
 	// Base processing.
 	Alien::setActive(active);
 
@@ -98,12 +91,37 @@ void Snake::setActive(bool active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_BOSS);
 
-		// Set up all segments.
-		double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
+		// Find out which spawn zone we should be using (based on the players current location).
+		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
+			// Spawn the alien in the right zone.
+			this->moveTo(RIGHT_SPAWN_POINT_X, RIGHT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
 
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+		} else {
+			// Spawn the alien in the left zone.
+			this->moveTo(LEFT_SPAWN_POINT_X, LEFT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+		}
+
+		verticalSwitch = (!verticalSwitch);
+
+		// Set up all segments (the segments will be activated later).
+		double movementDirection = calculateDirectionFromVelocityComponents(horizontalVelocity, verticalVelocity);
 		for (SnakeSegment* segment : segments) {
+			segment->setVisible(false);
 			segment->moveTo(this->getPositionWCS());
-			segment->setVelocityFromComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
+			segment->setVelocityFromComponents(horizontalVelocity, verticalVelocity);
 			segment->setFacingTowardsDirection(movementDirection);
 		}
 
@@ -112,7 +130,6 @@ void Snake::setActive(bool active) {
 		lastSpawnedTime = 0;
 		totalElapsedTime = 0;
 	} else {
-		// We have been destroyed, deactivate all of the segments.
 		for (SnakeSegment* segment : segments) {
 			segment->setActive(false);
 		}
@@ -122,10 +139,8 @@ void Snake::setActive(bool active) {
 void Snake::update(float elapsedTime) {
 	totalElapsedTime += elapsedTime;
 
-	for (SnakeSegment* segment : segments) {
-		if (segment->isActive()) {
-			segment->update(elapsedTime);
-		}
+	for (int i = 0; i < numSpawnedSegments; i++) {
+		segments[i]->update(elapsedTime);
 	}
 
 	// If any segments are visible then mark the container as visible (so the draw method is called).
@@ -137,7 +152,7 @@ void Snake::update(float elapsedTime) {
 		}
 	}
 
-	// See if we need to spawn the next segment.
+	// See if we are ready to spawn the next segment.
 	if (numSpawnedSegments < NUMBER_OF_SEGMENTS) {
 		if ((totalElapsedTime - lastSpawnedTime) >= SEGMENT_SPAWN_INTERVAL) {
 			segments[numSpawnedSegments]->setActive(true);
@@ -187,7 +202,7 @@ bool Snake::checkCollision(Missile* missile) {
 			// See if the head is vulnerable as a result of this body collision.
 			bool vulnerable = true;
 			for (SnakeBodySegment* segment : bodySegments) {
-				if (!segment->isDisabled()) {
+				if (segment->isActive()) {
 					vulnerable = false;
 					break;
 				}
@@ -208,7 +223,7 @@ bool Snake::checkCollision(Missile* missile) {
 	}
 
 	if (collision) {
-		if (headSegment->isDisabled()) {
+		if (!headSegment->isActive()) {
 			// The head is dead, therefore the snake is dead.
 			playState->getAlienController()->deactivate(this);
 			playState->getPlayer()->increaseScore(this);
@@ -219,6 +234,38 @@ bool Snake::checkCollision(Missile* missile) {
 	}
 
 	return collision;
+}
+
+void Snake::smartBombNotification() {
+	if (!headSegment->isVulnerable()) {
+		for (SnakeBodySegment* segment : bodySegments) {
+			if (segment->isActive()) {
+				segment->setActive(false);
+				break;
+			}
+		}
+
+		// See if the head is vulnerable as a result of the smart bomb.
+		bool vulnerable = true;
+		for (SnakeBodySegment* segment : bodySegments) {
+			if (segment->isActive()) {
+				vulnerable = false;
+				break;
+			}
+		}
+
+		if (vulnerable) {
+			// The head can now be destroyed.
+			headSegment->setVulnerable(true);
+		}
+	} else {
+		// Head is dead.
+		headSegment->setActive(false);
+
+		// The head is dead, therefore the snake is dead.
+		playState->getAlienController()->deactivate(this);
+		playState->getPlayer()->increaseScore(this);
+	}
 }
 
 void Snake::draw() {
@@ -233,13 +280,13 @@ void Snake::draw() {
 			NovaVertex start = childSegment->getAnchorPointCCS(SnakeSegment::BOTTOM_VERTEX_ANCHOR);
 			displayVertex.x = horizontalProject(start.x, start.z);
 			displayVertex.y = verticalProject(start.y, start.z);
-			glColor3fv(childSegment->getSpriteColor().data);
+			glColor3fv(childSegment->getCurrentColor().data);
 			glVertex2i(displayVertex.x, displayVertex.y);
 
 			NovaVertex finish = parentSegment->getAnchorPointCCS(SnakeSegment::BOTTOM_VERTEX_ANCHOR);
 			displayVertex.x = horizontalProject(finish.x, finish.z);
 			displayVertex.y = verticalProject(finish.y, finish.z);
-			glColor3fv(parentSegment->getSpriteColor().data);
+			glColor3fv(parentSegment->getCurrentColor().data);
 			glVertex2i(displayVertex.x, displayVertex.y);
 
 			// Draw the segments.

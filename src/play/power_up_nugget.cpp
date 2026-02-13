@@ -20,13 +20,12 @@
 
 #define NUGGET_DURATION 40
 
-PowerUpNugget::PowerUpNugget(PlayState* playState) : Nugget(playState) {
-	nuggetType = POWER_UP;
+PowerUpNugget::PowerUpNugget(PlayState* playState) : Nugget(playState, POWER_UP_NUGGET) {
 	this->setSpriteDefinition("alien_nugget");
 	highColor = NovaColor(37, 147, 245);
 	lowColor = highColor;
 	lowColor.rebase(60);
-	this->setSpriteColor(highColor);
+	this->setDefaultColor(highColor);
 	increasingColor = false;
 	totalElapsedTime = 0;
 }
@@ -37,7 +36,6 @@ void PowerUpNugget::setActive(bool active) {
 
 	if (active) {
 		// Reset.
-		this->setSpriteColor(highColor);
 		increasingColor = false;
 		totalElapsedTime = 0;
 	}
@@ -51,18 +49,18 @@ void PowerUpNugget::update(float elapsedTime) {
 	// See if we need to destroy the nugget (expired).
 	if (totalElapsedTime > NUGGET_DURATION) {
 		// fade out.
-		if (this->spriteColor.fade((elapsedTime / 30), black)) {
+		if (this->currentColor.fade((elapsedTime / 30), black)) {
 			playState->getNuggetController()->deactivate(this);
 		}
 	} else {
 		// Do some simple color cycling.
 		if (increasingColor) {
-			if (spriteColor.brighten((elapsedTime / 30), highColor)) {
+			if (currentColor.brighten((elapsedTime / 30), highColor)) {
 				// Wrap.
 				increasingColor = false;
 			}
 		} else {
-			if (spriteColor.fade((elapsedTime / 30), lowColor)) {
+			if (currentColor.fade((elapsedTime / 30), lowColor)) {
 				// Wrap.
 				increasingColor = true;
 			}

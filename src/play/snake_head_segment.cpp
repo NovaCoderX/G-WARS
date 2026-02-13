@@ -26,14 +26,21 @@
 #define DEFAULT_FIRE_INTERVAL 10
 #define MAXIMUM_TARGET_ANGLE 33
 
-SnakeHeadSegment::SnakeHeadSegment(PlayState* playState, Sprite* parent, const NovaColor &color,  bool explosive) :
- SnakeSegment(playState, parent, color, explosive) {
+SnakeHeadSegment::SnakeHeadSegment(PlayState* playState, Sprite* parent, const NovaColor &color) :
+ SnakeSegment(playState, parent, color) {
 	highColor = color;
 	lowColor = color;
 	lowColor.rebase(10);
+	this->setDefaultColor(highColor);
 	increasingColor = false;
+	vulnerable = false;
 	damage = 0;
 	fireInterval = DEFAULT_FIRE_INTERVAL;
+
+	// Set up how this object will explode.
+	this->setExplosionSize(MASSIVE_EXPLOSION);
+	this->setExplosionSound(BOSS_ALIEN_EXPLODE);
+	this->setExplosionColor(this->getDefaultColor());
 
 	// Create the face data.
 	fangData.color = NovaColor(255, 82, 15);
@@ -139,29 +146,28 @@ SnakeHeadSegment::~SnakeHeadSegment() {
 	}
 }
 
-void SnakeHeadSegment::setVulnerable(bool vulnerable) {
-	// Base processing.
-	SnakeSegment::setVulnerable(vulnerable);
-
-	if (vulnerable) {
-		// Increase fire rate when vulnerable.
-		fireInterval = (DEFAULT_FIRE_INTERVAL / 2);
-	} else {
-		fireInterval = DEFAULT_FIRE_INTERVAL;
-	}
-}
-
 void SnakeHeadSegment::setActive(bool active) {
 	// Base processing.
 	SnakeSegment::setActive(active);
 
 	if (active) {
 		// Reset.
-		this->setSpriteColor(highColor);
 		increasingColor = false;
+		vulnerable = false;
 		damage = 0;
-
+		fireInterval = DEFAULT_FIRE_INTERVAL;
 		totalElapsedTime = lastFireTime = 0;
+	}
+}
+
+void SnakeHeadSegment::setVulnerable(bool vulnerable) {
+	this->vulnerable = vulnerable;
+
+	if (vulnerable) {
+		// Increase fire rate when vulnerable.
+		fireInterval = (DEFAULT_FIRE_INTERVAL / 2);
+	} else {
+		fireInterval = DEFAULT_FIRE_INTERVAL;
 	}
 }
 
@@ -214,11 +220,11 @@ void SnakeHeadSegment::update(float elapsedTime) {
 		if (this->isVulnerable()) {
 			// Do some simple color cycling.
 			if (increasingColor) {
-				if (spriteColor.brighten((elapsedTime / 5), highColor)) {
+				if (currentColor.brighten((elapsedTime / 10), highColor)) {
 					increasingColor = false;
 				}
 			} else {
-				if (spriteColor.fade((elapsedTime / 5), lowColor)) {
+				if (currentColor.fade((elapsedTime / 10), lowColor)) {
 					increasingColor = true;
 				}
 			}
@@ -256,10 +262,10 @@ bool SnakeHeadSegment::checkCollision(Missile* missile) {
 		// This segment was hit by the player's missile.
 		collision = true;
 
-		if (this->isVulnerable()) {
+		if (this->isActive() && this->isVulnerable()) {
 			damage++;
 			if (damage >= MAX_DAMAGE) {
-				this->setDisabled(true);
+				this->setActive(false);
 			}
 		}
 	}

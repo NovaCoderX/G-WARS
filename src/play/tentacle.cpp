@@ -22,7 +22,6 @@
 #define NUMBER_OF_SEGMENTS 12
 #define MAX_SEGMENT_SIZE 6
 #define MIN_SEGMENT_SIZE 2
-#define TENTACLE_LENGTH 40.0
 #define MOVEMENT_AMPLITUDE 10.0
 #define MOVEMENT_FREQUENCY 0.15
 #define MOVEMENT_VELOCITY 0.3
@@ -35,6 +34,9 @@ Tentacle::Tentacle(Jelly* jelly, Jelly::AnchorPoint anchor, const NovaColor &col
     // Randomize each tentacle's movement.
     phaseOffset = (float_rand(1, 4) / 4) * 6.28318f;
 
+    // Randomize the tentacle's length.
+    length = float_rand(30.0, 50.0);
+
 	// Create the segments.
     float decrement = ((float)(MAX_SEGMENT_SIZE - MIN_SEGMENT_SIZE) / NUMBER_OF_SEGMENTS);
     float currentSize = MAX_SEGMENT_SIZE;
@@ -43,17 +45,11 @@ Tentacle::Tentacle(Jelly* jelly, Jelly::AnchorPoint anchor, const NovaColor &col
     finalColor.rebase(30);
 
     for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
-		// Make every 3rd segment explosive.
-		bool explosive = false;
-		if (i % 3 == 0) {
-			explosive = true;
-		}
-
 		if (i < (NUMBER_OF_SEGMENTS - 1)) {
-			segments.push_back(new TentacleSegment(jelly->getPlayState(), jelly, currentSize, currentColor, explosive));
+			segments.push_back(new TentacleSegment(jelly->getPlayState(), jelly, currentSize, currentColor));
 		} else {
 			// Add the last segment.
-			nematocyst = new TentacleNematocyst(jelly->getPlayState(), jelly, currentSize, NovaColor(34, 250, 5), explosive);
+			nematocyst = new TentacleNematocyst(jelly->getPlayState(), jelly, currentSize, NovaColor(34, 250, 5));
 			segments.push_back(nematocyst);
 		}
 
@@ -64,8 +60,8 @@ Tentacle::Tentacle(Jelly* jelly, Jelly::AnchorPoint anchor, const NovaColor &col
 		currentColor.fade((1.0 / NUMBER_OF_SEGMENTS), finalColor);
 	}
 
-    visible = false;
-    disabled = false;
+	active = false;
+	visible = false;
 	totalElapsedTime = 0;
 }
 
@@ -80,19 +76,11 @@ Tentacle::~Tentacle() {
 	nematocyst = NULL;
 }
 
-void Tentacle::setDisabled(bool disabled) {
-	for (TentacleSegment* segment : segments) {
-		segment->setDisabled(disabled);
-	}
-
-	this->disabled = disabled;
-}
-
 void Tentacle::setActive(bool active) {
+	this->active = active;
+
 	if (active) {
 		// Reset.
-		this->setVisible(false);
-		this->setDisabled(false);
 		totalElapsedTime = 0;
 	}
 
@@ -106,10 +94,10 @@ void Tentacle::update(float elapsedTime) {
 
 	// Position the segments.
 	NovaVertex origin = jelly->getAnchorPointWCS(anchor);
-	for (int i = 0; i < NUMBER_OF_SEGMENTS; ++i) {
-		float distance = (TENTACLE_LENGTH / (NUMBER_OF_SEGMENTS - 1)) * i;
+	for (uint i = 0; i < segments.size(); ++i) {
+		float distance = (length / (segments.size() - 1)) * i;
 		float sway = MOVEMENT_AMPLITUDE * sinf((distance * MOVEMENT_FREQUENCY) + (totalElapsedTime * MOVEMENT_VELOCITY) + phaseOffset);
-        sway *= (distance / TENTACLE_LENGTH); // Taper motion near base (sway less).
+        sway *= (distance / length); // Taper motion near base (sway less).
         segments[i]->moveTo(origin.x + sway, origin.y - distance, 0);
 	}
 
@@ -160,10 +148,10 @@ bool Tentacle::checkCollision(Missile* missile) {
 		}
 	}
 
-	if (collision && (!this->isDisabled())) {
+	if (collision && (this->isActive())) {
 		// See if this tentacle has just been disabled.
-		if (nematocyst->isDisabled()) {
-			this->setDisabled(true);
+		if (!nematocyst->isActive()) {
+			this->setActive(false);
 		}
 	}
 

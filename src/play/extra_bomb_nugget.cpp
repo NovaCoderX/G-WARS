@@ -20,9 +20,9 @@
 
 #define NUGGET_DURATION 40
 
-MultiplierNugget::MultiplierNugget(PlayState* playState) : Nugget(playState, MULTIPLIER_NUGGET) {
+ExtraBombNugget::ExtraBombNugget(PlayState* playState) : Nugget(playState, EXTRA_BOMB_NUGGET) {
 	this->setSpriteDefinition("alien_nugget");
-	highColor = NovaColor(201, 255, 4);
+	highColor = NovaColor(190, 30, 255);
 	lowColor = highColor;
 	lowColor.rebase(60);
 	this->setDefaultColor(highColor);
@@ -30,7 +30,7 @@ MultiplierNugget::MultiplierNugget(PlayState* playState) : Nugget(playState, MUL
 	totalElapsedTime = 0;
 }
 
-void MultiplierNugget::setActive(bool active) {
+void ExtraBombNugget::setActive(bool active) {
 	// Base processing.
 	Nugget::setActive(active);
 
@@ -41,7 +41,7 @@ void MultiplierNugget::setActive(bool active) {
 	}
 }
 
-void MultiplierNugget::update(float elapsedTime) {
+void ExtraBombNugget::update(float elapsedTime) {
 	static NovaColor black;
 
 	totalElapsedTime += elapsedTime;
@@ -70,5 +70,4 @@ void MultiplierNugget::update(float elapsedTime) {
 	// Mark this object visible/invisible for this frame.
 	this->calculateVisibility();
 }
-
 

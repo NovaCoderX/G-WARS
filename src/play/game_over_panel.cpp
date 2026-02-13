@@ -18,12 +18,12 @@
  *****************************************************************/
 #include "poly_nova.h"
 
-#define NUM_PANEL_CHARACTERS 8
+#define NUM_TOP_CHARACTERS 8
 #define FIRST_WORD_LENGTH 4
-#define CHARACTER_WIDTH 15
 
 GameOverPanel::GameOverPanel(PlayState* playState) : HudPanel(playState) {
 	visible = false;
+	animationComplete = false;
 }
 
 GameOverPanel::~GameOverPanel() {
@@ -36,7 +36,7 @@ GameOverPanel::~GameOverPanel() {
 
 void GameOverPanel::init() {
 	// Setup the game over message.
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
 		characters.push_back(new CharacterSprite(playState));
 	}
 
@@ -55,20 +55,20 @@ void GameOverPanel::init() {
 	// First word.
 	for (int i = 0; i < FIRST_WORD_LENGTH; i++) {
 		characters[i]->moveTo(x, 0, 0);
-		x += CHARACTER_WIDTH;
+		x += LARGE_CHARACTER_WIDTH;
 	}
 
 	// Add a space in the middle of the words.
-	x += CHARACTER_WIDTH;
+	x += LARGE_CHARACTER_WIDTH;
 
 	// Second word.
-	for (int i = FIRST_WORD_LENGTH; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = FIRST_WORD_LENGTH; i < NUM_TOP_CHARACTERS; i++) {
 		characters[i]->moveTo(x, 0, 0);
-		x += CHARACTER_WIDTH;
+		x += LARGE_CHARACTER_WIDTH;
 	}
 
 	// Then we need to transform and project each letter in advance.
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
 		characters[i]->transform();
 	}
 
@@ -78,12 +78,12 @@ void GameOverPanel::init() {
 }
 
 void GameOverPanel::update(float elapsedTime) {
-	currentTextColor.brighten((elapsedTime / 90), textColor);
+	animationComplete = currentTextColor.brighten((elapsedTime / 90), textColor);
 }
 
 void GameOverPanel::draw() {
-	for (int i = 0; i < NUM_PANEL_CHARACTERS; i++) {
-		characters[i]->setSpriteColor(currentTextColor);
+	for (int i = 0; i < NUM_TOP_CHARACTERS; i++) {
+		characters[i]->setCurrentColor(currentTextColor);
 		characters[i]->draw();
 	}
 }

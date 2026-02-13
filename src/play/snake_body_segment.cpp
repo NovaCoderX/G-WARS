@@ -20,22 +20,13 @@
 #include "poly_nova.h"
 
 #define DAMAGE_FACTOR 0.25
+#define FOLLOW_DISTANCE 6.0
 
-SnakeBodySegment::SnakeBodySegment(PlayState* playState, Sprite* parent, const NovaColor &color,
-		bool explosive) : SnakeSegment(playState, parent, color, explosive) {
-	defaultColor = color;
-	disabledColor = NovaColor(64, 64, 64);
-}
-
-void SnakeBodySegment::setDisabled(bool disabled) {
-	// Base processing.
-	SnakeSegment::setDisabled(disabled);
-
-	if (disabled) {
-		this->setSpriteColor(disabledColor);
-	} else {
-		this->setSpriteColor(defaultColor);
-	}
+SnakeBodySegment::SnakeBodySegment(PlayState* playState, Sprite* parent, const NovaColor &color) : SnakeSegment(playState, parent, color) {
+	// Set up how this object will explode.
+	this->setExplosionSize(LARGE_EXPLOSION);
+	this->setExplosionSound(SILENCE);
+	this->setExplosionColor(this->getDefaultColor());
 }
 
 void SnakeBodySegment::update(float elapsedTime) {
@@ -46,13 +37,16 @@ void SnakeBodySegment::update(float elapsedTime) {
 	alienPosition = this->getPositionWCS();
 	parentPosition = parent->getPositionWCS();
 
-	double parentDirection = calculateDirectionFromVelocityComponents((parentPosition.x - alienPosition.x),
-			(parentPosition.y - alienPosition.y));
-	double horzVelocity = parentPosition.x - alienPosition.x;
-	double vertVelocity = parentPosition.y - alienPosition.y;
-	double velocity = sqrt(horzVelocity * horzVelocity + vertVelocity * vertVelocity);
-	this->setVelocityFromDirection(parentDirection, velocity);
-	this->setFacingTowardsDirection(parentDirection);
+	float currentDistance = (parentPosition - alienPosition).magnitude();
+	if (currentDistance > FOLLOW_DISTANCE) {
+		double parentDirection = calculateDirectionFromVelocityComponents((parentPosition.x - alienPosition.x),
+				(parentPosition.y - alienPosition.y));
+		double horzVelocity = parentPosition.x - alienPosition.x;
+		double vertVelocity = parentPosition.y - alienPosition.y;
+		double velocity = sqrt(horzVelocity * horzVelocity + vertVelocity * vertVelocity);
+		this->setVelocityFromDirection(parentDirection, velocity);
+		this->setFacingTowardsDirection(parentDirection);
+	}
 
 	// Apply the velocity.
 	this->applyVelocity(elapsedTime);
@@ -69,13 +63,14 @@ bool SnakeBodySegment::checkCollision(Missile* missile) {
 		// This segment was hit by the player's missile.
 		collision = true;
 
-		if (!this->isDisabled()) {
-			if (this->spriteColor.fade(DAMAGE_FACTOR, disabledColor)) {
-				this->setDisabled(true);
+		if (this->isActive()) {
+			if (this->currentColor.fade(DAMAGE_FACTOR, this->getDisabledtColor())) {
+				this->setActive(false);
 			}
 		}
 	}
 
 	return collision;
 }
+
 

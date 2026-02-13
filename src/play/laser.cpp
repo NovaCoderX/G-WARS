@@ -20,6 +20,11 @@
 
 Laser::Laser(PlayState* playState) {
 	this->playState = playState;
+
+	// Set up how this object will explode.
+	this->setExplosionSize(SMALL_EXPLOSION);
+	this->setExplosionSound(LASER_EXPLODE);
+	this->setLightEmittingExplosion(false);
 }
 
 void Laser::draw() {

@@ -19,13 +19,16 @@
 
 #include "poly_nova.h"
 
-RocketShip::RocketShip(PlayState* playState) : Alien(playState) {
-	this->setAlienType(ROCKET_SHIP);
+#define MIN_INITIAL_VELOCITY 8
+#define MAX_INITIAL_VELOCITY 16
+
+RocketShip::RocketShip(PlayState* playState) : Alien(playState, ROCKET_SHIP_ALIEN) {
 	this->setSpriteDefinition("rocket_ship");
-	this->setSpriteColor(NovaColor(86, 173, 10));
-	this->setExplosionSize(MEDIUM_EXPLOSION);
-	this->setExplosionColor(this->getSpriteColor());
-	this->setNuggetSpawnType(POWER_UP);
+	highColor = NovaColor(86, 173, 10);
+	lowColor = highColor;
+	lowColor.rebase(30);
+	this->setDefaultColor(lowColor);
+	increasingColor = true;
 }
 
 void RocketShip::setActive(bool active) {
@@ -35,6 +38,26 @@ void RocketShip::setActive(bool active) {
 	if (active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_ROCKET_SHIP);
+
+		// Find out which spawn zone we should be using (based on the players current location).
+		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
+			// Spawn the alien in the right zone.
+			this->moveTo(RIGHT_SPAWN_POINT_X, float_rand(-60, 60), 0);
+			this->setVelocityFromComponents(-float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY), 0);
+
+			// Rotate the sprite to match the direction of travel.
+			this->setFacingTowardsDirection(LEFT);
+		} else {
+			// Spawn the alien in the left zone.
+			this->moveTo(LEFT_SPAWN_POINT_X, float_rand(-60, 60), 0);
+			this->setVelocityFromComponents(float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY), 0);
+
+			// Rotate the sprite to match the direction of travel.
+			this->setFacingTowardsDirection(RIGHT);
+		}
+
+		// Reset.
+		increasingColor = true;
 	}
 }
 
@@ -63,6 +86,20 @@ void RocketShip::update(float elapsedTime) {
 
 	// Mark this object visible/invisible for this frame.
 	this->calculateVisibility();
+
+	// Animate.
+	if (this->isVisible()) {
+		// Do some simple color cycling.
+		if (increasingColor) {
+			if (currentColor.brighten((elapsedTime / 10), highColor)) {
+				increasingColor = false;
+			}
+		} else {
+			if (currentColor.fade((elapsedTime / 10), lowColor)) {
+				increasingColor = true;
+			}
+		}
+	}
 }
 
 

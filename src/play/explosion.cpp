@@ -18,12 +18,16 @@
  *****************************************************************/
 #include "poly_nova.h"
 
-Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, float duration, bool lightEmitting) {
+enum ExplosionDuration {
+	INNER_DURATION = 0, MIDDLE_DURATION = 1, OUTER_DURATION = 2
+};
+
+Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, float duration) {
 	this->playState = playState;
 	nextInList = priorInList = NULL;
 
 	if (numParticles <= 0) {
-		fatalError("Invalid number of particles\n");
+		fatalError("Invalid number of innerParticles\n");
 	}
 
 	if (maxVelocity <= 0) {
@@ -35,19 +39,26 @@ Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, 
 	}
 
 	this->numParticles = numParticles;
-	particles = new NovaParticle[this->numParticles];
+	innerParticles = new NovaParticle[this->numParticles];
+	middleParticles = new NovaParticle[this->numParticles];
+	outerParticles = new NovaParticle[this->numParticles];
 
 	for (int i = 0; i < numParticles; i++) {
-		particles[i].horizontalVelocity = float_rand(-maxVelocity, maxVelocity);
-		particles[i].verticalVelocity = float_rand(-maxVelocity, maxVelocity);
+		innerParticles[i].horizontalVelocity = float_rand(-maxVelocity, maxVelocity);
+		innerParticles[i].verticalVelocity = float_rand(-maxVelocity, maxVelocity);
+		middleParticles[i].horizontalVelocity = float_rand(-maxVelocity, maxVelocity);
+		middleParticles[i].verticalVelocity = float_rand(-maxVelocity, maxVelocity);
+		outerParticles[i].horizontalVelocity = float_rand(-maxVelocity, maxVelocity);
+		outerParticles[i].verticalVelocity = float_rand(-maxVelocity, maxVelocity);
 	}
 
-	this->duration = duration;
-	currentFadeAmount = 0;
+	this->duration[INNER_DURATION] = duration / 4;
+	this->duration[MIDDLE_DURATION] = duration / 2;
+	this->duration[OUTER_DURATION] = duration;
 	totalFadeAmount = 0;
 
 	/*
-	 ** Iterate through the particles
+	 ** Iterate through the innerParticles
 	 ** and store the distance of the vertex farthest away
 	 ** from the explosion's origin.
 	 */
@@ -56,8 +67,8 @@ Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, 
 	for (int i = 0; i < numParticles; i++) {
 		NovaVertex particleLocation;
 
-		particleLocation.x = (particles[i].horizontalVelocity * duration);
-		particleLocation.y = (particles[i].verticalVelocity * duration);
+		particleLocation.x = (innerParticles[i].horizontalVelocity * duration);
+		particleLocation.y = (innerParticles[i].verticalVelocity * duration);
 		particleLocation.z = 0;
 
 		if (particleLocation.magnitude() > farthest) {
@@ -65,21 +76,31 @@ Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, 
 		}
 	}
 
-	// Calculate how much we need to grow the bounding sphere (each update) to contain the expanding particles.
+	// Calculate how much we need to grow the bounding sphere (each update) to contain the expanding innerParticles.
 	boundingSphereExpansionFactor = (farthest / duration);
 
-	this->lightEmitting = lightEmitting;
+	lightEmitting = false;
 	totalElapsedTime = 0;
 }
 
 Explosion::~Explosion() {
-	if (particles) {
-		delete[] particles;
-		particles = NULL;
+	if (innerParticles) {
+		delete[] innerParticles;
+		innerParticles = NULL;
+	}
+
+	if (middleParticles) {
+		delete[] middleParticles;
+		middleParticles = NULL;
+	}
+
+	if (outerParticles) {
+		delete[] outerParticles;
+		outerParticles = NULL;
 	}
 }
 
-void Explosion::setExplosionColor(const NovaColor& color) {
+void Explosion::setColor(const NovaColor& color) {
 	this->explosionColor = color;
 
 	// Seed.
@@ -97,8 +118,9 @@ void Explosion::setExplosionColor(const NovaColor& color) {
 		fatalError("Invalid explosion starting color\n");
 	}
 
-	currentFadeAmount = 0;
 	totalFadeAmount = hightest;
+
+	// Reset.
 	totalElapsedTime = 0;
 }
 
@@ -107,29 +129,29 @@ void Explosion::update(float elapsedTime) {
 
 	totalElapsedTime += elapsedTime;
 
-	if (totalElapsedTime >= duration) {
+	// Amount to reduce this tick.
+	float fadeAmount = (totalFadeAmount / duration[OUTER_DURATION]) * elapsedTime;
+
+	if (explosionColor.fade(fadeAmount, black)) {
 		playState->getExplosionController()->deactivate(this);
 	} else {
-		float fadeAmount = ((totalElapsedTime / duration) * totalFadeAmount);
-		explosionColor.fade((fadeAmount - currentFadeAmount), black);
-		currentFadeAmount = fadeAmount;
-
 		// Mark this object visible/invisible for this frame.
 		this->calculateVisibility();
 	}
+
 }
 
 void Explosion::calculateVisibility() {
 	positionCCS = playState->getCamera()->getPositionCCS(this);
 
 	// If the object's origin is within the view port then it's definitely visible.
-	if (playState->getCamera()->checkProjectedPoint(positionCCS)) {
+	if (checkProjectedPoint(positionCCS)) {
 		visible = true;
 	} else {
 		// Take the objects extents into account.
 		NovaVertex topR = NovaVertex(getBoundingSphere() + positionCCS.x, getBoundingSphere() + positionCCS.y, positionCCS.z);
 		NovaVertex botL = NovaVertex(-getBoundingSphere() + positionCCS.x, -getBoundingSphere() + positionCCS.y, positionCCS.z);
-		visible = playState->getCamera()->checkProjectedPoints(topR, botL);
+		visible = checkProjectedPoints(topR, botL);
 	}
 }
 
@@ -141,14 +163,42 @@ void Explosion::draw() {
 
 	for (int i = 0; i < numParticles; i++) {
 		particle = positionCCS;
-		particle.x += (particles[i].horizontalVelocity * totalElapsedTime);
-		particle.y += (particles[i].verticalVelocity * totalElapsedTime);
+		particle.x += (outerParticles[i].horizontalVelocity * totalElapsedTime);
+		particle.y += (outerParticles[i].verticalVelocity * totalElapsedTime);
 
 		// Transform.
 		displayVertex.x = horizontalProject(particle.x, particle.z);
 		displayVertex.y = verticalProject(particle.y, particle.z);
 
 		glVertex2i(displayVertex.x, displayVertex.y);
+	}
+
+	if (totalElapsedTime < duration[MIDDLE_DURATION]) {
+		for (int i = 0; i < numParticles; i++) {
+			particle = positionCCS;
+			particle.x += (middleParticles[i].horizontalVelocity * totalElapsedTime);
+			particle.y += (middleParticles[i].verticalVelocity * totalElapsedTime);
+
+			// Transform.
+			displayVertex.x = horizontalProject(particle.x, particle.z);
+			displayVertex.y = verticalProject(particle.y, particle.z);
+
+			glVertex2i(displayVertex.x, displayVertex.y);
+		}
+
+		if (totalElapsedTime < duration[INNER_DURATION]) {
+			for (int i = 0; i < numParticles; i++) {
+				particle = positionCCS;
+				particle.x += (innerParticles[i].horizontalVelocity * totalElapsedTime);
+				particle.y += (innerParticles[i].verticalVelocity * totalElapsedTime);
+
+				// Transform.
+				displayVertex.x = horizontalProject(particle.x, particle.z);
+				displayVertex.y = verticalProject(particle.y, particle.z);
+
+				glVertex2i(displayVertex.x, displayVertex.y);
+			}
+		}
 	}
 }
 

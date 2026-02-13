@@ -25,11 +25,9 @@ static AstMatrix3x3 rotationMatrix;
 static float lastAnimatedTime = 0;
 
 
-ChaseStar::ChaseStar(PlayState* playState) : ChaseAlien(playState) {
-	this->setAlienType(CHASE_RHOMBUS);
+ChaseStar::ChaseStar(PlayState* playState) : ChaseAlien(playState, CHASE_STAR_ALIEN) {
 	this->setSpriteDefinition("chase_star");
-	this->setSpriteColor(NovaColor(255, 5, 104));
-	this->setExplosionColor(this->getSpriteColor());
+	this->setDefaultColor(NovaColor(255, 5, 104));
 }
 
 void ChaseStar::update(float elapsedTime) {

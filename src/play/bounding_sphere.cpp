@@ -53,23 +53,13 @@ BoundingSphere::BoundingSphere(PlayState* playState, Sprite* parent, int anchorI
 	}
 
 	sphereDefinition->calculateBoundingSphere();
-		this->setSpriteDefinition(sphereDefinition);
+	this->setSpriteDefinition(sphereDefinition);
 }
 
 BoundingSphere::~BoundingSphere() {
 	if (sphereDefinition) {
 		delete sphereDefinition;
 		sphereDefinition = NULL;
-	}
-}
-
-void BoundingSphere::setActive(bool active) {
-	// Base processing.
-	AlienComponent::setActive(active);
-
-	if (active) {
-		// Reset.
-		this->setDisabled(true);
 	}
 }
 

@@ -47,8 +47,6 @@ PlayAreaController::~PlayAreaController() {
 }
 
 void PlayAreaController::init() {
-	Yamlish* yamlish = g_worldManager->getYamlish();
-
 	for (int i = 0; i < NUMBER_OF_BORDERS; i++) {
 		borders.push_back(new PlayAreaBorder(playState));
 	}
@@ -104,10 +102,36 @@ void PlayAreaController::init() {
 	borders[BOTTOM_BORDER]->lineColors[LINE_END] = &borderData.lineColors[1];
 	borders[BOTTOM_BORDER]->moveTo(0, -HORIZONTAL_BORDER_POSITION, 0);
 
-	bool gridEnabled = yamlish->getBool("playarea.grid.enabled", true);
-	if (gridEnabled) {
+	// Create the grid if enabled.
+	Yamlish* yamlish = g_worldManager->getYamlish();
+	bool enabled = yamlish->getBool("playfield.enabled", true);
+	if (enabled) {
 		grid = new PlayAreaGrid(playState);
 		grid->init();
+	}
+}
+
+void PlayAreaController::syncOptions() {
+	Yamlish* yamlish = g_worldManager->getYamlish();
+	bool enabled = yamlish->getBool("playfield.enabled", true);
+	if (enabled) {
+		logMessage("Playfield grid enabled\n");
+		if (!grid) {
+			grid = new PlayAreaGrid(playState);
+			grid->init();
+		}
+	} else {
+		logMessage("Playfield grid disabled\n");
+		if (grid) {
+			delete grid;
+			grid = NULL;
+		}
+	}
+}
+
+void PlayAreaController::smartBombNotification() {
+	if (grid) {
+		grid->smartBombNotification();
 	}
 }
 
@@ -257,8 +281,3 @@ bool PlayAreaController::isWithinZone(ZoneIndex zoneIndex, Sprite *object) {
 	return result;
 }
 
-void PlayAreaController::shakeGrid() {
-	if (grid) {
-		grid->startShaking();
-	}
-}

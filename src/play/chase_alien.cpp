@@ -18,11 +18,48 @@
  *****************************************************************/
 #include "poly_nova.h"
 
-#define MINIMUM_CHASE_DISTANCE 10
-#define MAXIMUM_CHASE_ANGLE 10
+#define MIN_CHASE_DISTANCE 10
+#define MAX_CHASE_ANGLE 10
+#define MIN_INITIAL_VELOCITY 2
+#define MAX_INITIAL_VELOCITY 4
 
-ChaseAlien::ChaseAlien(PlayState* playState) : Alien(playState) {
+
+ChaseAlien::ChaseAlien(PlayState* playState, AlienType alienType) : Alien(playState, alienType) {
 	// Empty.
+}
+
+void ChaseAlien::setActive(bool active) {
+	static bool verticalSwitch = true;
+
+	// Base processing.
+	Alien::setActive(active);
+
+	if (active) {
+		// Find out which spawn zone we should be using (based on the players current location).
+		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
+			// Spawn the alien in the right zone.
+			this->moveTo(RIGHT_SPAWN_POINT_X, RIGHT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+		} else {
+			// Spawn the alien in the left zone.
+			this->moveTo(LEFT_SPAWN_POINT_X, LEFT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+		}
+
+		verticalSwitch = (!verticalSwitch);
+	}
 }
 
 void ChaseAlien::update(float elapsedTime) {
@@ -33,14 +70,14 @@ void ChaseAlien::update(float elapsedTime) {
 		NovaVertex alienPosition = this->getPositionWCS();
 
 		float between = (playerPosition - alienPosition).magnitude();
-		if (between > MINIMUM_CHASE_DISTANCE) {
+		if (between > MIN_CHASE_DISTANCE) {
 			double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
 					(playerPosition.y - alienPosition.y));
 			double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(),
 					this->getVerticalVelocity());
 
 			float diff = fabs(movementDirection - playerDirection);
-			if (diff < MAXIMUM_CHASE_ANGLE) {
+			if (diff < MAX_CHASE_ANGLE) {
 				// Change our velocity to chase the player.
 				this->setVelocityFromDirection(playerDirection, this->getTotalVelocity());
 			}

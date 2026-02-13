@@ -19,10 +19,21 @@
 
 #include "poly_nova.h"
 
-Nugget::Nugget(PlayState *playState) : Sprite(playState) {
+Nugget::Nugget(PlayState *playState, NuggetType nuggetType) : Sprite(playState) {
 	this->playState = playState;
-	nuggetType = UNDEFINED;
+	this->nuggetType = nuggetType;
 	nextInList = priorInList = NULL;
+	defaultColor = NovaColor(255, 255, 255);
+}
+
+void Nugget::setActive(bool active) {
+	// Base processing.
+	Sprite::setActive(active);
+
+	if (active) {
+		// Reset.
+		this->setCurrentColor(defaultColor);
+	}
 }
 
 void Nugget::checkCollision(Player *player) {

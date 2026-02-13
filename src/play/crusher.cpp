@@ -19,14 +19,9 @@
 
 #include "poly_nova.h"
 
-Crusher::Crusher(PlayState* playState) : Alien(playState) {
-	this->setAlienType(CRUSHER);
-
+Crusher::Crusher(PlayState* playState) : Alien(playState, CRUSHER_ALIEN) {
 	// The alien container doesn't explode.
-	this->setExplosionSize(DO_NOT_EXPLODE);
-
-	// Does not spawn nuggets.
-	this->setNuggetSpawnType(DO_NOT_SPAWN);
+	this->setExplosionSize(NO_EXPLOSION);
 
 	// Create the two banks.
 	leftCrusher = new LeftCrusherPlatform(playState, this);
@@ -52,6 +47,10 @@ void Crusher::setActive(bool active) {
 	if (active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_BOSS);
+
+		// Set initial position, direction and velocity of the new alien.
+		this->moveTo(0, 0, 0);
+		this->setVelocityFromComponents(0, 0);
 	}
 
 	leftCrusher->setActive(active);
@@ -62,8 +61,17 @@ void Crusher::update(float elapsedTime) {
 	leftCrusher->update(elapsedTime);
 	rightCrusher->update(elapsedTime);
 
+	this->setVisible(false);
 	if (leftCrusher->isVisible() || rightCrusher->isVisible()) {
 		this->setVisible(true);
+	}
+
+	// See if we are now dead (both platforms are inactive and have finished retreating).
+	if ((!leftCrusher->isActive()) && (!rightCrusher->isActive())) {
+		if ((!leftCrusher->isRetreating()) && (!rightCrusher->isRetreating())) {
+			playState->getAlienController()->deactivate(this);
+			playState->getPlayer()->increaseScore(this);
+		}
 	}
 }
 
@@ -92,9 +100,9 @@ bool Crusher::checkCollision(Missile *missile) {
 	}
 
 	if (collision) {
-		if (leftCrusher->isDisabled() && rightCrusher->isDisabled()) {
-			playState->getAlienController()->deactivate(this);
-			playState->getPlayer()->increaseScore(this);
+		if ((!leftCrusher->isActive()) && (!rightCrusher->isActive())) {
+			leftCrusher->setRetreating(true);
+			rightCrusher->setRetreating(true);
 		}
 
 		// Missile has been destroyed.
@@ -102,6 +110,20 @@ bool Crusher::checkCollision(Missile *missile) {
 	}
 
 	return collision;
+}
+
+void Crusher::smartBombNotification() {
+	/*if (leftCrusher->isActive()) {
+		leftCrusher->smartBombNotification();
+	} else if (rightCrusher->isActive()) {
+		rightCrusher->smartBombNotification();
+	}
+
+	if ((!leftCrusher->isActive()) && (!rightCrusher->isActive())) {
+		leftCrusher->setRetreating(true);
+		rightCrusher->setRetreating(true);
+	}*/
+	playState->getAlienController()->deactivate(this);
 }
 
 void Crusher::draw() {

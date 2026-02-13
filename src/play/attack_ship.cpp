@@ -94,16 +94,13 @@ static bool checkLaserHit(double x0, double y0, double radians, double targetX, 
 	return false;  // No hit detected
 }
 
-AttackShip::AttackShip(PlayState* playState) : Alien(playState) {
-	this->setAlienType(ATTACK_SHIP);
-	defaultColor = NovaColor(169, 169, 169);
+AttackShip::AttackShip(PlayState* playState) : AttackAlien(playState, ATTACK_SHIP_ALIEN) {
+	this->setSpriteDefinition("attack_ship");
+	this->setDefaultColor(NovaColor(169, 169, 169));
+
 	readyToFireColor = NovaColor(201, 255, 4);
 	readyToFire = false;
 	totalElapsedTime = lastFireTime = readyToFireTime = 0;
-
-	this->setSpriteDefinition("attack_ship");
-	this->setSpriteColor(defaultColor);
-	this->setExplosionColor(readyToFireColor);
 
 	laser = new Laser(playState);
 	laser->setColor(readyToFireColor);
@@ -118,7 +115,7 @@ AttackShip::~AttackShip() {
 
 void AttackShip::setActive(bool active) {
 	// Base processing.
-	Alien::setActive(active);
+	AttackAlien::setActive(active);
 
 	if (active) {
 		// Rotate the sprite towards the direction of travel.
@@ -128,7 +125,6 @@ void AttackShip::setActive(bool active) {
 		// Reset.
 		readyToFire = false;
 		laser->setActive(false);
-		this->setSpriteColor(defaultColor);
 		totalElapsedTime = lastFireTime = readyToFireTime = 0;
 	}
 }
@@ -174,7 +170,7 @@ void AttackShip::update(float elapsedTime) {
 		// If the laser is currently active, deactivate it.
 		if (laser->isActive()) {
 			laser->setActive(false);
-			this->setSpriteColor(defaultColor);
+			this->setCurrentColor(this->getDefaultColor());
 		}
 	}
 
@@ -187,7 +183,7 @@ void AttackShip::update(float elapsedTime) {
 		// See if we need to expire the laser.
 		if ((!this->isVisible()) || ((totalElapsedTime - lastFireTime) > FIRE_DURATION)) {
 			laser->setActive(false);
-			this->setSpriteColor(defaultColor);
+			this->setCurrentColor(this->getDefaultColor());
 		} else {
 			// The laser is still active.
 			NovaVertex alienPosition = this->getPositionWCS();
@@ -270,7 +266,7 @@ void AttackShip::update(float elapsedTime) {
 					// Ready to fire again, change color to let the player know.
 					readyToFire = true;
 					readyToFireTime = totalElapsedTime;
-					this->setSpriteColor(readyToFireColor);
+					this->setCurrentColor(readyToFireColor);
 				}
 			}
 		}

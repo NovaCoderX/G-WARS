@@ -20,6 +20,8 @@
 
 #define GATE_DISTANCE 18
 #define GATE_ANGLE 6
+#define MIN_INITIAL_VELOCITY 1
+#define MAX_INITIAL_VELOCITY 2
 
 template <typename T>
 T clamp(T value, T minVal, T maxVal) {
@@ -28,26 +30,24 @@ T clamp(T value, T minVal, T maxVal) {
     return value;
 }
 
-MiniGate::MiniGate(PlayState* playState) : Alien(playState) {
-	this->setAlienType(MINI_GATE);
-
+MiniGate::MiniGate(PlayState* playState) : Alien(playState, MINI_GATE_ALIEN) {
 	// The alien container doesn't explode.
-	this->setExplosionSize(DO_NOT_EXPLODE);
-
-	// Does not spawn nuggets.
-	this->setNuggetSpawnType(DO_NOT_SPAWN);
+	this->setExplosionSize(NO_EXPLOSION);
 
 	head = new AlienComponent(playState, this);
 	head->setSpriteDefinition("mini_gate");
-	head->setSpriteColor(NovaColor(252, 152, 3));
+	head->setDefaultColor(NovaColor(252, 152, 3));
 	head->setExplosionSize(MEDIUM_EXPLOSION);
-	head->setExplosionColor(head->getSpriteColor());
+	head->setExplosionSound(SPECIAL_ALIEN_EXPLODE);
+	head->setExplosionColor(head->getDefaultColor());
+
 
 	tail = new AlienComponent(playState, this);
 	tail->setSpriteDefinition("mini_gate");
-	tail->setSpriteColor(NovaColor(252, 152, 3));
+	tail->setDefaultColor(NovaColor(252, 152, 3));
 	tail->setExplosionSize(MEDIUM_EXPLOSION);
-	tail->setExplosionColor(tail->getSpriteColor());
+	tail->setExplosionSound(SPECIAL_ALIEN_EXPLODE);
+	tail->setExplosionColor(tail->getDefaultColor());
 
 	laser = new Laser(playState);
 	laserHighColor = NovaColor(252, 240, 3);
@@ -74,6 +74,8 @@ MiniGate::~MiniGate() {
 }
 
 void MiniGate::setActive(bool active) {
+	static bool verticalSwitch = true;
+
 	// Base processing.
 	Alien::setActive(active);
 
@@ -81,17 +83,42 @@ void MiniGate::setActive(bool active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_MINI_GATE);
 
+		// Find out which spawn zone we should be using (based on the players current location).
+		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
+			// Spawn the alien in the right zone.
+			this->moveTo(RIGHT_SPAWN_POINT_X, RIGHT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+		} else {
+			// Spawn the alien in the left zone.
+			this->moveTo(LEFT_SPAWN_POINT_X, LEFT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+		}
+
+		verticalSwitch = (!verticalSwitch);
+
 		// Setup the head and tail platforms.
 		NovaVertex headPosition = this->getPositionWCS();
 		head->moveTo(headPosition);
-		head->setVelocityFromComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
+		head->setVelocityFromComponents(horizontalVelocity, verticalVelocity);
 
 		// The tail needs to be positioned slightly below and offset from the head.
 		NovaVertex tailPosition = this->getPositionWCS();
 		tailPosition.x -= GATE_ANGLE;
 		tailPosition.y -= GATE_DISTANCE;
 		tail->moveTo(tailPosition);
-		tail->setVelocityFromComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
+		tail->setVelocityFromComponents(horizontalVelocity, verticalVelocity);
 
 		// Point the head towards the tail.
 		double direction = calculateDirectionFromVelocityComponents((tailPosition.x - headPosition.x),
@@ -246,10 +273,18 @@ bool MiniGate::checkCollision(Player* player) {
 		NovaVertex difference = (playerPosition - closestPoint);
 		float distSq = difference.magnitudeSquared();
 		if (distSq <= (player->getBoundingSphere() * player->getBoundingSphere())) {
-			// Player went through the gate.
-			NuggetSpawnMode savedMode = playState->getNuggetController()->setSpawnMode(ALWAYS_SPAWN_NUGGETS);
-			playState->getAlienController()->destroyAliens();
-			playState->getNuggetController()->setSpawnMode(savedMode);
+			// Player went through the gate, destroy all life and spawn nuggets.
+			Alien* alien = playState->getAlienController()->alienListHead;
+			while (alien) {
+				playState->getAlienController()->deactivate(alien);
+
+				if (alien->getAlienCategory() == Alien::STANDARD_ALIEN) {
+					playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, alien->getPositionWCS());
+				}
+
+				alien = alien->nextInList;
+			}
+
 			playState->getPlayer()->increaseScore(this);
 		}
 	}

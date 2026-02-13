@@ -19,10 +19,18 @@
 #include "poly_nova.h"
 
 #define RESPAWN_INTERVAL 33
+#define CAMERA_ZOOM_FACTOR 10
+#define CAMERA_MAX_ZOOM_AMOUNT -120
+#define CAMERA_MIN_ZOOM_AMOUNT -240
+#define TIME_DEMO_DURATION 100000
 
 static Uint32 lastFrameTime = 0;
 
-PlayState::PlayState() {
+#ifdef TIME_DEMO_ENABLED
+static Uint32 timeDemoEndTime = 0;
+#endif
+
+PlayState::PlayState() : GameState(PLAY_STATE) {
 	camera = NULL;
 	player = NULL;
 	playAreaController = NULL;
@@ -109,7 +117,34 @@ void PlayState::init() {
 }
 
 void PlayState::handleKeyDown(SDL_keysym *keysym) {
+	NovaVertex newCameraPosition = camera->getPositionWCS();
+
 	switch (keysym->sym) {
+	case SDLK_RETURN:
+		// Alt-enter toggles full screen mode
+		if (keysym->mod & KMOD_ALT) {
+			g_worldManager->toggleFullScreen();
+		}
+		break;
+
+	case SDLK_EQUALS:
+		newCameraPosition.z += CAMERA_ZOOM_FACTOR;
+		if (newCameraPosition.z > CAMERA_MAX_ZOOM_AMOUNT) {
+			newCameraPosition.z = CAMERA_MAX_ZOOM_AMOUNT;
+		}
+
+		camera->moveTo(newCameraPosition);
+		camera->calculateWorldToCameraMatrix();
+		break;
+	case SDLK_MINUS:
+		newCameraPosition.z -= CAMERA_ZOOM_FACTOR;
+		if (newCameraPosition.z < CAMERA_MIN_ZOOM_AMOUNT) {
+			newCameraPosition.z = CAMERA_MIN_ZOOM_AMOUNT;
+		}
+
+		camera->moveTo(newCameraPosition);
+		camera->calculateWorldToCameraMatrix();
+		break;
 	case SDLK_ESCAPE:
 		g_worldManager->setActiveState(MENU_STATE);
 		break;
@@ -154,15 +189,20 @@ void PlayState::processInput() {
 			break;
 		case SDL_JOYBUTTONDOWN:
 			if (event.jbutton.button == 0) {
-				if ((!player->isActive()) && (!player->getNumLives())) {
-					g_worldManager->setActiveState(MENU_STATE);
-				} else {
+				if (player->getNumLives()) {
 					player->fireMissileRequest(true);
+				} else {
+					// Game over man.
+					if (hudController->getGameOverPanel()->isAnimationComplete()) {
+						g_worldManager->setActiveState(MENU_STATE);
+					}
 				}
 			}
 
 			if (event.jbutton.button == 1) {
-				player->dropBombRequest();
+				if (player->isActive()) {
+					player->dropBombRequest();
+				}
 			}
 			break;
 		case SDL_JOYBUTTONUP:
@@ -186,36 +226,45 @@ void PlayState::processInput() {
 
 void PlayState::update() {
 	Uint32 currentFrameTime = SDL_GetTicks();
-	float elapsedTime = (currentFrameTime - lastFrameTime) / 1000.0;
+	float elapsedTime = (currentFrameTime - lastFrameTime) / 100.0;
 
-	// First update the player.
-	if (player->isActive()) {
-		player->update(elapsedTime);
-	} else if (player->getNumLives()) {
-		// Player died but will be reborn....
-		resurrectionTimer += elapsedTime;
-		if (resurrectionTimer >= RESPAWN_INTERVAL) {
-			// Back to life.
-			player->setActive(true);
-
-			// Reset.
-			resurrectionTimer = 0;
+#ifdef TIME_DEMO_ENABLED
+		if (currentFrameTime >= timeDemoEndTime) {
+			logMessage("Time demo completed, shutting down...\n");
+			exit(EXIT_SUCCESS);
 		}
-	}
+#else
+		// First update the player.
+		if (player->isActive()) {
+			player->update(elapsedTime);
+		} else if (player->getNumLives()) {
+			// Player will be reborn....
+			resurrectionTimer += elapsedTime;
+			if (resurrectionTimer >= RESPAWN_INTERVAL) {
+				// Back to life.
+				player->setActive(true);
 
-	// Base updates.
+				// Reset.
+				resurrectionTimer = 0;
+			}
+		}
+#endif
+
+	// Then the entity updates.
 	missileController->update(elapsedTime);
 	alienController->update(elapsedTime);
 	nuggetController->update(elapsedTime);
 
-	// See if any collisions resulted from the base updates.
+	// See if any collisions resulted from the entity updates.
 	missileController->checkCollisions();
 	alienController->checkCollisions();
 	nuggetController->checkCollisions();
 
-	// Show the results of any collisions.
+	// Show the results from any collisions.
 	explosionController->update(elapsedTime);
 	playAreaController->update(elapsedTime);
+
+	// Misc updates.
 	starfieldController->update(elapsedTime);
 	hudController->update(elapsedTime);
 
@@ -233,7 +282,7 @@ void PlayState::draw() {
 	glBegin(GL_LINES);
 	playAreaController->draw();
 
-	if (player->isActive()) {
+	if (player->isVisible()) {
 		player->draw();
 	}
 
@@ -299,19 +348,37 @@ void PlayState::reset() {
 }
 
 void PlayState::enterState() {
-	if (player->isActive()) {
-		// Only resume the music if there is a game in progress.
-		g_worldManager->resumeMusic();
-	}
+#ifdef TIME_DEMO_ENABLED
+		logMessage("Starting a time demo...\n");
+		g_worldManager->setMusicType(NO_MUSIC);
+		if (!player->isActive()) {
+			player->setActive(true);
+		}
+#else
+		g_worldManager->setMusicType(GAMEPLAY_MUSIC);
+		if (player->isActive()) {
+			// Only restart the music if there is a game in progress.
+			g_worldManager->startMusic();
+		}
+#endif
+
+	// Need to check if the playfield/starfield toggles were just changed in the options menu.
+	playAreaController->syncOptions();
+	starfieldController->syncOptions();
+
+	// Clear any pending input requests (only needed when resuming a game).
+	player->resetInputRequests();
 
 	// Update to the current time.
 	lastFrameTime = SDL_GetTicks();
+
+#ifdef TIME_DEMO_ENABLED
+	timeDemoEndTime = (lastFrameTime + TIME_DEMO_DURATION);
+#endif
 }
 
 void PlayState::leaveState() {
-	if (player->isActive()) {
-		// Only pause the music if there is a game in progress.
-		g_worldManager->pauseMusic();
-	}
+	// Stop playing the gameplay music.
+	g_worldManager->stopMusic();
 }
 

@@ -18,25 +18,25 @@
  *****************************************************************/
 #include "poly_nova.h"
 
-#define HIGH_COLOR_INTERVAL 20
-#define MINIMUM_CHASE_DISTANCE 10
+#define HIGH_COLOR_INTERVAL 10
+#define MIN_CHASE_DISTANCE 10
+#define MIN_INITIAL_VELOCITY 1.3
+#define MAX_INITIAL_VELOCITY 2.6
 
-FlyingSaucer::FlyingSaucer(PlayState* playState) : Alien(playState) {
-	this->setAlienType(FLYING_SAUCER);
+FlyingSaucer::FlyingSaucer(PlayState* playState) : Alien(playState, FLYING_SAUCER_ALIEN) {
 	this->setSpriteDefinition("flying_saucer");
 	highColor = NovaColor(255, 95, 31);
 	lowColor = highColor;
-	lowColor.rebase(30);
-	this->setSpriteColor(lowColor);
-	increasingColor = true;
+	lowColor.rebase(10);
+	this->setDefaultColor(highColor);
+	increasingColor = false;
 	highColorTimer = 0;
 	highColorDisplayed = false;
-	this->setExplosionSize(MEDIUM_EXPLOSION);
-	this->setExplosionColor(highColor);
-	this->setNuggetSpawnType(POWER_UP);
 }
 
 void FlyingSaucer::setActive(bool active) {
+	static bool verticalSwitch = true;
+
 	// Base processing.
 	Alien::setActive(active);
 
@@ -44,8 +44,37 @@ void FlyingSaucer::setActive(bool active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_FLYING_SAUCER);
 
-		this->setSpriteColor(lowColor);
-		increasingColor = true;
+		// Find out which spawn zone we should be using (based on the players current location).
+		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
+			// Spawn the alien in the right zone.
+			this->moveTo(RIGHT_SPAWN_POINT_X, RIGHT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+
+			this->setVelocityFromComponents(horizontalVelocity, verticalVelocity);
+		} else {
+			// Spawn the alien in the left zone.
+			this->moveTo(LEFT_SPAWN_POINT_X, LEFT_SPAWN_POINT_Y, 0);
+			horizontalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+
+			if (verticalSwitch) {
+				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			} else {
+				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			}
+
+			this->setVelocityFromComponents(horizontalVelocity, verticalVelocity);
+		}
+
+		verticalSwitch = (!verticalSwitch);
+
+		// Reset.
+		increasingColor = false;
 		highColorTimer = 0;
 		highColorDisplayed = false;
 	}
@@ -63,7 +92,7 @@ void FlyingSaucer::update(float elapsedTime) {
 		alienPosition = this->getPositionWCS();
 
 		float between = (playerPosition - alienPosition).magnitude();
-		if (between > MINIMUM_CHASE_DISTANCE) {
+		if (between > MIN_CHASE_DISTANCE) {
 			double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
 					(playerPosition.y - alienPosition.y));
 
@@ -111,18 +140,37 @@ void FlyingSaucer::update(float elapsedTime) {
 		} else {
 			// Do some simple color cycling.
 			if (increasingColor) {
-				if (spriteColor.brighten((elapsedTime / 30), highColor)) {
+				if (currentColor.brighten((elapsedTime / 60), highColor)) {
 					increasingColor = false;
 
 					// Stay at the highest color for a few ticks.
 					highColorDisplayed = true;
 				}
 			} else {
-				if (spriteColor.fade((elapsedTime / 30), lowColor)) {
+				if (currentColor.fade((elapsedTime / 30), lowColor)) {
 					increasingColor = true;
 				}
 			}
 		}
 	}
+}
+
+bool FlyingSaucer::checkCollision(Missile* missile) {
+	bool collision = false;
+
+	// See if this alien has just hit this missile.
+	NovaVertex between = (missile->getPositionWCS() - this->getPositionWCS());
+	if (between.magnitude() < (missile->getBoundingSphere() + this->getBoundingSphere())) {
+		// This alien was destroyed by a player's missile.
+		collision = true;
+		playState->getAlienController()->deactivate(this);
+		playState->getNuggetController()->spawnNugget(POWER_UP_NUGGET, this->getPositionWCS());
+		playState->getPlayer()->increaseScore(this);
+
+		// Missile has also been destroyed.
+		playState->getMissileController()->deactivate(missile);
+	}
+
+	return collision;
 }
 

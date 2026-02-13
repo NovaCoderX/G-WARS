@@ -22,8 +22,7 @@
 PlayerMissile::PlayerMissile(PlayState *playState) : Missile(playState) {
 	missileType = PLAYER_MISSILE;
 	this->setSpriteDefinition("missile");
-	this->setSpriteColor(NovaColor(253, 243, 2));
-	this->setExplosionColor(this->getSpriteColor());
+	this->setCurrentColor(NovaColor(253, 243, 2));
 	homingEnabled = false;
 	target = NULL;
 }

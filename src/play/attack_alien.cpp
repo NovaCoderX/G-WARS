@@ -18,14 +18,15 @@
  *****************************************************************/
 #include "poly_nova.h"
 
-#define MIN_INITIAL_VELOCITY 3
-#define MAX_INITIAL_VELOCITY 6
+#define MIN_INITIAL_VELOCITY 2
+#define MAX_INITIAL_VELOCITY 4
 
-BounceAlien::BounceAlien(PlayState* playState, AlienType alienType) : Alien(playState, alienType) {
+
+AttackAlien::AttackAlien(PlayState* playState, AlienType alienType) : Alien(playState, alienType) {
 	// Empty.
 }
 
-void BounceAlien::setActive(bool active) {
+void AttackAlien::setActive(bool active) {
 	static bool verticalSwitch = true;
 
 	// Base processing.
@@ -58,39 +59,4 @@ void BounceAlien::setActive(bool active) {
 		verticalSwitch = (!verticalSwitch);
 	}
 }
-
-void BounceAlien::update(float elapsedTime) {
-	// Apply the velocity.
-	this->applyVelocity(elapsedTime);
-
-	// See if we have just moved outside the play area.
-	if (this->getHorizontalVelocity() > 0) {
-		if (!playState->getPlayAreaController()->isWithinPlayArea(RIGHT_BORDER, this)) {
-			// We just hit the right border.
-			this->reverseHorizontalVelocity();
-		}
-	} else {
-		if (!playState->getPlayAreaController()->isWithinPlayArea(LEFT_BORDER, this)) {
-			// We just hit the left border.
-			this->reverseHorizontalVelocity();
-		}
-	}
-
-	if (this->getVerticalVelocity() > 0) {
-		if (!playState->getPlayAreaController()->isWithinPlayArea(TOP_BORDER, this)) {
-			// We just hit the top border, make vertical velocity negative.
-			this->reverseVerticalVelocity();
-		}
-	} else {
-		if (!playState->getPlayAreaController()->isWithinPlayArea(BOTTOM_BORDER, this)) {
-			// We just hit the bottom border, make vertical velocity positive.
-			this->reverseVerticalVelocity();
-		}
-	}
-
-	// Mark this object visible/invisible for this frame.
-	this->calculateVisibility();
-}
-
-
 

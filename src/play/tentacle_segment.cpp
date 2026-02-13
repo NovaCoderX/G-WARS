@@ -21,16 +21,9 @@
 
 #define NUMBER_OF_POINTS 8
 
-TentacleSegment::TentacleSegment(PlayState* playState, Sprite* parent, float radius, const NovaColor &color, bool explosive)
+TentacleSegment::TentacleSegment(PlayState* playState, Sprite* parent, float radius, const NovaColor &color)
 : AlienComponent(playState, parent) {
-	defaultColor = color;
-	disabledColor = NovaColor(64, 64, 64);
-	this->setSpriteColor(defaultColor);
-
-	if (explosive) {
-		this->setExplosionSize(SMALL_EXPLOSION);
-		this->setExplosionColor(this->getSpriteColor());
-	}
+	this->setDefaultColor(color);
 
 	// Create the definition.
 	segmentDefinition = new SpriteDefinition();
@@ -72,13 +65,3 @@ TentacleSegment::~TentacleSegment() {
 	}
 }
 
-void TentacleSegment::setDisabled(bool disabled) {
-	// Base processing.
-	AlienComponent::setDisabled(disabled);
-
-	if (disabled) {
-		this->setSpriteColor(disabledColor);
-	} else {
-		this->setSpriteColor(defaultColor);
-	}
-}

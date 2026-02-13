@@ -28,64 +28,67 @@
 #define SECOND_GUN_VERTEX_ANCHOR 20
 #define THIRD_GUN_VERTEX_ANCHOR 21
 #define FOURTH_GUN_VERTEX_ANCHOR 22
+#define LEFT_RETREAT_POINT_X -130
+#define RIGHT_RETREAT_POINT_X 130
 
 CrusherPlatform::CrusherPlatform(PlayState* playState, Sprite* parent) : AlienComponent(playState, parent) {
 	this->setSpriteDefinition("crusher_platform");
-	defaultColor = NovaColor(207, 4, 190);
-	disabledColor = NovaColor(64, 64, 64);
-	this->setSpriteColor(defaultColor);
-	this->setExplosionSize(LARGE_EXPLOSION);
-	this->setExplosionColor(this->getSpriteColor());
+	this->setDefaultColor(NovaColor(207, 4, 190));
+	retreating = false;
 
 	// Create the invisible bounding spheres.
-	components.push_back(new BoundingSphere(playState, this, FIRST_SPHERE_VERTEX_ANCHOR, BOUNDING_SPHERE_SIZE));
-	components.push_back(new BoundingSphere(playState, this, SECOND_SPHERE_VERTEX_ANCHOR, BOUNDING_SPHERE_SIZE));
-	components.push_back(new BoundingSphere(playState, this, THIRD_SPHERE_VERTEX_ANCHOR, BOUNDING_SPHERE_SIZE));
-	components.push_back(new BoundingSphere(playState, this, FOURTH_SPHERE_VERTEX_ANCHOR, BOUNDING_SPHERE_SIZE));
+	boundingSpheres.push_back(new BoundingSphere(playState, this, FIRST_SPHERE_VERTEX_ANCHOR, BOUNDING_SPHERE_SIZE));
+	boundingSpheres.push_back(new BoundingSphere(playState, this, SECOND_SPHERE_VERTEX_ANCHOR, BOUNDING_SPHERE_SIZE));
+	boundingSpheres.push_back(new BoundingSphere(playState, this, THIRD_SPHERE_VERTEX_ANCHOR, BOUNDING_SPHERE_SIZE));
+	boundingSpheres.push_back(new BoundingSphere(playState, this, FOURTH_SPHERE_VERTEX_ANCHOR, BOUNDING_SPHERE_SIZE));
 
 	// Create the guns.
-	components.push_back(new GunPlatform(playState, this, FIRST_GUN_VERTEX_ANCHOR));
-	components.push_back(new GunPlatform(playState, this, SECOND_GUN_VERTEX_ANCHOR));
-	components.push_back(new GunPlatform(playState, this, THIRD_GUN_VERTEX_ANCHOR));
-	components.push_back(new GunPlatform(playState, this, FOURTH_GUN_VERTEX_ANCHOR));
+	gunPlatforms.push_back(new GunPlatform(playState, this, FIRST_GUN_VERTEX_ANCHOR));
+	gunPlatforms.push_back(new GunPlatform(playState, this, SECOND_GUN_VERTEX_ANCHOR));
+	gunPlatforms.push_back(new GunPlatform(playState, this, THIRD_GUN_VERTEX_ANCHOR));
+	gunPlatforms.push_back(new GunPlatform(playState, this, FOURTH_GUN_VERTEX_ANCHOR));
 }
 
 CrusherPlatform::~CrusherPlatform() {
-	for (AlienComponent* component : components) {
+	for (BoundingSphere* component : boundingSpheres) {
 		delete component;
 	}
 
-	components.clear();
-}
+	boundingSpheres.clear();
 
-void CrusherPlatform::setDisabled(bool disabled) {
-	// Base processing.
-	AlienComponent::setDisabled(disabled);
-
-	if (disabled) {
-		this->setSpriteColor(disabledColor);
-	} else {
-		this->setSpriteColor(defaultColor);
+	for (GunPlatform* component : gunPlatforms) {
+		delete component;
 	}
+
+	gunPlatforms.clear();
 }
 
 void CrusherPlatform::setActive(bool active) {
 	// Base processing.
 	AlienComponent::setActive(active);
 
-	for (AlienComponent* component : components) {
+	if (active) {
+		// Reset.
+		retreating = false;
+	}
+
+	for (AlienComponent* component : gunPlatforms) {
 		component->setActive(active);
 	}
 }
 
 void CrusherPlatform::update(float elapsedTime) {
-	for (AlienComponent* component : components) {
+	for (AlienComponent* component : boundingSpheres) {
+		component->update(elapsedTime);
+	}
+
+	for (AlienComponent* component : gunPlatforms) {
 		component->update(elapsedTime);
 	}
 
 	// If any guns are visible then mark the container as visible (so the draw method is called).
 	this->setVisible(false);
-	for (AlienComponent* component : components) {
+	for (AlienComponent* component : gunPlatforms) {
 		if (component->isVisible()) {
 			this->setVisible(true);
 			break;
@@ -97,10 +100,19 @@ bool CrusherPlatform::checkCollision(Player* player) {
 	bool collision = false;
 
 	// See if this platform has just hit the player.
-	for (AlienComponent* component : components) {
+	for (AlienComponent* component : boundingSpheres) {
 		collision = component->checkCollision(player);
 		if (collision) {
 			break;
+		}
+	}
+
+	if (!collision) {
+		for (AlienComponent* component : gunPlatforms) {
+			collision = component->checkCollision(player);
+			if (collision) {
+				break;
+			}
 		}
 	}
 
@@ -111,37 +123,69 @@ bool CrusherPlatform::checkCollision(Missile* missile) {
 	bool collision = false;
 
 	// See if this platform has just hit this missile.
-	for (AlienComponent* component : components) {
+	for (AlienComponent* component : boundingSpheres) {
 		collision = component->checkCollision(missile);
 		if (collision) {
 			break;
 		}
 	}
 
-	if (collision && (!this->isDisabled())) {
+	if (!collision) {
+		for (AlienComponent* component : gunPlatforms) {
+			collision = component->checkCollision(missile);
+			if (collision) {
+				break;
+			}
+		}
+	}
+
+	// See if this platform has just been disabled.
+	if (collision && (this->isActive())) {
 		bool disabled = true;
 
-		// See if this platform has just been disabled.
-		for (AlienComponent* component : components) {
-			if (!component->isDisabled()) {
+		for (AlienComponent* component : gunPlatforms) {
+			if (component->isActive()) {
 				disabled = false;
 				break;
 			}
 		}
 
 		if (disabled) {
-			this->setDisabled(true);
+			this->setActive(false);
 		}
 	}
 
 	return collision;
 }
 
+void CrusherPlatform::smartBombNotification() {
+	for (AlienComponent* component : gunPlatforms) {
+		if (component->isActive()) {
+			component->setActive(false);
+			break;
+		}
+	}
+
+	// See if this platform has just been disabled.
+	bool disabled = true;
+
+	for (AlienComponent* component : gunPlatforms) {
+		if (component->isActive()) {
+			disabled = false;
+			break;
+		}
+	}
+
+	if (disabled) {
+		this->setActive(false);
+	}
+}
+
 void CrusherPlatform::draw() {
 	// Base processing.
 	AlienComponent::draw();
 
-	for (AlienComponent* component : components) {
+	for (AlienComponent* component : gunPlatforms) {
 		if (component->isVisible()) {
 			component->draw();
 		}
@@ -169,21 +213,31 @@ void LeftCrusherPlatform::setActive(bool active) {
 }
 
 void LeftCrusherPlatform::update(float elapsedTime) {
-	Player* player = playState->getPlayer();
+	if (retreating) {
+		this->setVelocityFromComponents(-1.2, 0);
+		this->applyVelocity(elapsedTime);
 
-	if ((!player->isActive())) {
-		if (this->getPositionWCS().x > LEFT_SPAWN_POINT_X) {
-			this->setVelocityFromComponents(-1.2, 0);
-			this->applyVelocity(elapsedTime);
-
-			// Only move to the starting position.
-			if (this->getPositionWCS().x < LEFT_SPAWN_POINT_X) {
-				this->moveTo(LEFT_SPAWN_POINT_X, 0, 0);
-			}
+		// Move off the screen.
+		if (this->getPositionWCS().x < LEFT_RETREAT_POINT_X) {
+			// Finished retreating.
+			retreating = false;
 		}
 	} else {
-		this->setVelocityFromComponents(0.4, 0);
-		this->applyVelocity(elapsedTime);
+		Player* player = playState->getPlayer();
+		if ((!player->isActive())) {
+			if (this->getPositionWCS().x > LEFT_SPAWN_POINT_X) {
+				this->setVelocityFromComponents(-1.2, 0);
+				this->applyVelocity(elapsedTime);
+
+				// Only move back to the starting position.
+				if (this->getPositionWCS().x < LEFT_SPAWN_POINT_X) {
+					this->moveTo(LEFT_SPAWN_POINT_X, 0, 0);
+				}
+			}
+		} else {
+			this->setVelocityFromComponents(0.4, 0);
+			this->applyVelocity(elapsedTime);
+		}
 	}
 
 	// Base processing.
@@ -211,21 +265,31 @@ void RightCrusherPlatform::setActive(bool active) {
 }
 
 void RightCrusherPlatform::update(float elapsedTime) {
-	Player* player = playState->getPlayer();
+	if (retreating) {
+		this->setVelocityFromComponents(1.2, 0);
+		this->applyVelocity(elapsedTime);
 
-	if ((!player->isActive())) {
-		if (this->getPositionWCS().x < RIGHT_SPAWN_POINT_X) {
-			this->setVelocityFromComponents(1.2, 0);
-			this->applyVelocity(elapsedTime);
-
-			// Only move to the starting position.
-			if (this->getPositionWCS().x > RIGHT_SPAWN_POINT_X) {
-				this->moveTo(RIGHT_SPAWN_POINT_X, 0, 0);
-			}
+		// Move off the screen.
+		if (this->getPositionWCS().x > RIGHT_RETREAT_POINT_X) {
+			// Finished retreating.
+			retreating = false;
 		}
 	} else {
-		this->setVelocityFromComponents(-0.4, 0);
-		this->applyVelocity(elapsedTime);
+		Player* player = playState->getPlayer();
+		if ((!player->isActive())) {
+			if (this->getPositionWCS().x < RIGHT_SPAWN_POINT_X) {
+				this->setVelocityFromComponents(1.2, 0);
+				this->applyVelocity(elapsedTime);
+
+				// Only move back to the starting position.
+				if (this->getPositionWCS().x > RIGHT_SPAWN_POINT_X) {
+					this->moveTo(RIGHT_SPAWN_POINT_X, 0, 0);
+				}
+			}
+		} else {
+			this->setVelocityFromComponents(-0.4, 0);
+			this->applyVelocity(elapsedTime);
+		}
 	}
 
 	// Base processing.
