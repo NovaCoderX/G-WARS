@@ -27,7 +27,17 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
+	const NovaColor& getExplosionColor() const {
+		return highColor;
+	}
+
+	// Overridden.
 	void update(float elapsedTime);
+
+private:
+	NovaColor highColor;
+	NovaColor lowColor;
+	bool increasingColor;
 };
 
 #endif // __ROCKET_SHIP_H

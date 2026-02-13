@@ -19,102 +19,88 @@
 #ifndef __ALIEN_H
 #define __ALIEN_H
 
-enum ExplosionSize {
-	DO_NOT_EXPLODE = 0,
-	SMALL_EXPLOSION = 1,
-	MEDIUM_EXPLOSION = 2,
-	LARGE_EXPLOSION = 3
+enum AlienType {
+	BOUNCE_CUBE_ALIEN = 0,
+	BOUNCE_WANDERER_ALIEN = 1,
+	BOUNCE_STAR_ALIEN = 2,
+	BOUNCE_HEXAGON_ALIEN = 3,
+	CHASE_RHOMBUS_ALIEN = 4,
+	CHASE_STAR_ALIEN = 5,
+	CHASE_SHURIKEN_ALIEN = 6,
+	CHASE_CONCAVE_ALIEN = 7,
+	ATTACK_TANK_ALIEN = 8,
+	ATTACK_SHIP_ALIEN = 9,
+	ATTACK_ARTILLERY_ALIEN = 10,
+	ATTACK_NEUTRON_ALIEN = 11,
+	ROCKET_SHIP_ALIEN = 12,
+	FLYING_SAUCER_ALIEN = 13,
+	PLAYER_CLONE_ALIEN = 14,
+	BLACK_HOLE_ALIEN = 15,
+	MINI_GATE_ALIEN = 16,
+	MINI_CRUSHER_ALIEN = 17,
+	SNAKE_ALIEN = 18,
+	JELLY_ALIEN = 19,
+	CRUSHER_ALIEN = 20
 };
 
-class Alien: public Sprite {
-	friend class AlienController;
-	friend class MissileController;
-	friend class ExplosionController;
+class Alien: public Sprite, public ExplosiveObject {
 public:
-	Alien(PlayState* playState);
+	Alien(PlayState* playState, AlienType alienType);
+
+	// Overridden.
+	void setActive(bool active);
 
 	PlayState* getPlayState() {
 		return playState;
 	}
 
-	enum AlienType {
-		UNDEFINED = 0,
-		BOUNCE_CUBE = 1,
-		BOUNCE_WANDERER = 2,
-		BOUNCE_STAR = 3,
-		BOUNCE_HEXAGON = 4,
-		CHASE_RHOMBUS = 5,
-		CHASE_STAR = 6,
-		CHASE_SHURIKEN = 7,
-		CHASE_CONCAVE = 8,
-		ATTACK_TANK = 9,
-		ATTACK_SHIP = 10,
-		ATTACK_ARTILLERY = 11,
-		ATTACK_NEUTRON = 12,
-		ROCKET_SHIP = 13,
-		FLYING_SAUCER = 14,
-		PLAYER_CLONE = 15,
-		BLACK_HOLE = 16,
-		MINI_GATE = 17,
-		SNAKE = 18,
-		JELLY = 19,
-		CRUSHER = 20
-	};
-
 	AlienType getAlienType() const {
 		return alienType;
 	}
 
-	ExplosionSize getExplosionSize() const {
-		return explosionSize;
-	}
-
-	void setExplosionSize(ExplosionSize size) {
-		this->explosionSize = size;
-	}
-
-	const NovaColor& getExplosionColor() const {
-		return explosionColor;
-	}
-
-	void setExplosionColor(const NovaColor& explosionColor) {
-		this->explosionColor = explosionColor;
-	}
-
-	enum NuggetSpawnType {
-		DO_NOT_SPAWN = 0,
-		MULTIPLIER = 1,
-		POWER_UP = 2
+	enum AlienCategory {
+		STANDARD_ALIEN = 0,
+		SPECIAL_ALIEN = 1,
+		BOSS_ALIEN = 2
 	};
 
-	NuggetSpawnType getNuggetSpawnType() const {
-		return nuggetType;
+	AlienCategory getAlienCategory() const {
+		return alienCategory;
 	}
 
-	void setNuggetSpawnType(NuggetSpawnType type) {
-		this->nuggetType = type;
+	const NovaColor& getDefaultColor() const {
+		return defaultColor;
+	}
+
+	void setDefaultColor(const NovaColor &color) {
+		this->defaultColor = color;
 	}
 
 	// Overridden.
-	void setActive(bool active);
+	NovaVertex getExplosionOrigin() const {
+		return this->getPositionWCS();
+	}
+
+	// Overridden.
+	const NovaColor& getExplosionColor() const {
+		return currentColor;
+	}
 
 	virtual bool checkCollision(Player* player);
 	virtual bool checkCollision(Missile* missile);
+	virtual void smartBombNotification();
+
+public:
+	Alien* nextInList;
+	Alien* priorInList;
 
 protected:
 	PlayState* playState;
-	Alien* nextInList;
-	Alien* priorInList;
-	ExplosionSize explosionSize;
-	NovaColor explosionColor;
-	NuggetSpawnType nuggetType;
-
-	void setAlienType(AlienType type) {
-		this->alienType = type;
-	}
 
 private:
 	AlienType alienType;
+	AlienCategory alienCategory;
+	NovaColor defaultColor;
 };
 
 #endif // __ALIEN_H

@@ -19,7 +19,7 @@
 #ifndef __LASER_H
 #define __LASER_H
 
-class Laser: public MatrixObject {
+class Laser: public MatrixObject, public ExplosiveObject {
 public:
 	Laser(PlayState* playState);
 
@@ -39,12 +39,14 @@ public:
 		laserColor[index] = color;
 	}
 
-	const NovaColor& getExplosionColor() const {
-		return laserColor[LINE_END];
+	// Overridden.
+	NovaVertex getExplosionOrigin() const {
+		return staticVertices[LINE_END];
 	}
 
-	NovaVertex getEndPoint() const {
-		return staticVertices[LINE_END];
+	// Overridden.
+	const NovaColor& getExplosionColor() const {
+		return laserColor[LINE_END];
 	}
 
 	void draw();

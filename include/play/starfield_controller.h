@@ -25,6 +25,7 @@ public:
 	~StarfieldController();
 
 	void init();
+	void syncOptions();
 	void update(float elapsedTime);
 	void draw();
 

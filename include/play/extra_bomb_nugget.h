@@ -16,55 +16,24 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ALIEN_COMPONENT_H
-#define __ALIEN_COMPONENT_H
+#ifndef __EXTRA_BOMB_NUGGET_H
+#define __EXTRA_BOMB_NUGGET_H
 
-class AlienComponent : public Sprite, public ExplosiveObject {
+class ExtraBombNugget: public Nugget {
 public:
-	AlienComponent(PlayState* playState, Sprite* parent);
+	ExtraBombNugget(PlayState* playState);
 
 	// Overridden.
 	void setActive(bool active);
 
 	// Overridden.
-	NovaVertex getExplosionOrigin() const {
-		return this->getPositionWCS();
-	}
-
-	// Overridden.
-	const NovaColor& getExplosionColor() const {
-		return explosionColor;
-	}
-
-	void setExplosionColor(const NovaColor &color) {
-		this->explosionColor = color;
-	}
-
-	const NovaColor& getDefaultColor() const {
-		return defaultColor;
-	}
-
-	void setDefaultColor(const NovaColor &color) {
-		this->defaultColor = color;
-	}
-
-	const NovaColor& getDisabledtColor() const {
-		return disabledColor;
-	}
-
-	virtual bool checkCollision(Player* player);
-	virtual bool checkCollision(Missile* missile);
-	virtual void smartBombNotification() {}
-
-protected:
-	PlayState* playState;
-	Sprite* parent;
+	void update(float elapsedTime);
 
 private:
-	NovaColor defaultColor;
-	NovaColor disabledColor;
-	NovaColor explosionColor;
-	bool exploded;
+	NovaColor highColor;
+	NovaColor lowColor;
+	bool increasingColor;
+	float totalElapsedTime;
 };
 
-#endif // __ALIEN_COMPONENT_H
+#endif // __EXTRA_BOMB_NUGGET_H

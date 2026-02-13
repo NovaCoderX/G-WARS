@@ -19,11 +19,61 @@
 #ifndef __EXPLOSION_H
 #define __EXPLOSION_H
 
-class Explosion: public MatrixObject {
-	friend class ExplosionController;
-	friend class GridLine;
+
+enum ExplosionSize {
+	NO_EXPLOSION = 0,
+	SMALL_EXPLOSION = 1,
+	MEDIUM_EXPLOSION = 2,
+	LARGE_EXPLOSION = 3,
+	MASSIVE_EXPLOSION = 4
+};
+
+class ExplosiveObject {
 public:
-	Explosion(PlayState* playState, int numParticles, float maxVelocity, float duration, bool lightEmitting);
+	ExplosiveObject() {
+		size = NO_EXPLOSION;
+		sound = SILENCE;
+		lightEmitting = false;
+	}
+
+	virtual ~ExplosiveObject() {}
+
+	ExplosionSize getExplosionSize() const {
+		return size;
+	}
+
+	void setExplosionSize(ExplosionSize size) {
+		this->size = size;
+	}
+
+	SampleType getExplosionSound() const {
+		return sound;
+	}
+
+	void setExplosionSound(SampleType sound) {
+		this->sound = sound;
+	}
+
+	bool isLightEmittingExplosion() const {
+		return lightEmitting;
+	}
+
+	void setLightEmittingExplosion(bool lightEmitting) {
+		this->lightEmitting = lightEmitting;
+	}
+
+	virtual NovaVertex getExplosionOrigin() const = 0;
+	virtual const NovaColor& getExplosionColor() const = 0;
+
+private:
+	ExplosionSize size;
+	SampleType sound;
+	bool lightEmitting;
+};
+
+class Explosion: public MatrixObject {
+public:
+	Explosion(PlayState* playState, int numParticles, float maxVelocity, float duration);
 	~Explosion();
 
 	float getBoundingSphere() const {
@@ -34,11 +84,11 @@ public:
 		return positionCCS;
 	}
 
-	virtual const NovaColor& getExplosionColor() const {
+	virtual const NovaColor& getColor() const {
 		return explosionColor;
 	}
 
-	void setExplosionColor(const NovaColor &color);
+	void setColor(const NovaColor &color);
 
 	bool isLightEmitting() const {
 		return lightEmitting;
@@ -52,16 +102,19 @@ public:
 	void calculateVisibility();
 	void draw();
 
-private:
-	PlayState* playState;
+public:
 	Explosion *nextInList;
 	Explosion *priorInList;
-	NovaParticle *particles;
+
+private:
+	PlayState* playState;
+	NovaParticle *innerParticles;
+	NovaParticle *middleParticles;
+	NovaParticle *outerParticles;
 	int numParticles;
-	float duration;
+	float duration[3];
 	float totalElapsedTime;
 	NovaColor explosionColor;
-	float currentFadeAmount;
 	float totalFadeAmount;
 	float boundingSphereExpansionFactor;
 	NovaVertex positionCCS;

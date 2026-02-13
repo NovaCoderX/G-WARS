@@ -24,6 +24,9 @@ public:
 	BlackHoleRing(PlayState* playState, Alien* parent, SpriteDefinition *definition, const NovaColor &color);
 
 	// Overridden.
+	void setActive(bool active);
+
+	// Overridden.
 	void update(float elapsedTime);
 
 private:
@@ -48,6 +51,9 @@ public:
 
 	// Overridden.
 	bool checkCollision(Missile *missile);
+
+	// Overridden.
+	void smartBombNotification();
 
 	// Overridden.
 	void draw();

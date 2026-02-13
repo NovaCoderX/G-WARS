@@ -24,6 +24,12 @@ public:
 	Tentacle(Jelly* jelly, Jelly::AnchorPoint anchor, const NovaColor &color);
 	~Tentacle();
 
+	bool isActive() const {
+		return active;
+	}
+
+	void setActive(bool active);
+
 	bool isVisible() const {
 		return visible;
 	}
@@ -32,12 +38,6 @@ public:
 		this->visible = visible;
 	}
 
-	bool isDisabled() const {
-		return disabled;
-	}
-
-	void setDisabled(bool disabled);
-	void setActive(bool active);
 	void update(float elapsedTime);
 	bool checkCollision(Player* player);
 	bool checkCollision(Missile* missile);
@@ -49,9 +49,10 @@ private:
 	std::vector<TentacleSegment*> segments;
 	TentacleNematocyst* nematocyst;
     float phaseOffset;
+    float length;
 	float totalElapsedTime;
 	bool visible;
-	bool disabled;
+	bool active;
 };
 
 #endif // __TENTACLE_H

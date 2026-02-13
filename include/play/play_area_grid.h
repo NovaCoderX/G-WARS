@@ -24,18 +24,8 @@ public:
 	PlayAreaGrid(PlayState* playState);
 	~PlayAreaGrid();
 
-	bool isShaking() const {
-		return shaking;
-	}
-
-	void startShaking() {
-		this->shaking = true;
-
-		// Reset.
-		shakeTimer = 0;
-	}
-
 	void init();
+	void smartBombNotification();
 	void update(float elapsedTime);
 	void draw();
 
@@ -58,6 +48,12 @@ private:
 
 	bool shaking;
 	float shakeTimer;
+	NovaColor lineColor;
+	NovaColor highColor;
+	NovaColor lowColor;
+	float highColorTimer;
+	bool highColorDisplayed;
 };
 
 #endif // __PLAY_AREA_GRID_H
+

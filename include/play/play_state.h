@@ -25,15 +25,14 @@ public:
 	PlayState();
 	~PlayState();
 
-	bool isGameOver()  {
-		// Or not started yet!
-		bool gameOver = true;
+	bool isGameInProgress()  {
+		bool inProgress = false;
 
 		if (player) {
-			gameOver = (!player->getNumLives());
+			inProgress = (player->getNumLives() > 0);
 		}
 
-		return gameOver;
+		return inProgress;
 	}
 
 	Camera* getCamera() const {

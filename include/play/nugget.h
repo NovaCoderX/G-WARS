@@ -22,28 +22,44 @@
 // Forward declaration.
 class Player;
 
-class Nugget: public Sprite {
-	friend class NuggetController;
-public:
-	Nugget(PlayState* playState);
+enum NuggetType {
+	MULTIPLIER_NUGGET = 0,
+	POWER_UP_NUGGET = 1,
+	EXTRA_LIFE_NUGGET = 2,
+	EXTRA_BOMB_NUGGET = 3
+};
 
-	enum NuggetType {
-		UNDEFINED = 0,
-		MULTIPLIER = 1,
-		POWER_UP = 2
-	};
+class Nugget: public Sprite {
+public:
+	Nugget(PlayState* playState, NuggetType nuggetType);
+
+	// Overridden.
+	void setActive(bool active);
 
 	NuggetType getNuggetType() const {
 		return nuggetType;
 	}
 
+	const NovaColor& getDefaultColor() const {
+		return defaultColor;
+	}
+
+	void setDefaultColor(const NovaColor &color) {
+		this->defaultColor = color;
+	}
+
 	void checkCollision(Player *player);
+
+public:
+	Nugget *nextInList;
+	Nugget *priorInList;
 
 protected:
 	PlayState* playState;
 	NuggetType nuggetType;
-	Nugget *nextInList;
-	Nugget *priorInList;
+
+private:
+	NovaColor defaultColor;
 };
 
 #endif // __NUGGET_H

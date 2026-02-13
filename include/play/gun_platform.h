@@ -25,9 +25,6 @@ public:
 	~GunPlatform();
 
 	// Overridden.
-	void setDisabled(bool disabled);
-
-	// Overridden.
 	void setActive(bool active);
 
 	// Overridden.
@@ -41,10 +38,7 @@ public:
 
 private:
 	int anchorIndex;
-	Sprite* gunTurret;
-	NovaColor defaultPlatformColor;
-	NovaColor defaultGunColor;
-	NovaColor disabledColor;
+	AlienComponent* gunTurret;
 	float damage;
 	float lastFireTime;
 	float totalElapsedTime;

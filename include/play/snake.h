@@ -37,6 +37,9 @@ public:
 	bool checkCollision(Missile *missile);
 
 	// Overridden.
+	void smartBombNotification();
+
+	// Overridden.
 	void draw();
 
 private:

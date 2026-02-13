@@ -27,28 +27,30 @@ enum PowerUpType {
 	HOMING_MISSILE_POWER_UP = 4
 };
 
-static std::string DEFAULT_PLAYER_NAME = "NOVA";
+static std::string DEFAULT_PLAYER_NAME = "DOOMGUY";
+#define MAX_PLAYER_NAME_LENGTH 12
 
 struct InputRequest {
 	// This represents wants the player wants to do.
 	bool left, right, up, down;
+	bool fireMissile;
+	bool dropBomb;
 
 	InputRequest() {
 		left = right = up = down = false;
+		fireMissile = dropBomb = false;
 	}
 
 	void reset() {
 		left = right = up = down = false;
+		fireMissile = dropBomb = false;
 	}
 };
 
-class Player: public Sprite {
+class Player: public Sprite, public ExplosiveObject {
 public:
 	Player(PlayState* playState);
 	~Player();
-
-	// Overridden.
-	void setActive(bool active);
 
 	void moveDownRequest(bool toggle) {
 		inputRequest.down = toggle;
@@ -67,14 +69,11 @@ public:
 	}
 
 	void fireMissileRequest(bool toggle) {
-		fireMissileRequested = toggle;
+		inputRequest.fireMissile = toggle;
 	}
 
 	void dropBombRequest() {
-		// Player cannot trigger a smart bomb if they are dead.
-		if (active) {
-			dropBombRequested = true;
-		}
+		inputRequest.dropBomb = true;
 	}
 
 	bool isShieldActive() {
@@ -97,27 +96,31 @@ public:
 		return currentScore;
 	}
 
-	uint getHighScore() const {
-		return highScore;
+	PowerUpType getCurrentPowerUp() const {
+		return currentPowerUp;
 	}
 
+	// Overridden.
+	void setActive(bool active);
+
+	void resetInputRequests() {
+		inputRequest.reset();
+	}
+
+	// Overridden.
+	NovaVertex getExplosionOrigin() const {
+		return this->getPositionWCS();
+	}
+
+	// Overridden.
 	const NovaColor& getExplosionColor() const {
-		return explosionColor;
-	}
-
-	void setExplosionColor(const NovaColor& explosionColor) {
-		this->explosionColor = explosionColor;
+		return currentColor;
 	}
 
 	void youHit(Alien *alien);
 	void youHit(Nugget *nugget);
 	void checkCollision(Missile *missile);
 	void increaseScore(Alien *alien);
-
-	PowerUpType getCurrentPowerUp() const {
-		return currentPowerUp;
-	}
-
 	void update(float elapsedTime);
 	void updateVelocity(double additionalHorizontalVelocity, double additionalVerticalVelocity);
 	void draw();
@@ -127,22 +130,16 @@ private:
 	InputRequest inputRequest;
 	SpriteDefinition *shieldDefinition;
 	PlayerShield *playerShield;
-	bool fireMissileRequested;
-	bool dropBombRequested;
 	uint numSmartBombs;
 	bool autofireModeActive;
 	float autofireTimer;
 	uint numLives;
 	uint currentScore;
-	uint highScore;
 	bool highScoreAchived;
-	uint awardScore;
 	float scoreMultiplier;
 	PowerUpType currentPowerUp;
 	float powerUpTimer;
-	int thrustSoundChannel;
 	bool restartMusic;
-	NovaColor explosionColor;
 };
 
 #endif // __PLAYER_H

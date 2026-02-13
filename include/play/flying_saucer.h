@@ -27,7 +27,15 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
+	const NovaColor& getExplosionColor() const {
+		return highColor;
+	}
+
+	// Overridden.
 	void update(float elapsedTime);
+
+	// Overridden.
+	bool checkCollision(Missile *missile);
 
 private:
 	NovaColor highColor;

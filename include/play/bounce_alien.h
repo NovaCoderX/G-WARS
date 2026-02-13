@@ -21,7 +21,10 @@
 
 class BounceAlien: public Alien {
 public:
-	BounceAlien(PlayState* playState);
+	BounceAlien(PlayState* playState, AlienType alienType);
+
+	// Overridden.
+	void setActive(bool active);
 
 	// Overridden.
 	void update(float elapsedTime);

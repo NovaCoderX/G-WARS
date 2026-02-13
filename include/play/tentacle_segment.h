@@ -21,16 +21,11 @@
 
 class TentacleSegment: public AlienComponent {
 public:
-	TentacleSegment(PlayState* playState, Sprite* parent, float radius, const NovaColor &color, bool explosive);
+	TentacleSegment(PlayState* playState, Sprite* parent, float radius, const NovaColor &color);
 	~TentacleSegment();
-
-	// Overridden.
-	void setDisabled(bool disabled);
 
 protected:
 	SpriteDefinition* segmentDefinition;
-	NovaColor defaultColor;
-	NovaColor disabledColor;
 };
 
 #endif // __TENTACLE_SEGMENT_H

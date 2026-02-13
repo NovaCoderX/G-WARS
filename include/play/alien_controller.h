@@ -21,6 +21,7 @@
 
 class AlienController {
 	friend class MissileController;
+	friend class MiniGate;
 public:
 	AlienController(PlayState* playState);
 	~AlienController();
@@ -30,7 +31,7 @@ public:
 	void checkCollisions();
 	void draw();
 	void deactivate(Alien* alien);
-	void destroyAliens();
+	void smartBombNotification();
 	Alien* findBestTarget(Missile* missile);
 	void applyGravitionalPull(Player* player);
 	bool isWithinBlackHole(const NovaVertex& positionCCS);
@@ -61,6 +62,7 @@ private:
 	PlayerClone* playerClone;
 	BlackHole* blackHole;
 	MiniGate* miniGate;
+	MiniCrusher* miniCrusher;
 
 	// Boss aliens.
 	Snake* snake;
@@ -89,8 +91,7 @@ private:
 
 	void addToList(Alien* alien);
 	void removeFromList(Alien* alien);
-	void spawnHelper(Alien* alien, float miniumVelocity, float maximumVelocity);
-	void spawnStandardAlien(Alien::AlienType type);
+	void spawnStandardAlien(AlienType type);
 	void spawnBounceCube();
 	void spawnBounceWanderer();
 	void spawnBounceStar();
@@ -103,13 +104,14 @@ private:
 	void spawnAttackShip();
 	void spawnAttackArtillery();
 	void spawnAttackNeutron();
-	void spawnSpecialAlien(Alien::AlienType type);
+	void spawnSpecialAlien(AlienType type);
 	void spawnRocketShip();
 	void spawnFlyingSaucer();
 	void spawnPlayerClone();
 	void spawnBlackHole();
 	void spawnMiniGate();
-	void spawnBossAlien(Alien::AlienType type);
+	void spawnMiniCrusher();
+	void spawnBossAlien(AlienType type);
 	void spawnSnake();
 	void spawnJelly();
 	void spawnCrusher();

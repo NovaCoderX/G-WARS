@@ -16,37 +16,15 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ATTACK_TANK_H
-#define __ATTACK_TANK_H
+#ifndef __ATTACK_ALIEN_H
+#define __ATTACK_ALIEN_H
 
-class AttackTank: public AttackAlien {
+class AttackAlien: public Alien {
 public:
-	AttackTank(PlayState* playState);
-	~AttackTank();
+	AttackAlien(PlayState* playState, AlienType alienType);
 
 	// Overridden.
 	void setActive(bool active);
-
-	// Overridden.
-	const NovaColor& getExplosionColor() const {
-		return readyToFireColorTurret;
-	}
-
-	// Overridden.
-	void update(float timePassed);
-
-	// Overridden.
-	void draw();
-
-private:
-	Sprite* gunTurret;
-	NovaColor defaultColorTurret;
-	NovaColor readyToFireColorBase;
-	NovaColor readyToFireColorTurret;
-	float lastFireTime;
-	bool readyToFire;
-	float readyToFireTime;
-	float totalElapsedTime;
 };
 
-#endif // __ATTACK_TANK_H
+#endif // __ATTACK_ALIEN_H

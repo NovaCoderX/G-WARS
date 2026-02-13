@@ -19,7 +19,7 @@
 #ifndef __ATTACK_ARTILLERY_H
 #define __ATTACK_ARTILLERY_H
 
-class AttackArtillery: public Alien {
+class AttackArtillery: public AttackAlien {
 public:
 	AttackArtillery(PlayState* playState);
 
@@ -27,10 +27,14 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
+	const NovaColor& getExplosionColor() const {
+		return readyToFireColor;
+	}
+
+	// Overridden.
 	void update(float timePassed);
 
 private:
-	NovaColor defaultColor;
 	NovaColor readyToFireColor;
 	bool readyToFire;
 	float lastFireTime;

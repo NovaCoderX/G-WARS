@@ -37,6 +37,11 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
+	const NovaColor& getExplosionColor() const {
+		return highColor;
+	}
+
+	// Overridden.
 	void update(float elapsedTime);
 
 	// Overridden.
@@ -45,10 +50,14 @@ public:
 	// Overridden.
 	bool checkCollision(Missile* missile);
 
+	// Overridden
+	void smartBombNotification();
+
 	// Overridden.
 	void draw();
 
 private:
+	Sprite* highlight;
 	std::vector<Tentacle*> tentacles;
 	NovaColor highColor;
 	NovaColor lowColor;

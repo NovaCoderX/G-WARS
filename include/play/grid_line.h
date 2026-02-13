@@ -25,7 +25,7 @@ public:
 	GridLine(PlayState* playState);
 	~GridLine();
 
-	void setLineColor(const NovaColor &baseColor) {
+	void setColor(const NovaColor &baseColor) {
 		this->lineColor = baseColor;
 	}
 

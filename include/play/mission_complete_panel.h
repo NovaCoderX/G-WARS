@@ -16,37 +16,33 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __ATTACK_TANK_H
-#define __ATTACK_TANK_H
+#ifndef __MISSION_COMPLETE_PANEL_H
+#define __MISSION_COMPLETE_PANEL_H
 
-class AttackTank: public AttackAlien {
+class MissionCompletePanel : public HudPanel {
 public:
-	AttackTank(PlayState* playState);
-	~AttackTank();
+	MissionCompletePanel(PlayState* playState);
+	~MissionCompletePanel();
 
-	// Overridden.
-	void setActive(bool active);
-
-	// Overridden.
-	const NovaColor& getExplosionColor() const {
-		return readyToFireColorTurret;
+	bool isVisible() const {
+		return visible;
 	}
 
-	// Overridden.
-	void update(float timePassed);
+	void setVisible(bool visible);
 
-	// Overridden.
+	void init();
+	void update(float elapsedTime);
 	void draw();
-
 private:
-	Sprite* gunTurret;
-	NovaColor defaultColorTurret;
-	NovaColor readyToFireColorBase;
-	NovaColor readyToFireColorTurret;
-	float lastFireTime;
-	bool readyToFire;
-	float readyToFireTime;
-	float totalElapsedTime;
+	bool visible;
+	std::vector<CharacterSprite*> topCharacters;
+	std::vector<CharacterSprite*> bottomCharacters;
+	NovaColor currentTextColor;
+	NovaColor highColor;
+	NovaColor lowColor;
+	bool increasingColor;
+	float highColorTimer;
+	bool highColorDisplayed;
 };
 
-#endif // __ATTACK_TANK_H
+#endif // __MISSION_COMPLETE_PANEL_H

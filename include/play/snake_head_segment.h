@@ -21,14 +21,17 @@
 
 class SnakeHeadSegment: public SnakeSegment {
 public:
-	SnakeHeadSegment(PlayState* playState, Sprite* parent, const NovaColor &color, bool explosive);
+	SnakeHeadSegment(PlayState* playState, Sprite* parent, const NovaColor &color);
 	~SnakeHeadSegment();
 
 	// Overridden.
-	void setVulnerable(bool vulnerable);
-
-	// Overridden.
 	void setActive(bool active);
+
+	bool isVulnerable() const {
+		return vulnerable;
+	}
+
+	void setVulnerable(bool vulnerable);
 
 	// Overridden.
 	void update(float elapsedTime);
@@ -82,6 +85,7 @@ private:
 	NovaColor highColor;
 	NovaColor lowColor;
 	bool increasingColor;
+	bool vulnerable;
 	uint damage;
 	float fireInterval;
 	float lastFireTime;

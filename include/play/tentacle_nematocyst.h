@@ -21,7 +21,7 @@
 
 class TentacleNematocyst: public TentacleSegment {
 public:
-	TentacleNematocyst(PlayState* playState, Sprite* parent, float radius, const NovaColor &color, bool explosive);
+	TentacleNematocyst(PlayState* playState, Sprite* parent, float radius, const NovaColor &color);
 	~TentacleNematocyst();
 
 	// Overridden.
@@ -39,6 +39,7 @@ public:
 private:
 	Laser* laser;
 	float damage;
+	NovaColor highColor;
 	NovaColor lowColor;
 	bool increasingColor;
 };

@@ -21,7 +21,7 @@
 
 class SnakeSegment: public AlienComponent {
 public:
-	SnakeSegment(PlayState* playState, Sprite* parent, const NovaColor &color, bool explosive);
+	SnakeSegment(PlayState* playState, Sprite* parent, const NovaColor &color);
 
 	enum AnchorPoint {
 		TOP_VERTEX_ANCHOR = 5, BOTTOM_VERTEX_ANCHOR = 0

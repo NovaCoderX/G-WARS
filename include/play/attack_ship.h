@@ -19,13 +19,18 @@
 #ifndef __ATTACK_SHIP_H
 #define __ATTACK_SHIP_H
 
-class AttackShip: public Alien {
+class AttackShip: public AttackAlien {
 public:
 	AttackShip(PlayState* playState);
 	~AttackShip();
 
 	// Overridden.
 	void setActive(bool active);
+
+	// Overridden.
+	const NovaColor& getExplosionColor() const {
+		return readyToFireColor;
+	}
 
 	// Overridden.
 	void update(float elapsedTime);
@@ -35,7 +40,6 @@ public:
 
 private:
 	Laser *laser;
-	NovaColor defaultColor;
 	NovaColor readyToFireColor;
 	float totalElapsedTime;
 	float lastFireTime;

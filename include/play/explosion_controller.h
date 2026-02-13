@@ -28,24 +28,19 @@ public:
 	void update(float elapsedTime);
 	void draw();
 
-	void createExplosion(const Player* player);
-	void createExplosion(const Alien* alien);
-	void createExplosion(const AlienComponent* alien);
-	void createExplosion(const Missile* missile);
-	void createExplosion(const Laser* laser);
+	void createExplosion(const ExplosiveObject* explosiveObject);
 	void deactivate(Explosion* explosion);
 	void applyLighting(RenderVertex& targetVertex);
 
 private:
 	PlayState* playState;
 	Explosion* explosionListHead;
-	Explosion* playerExplosion;
-	std::vector<Explosion*> smallAlienExplosions;
-	std::vector<Explosion*> mediumAlienExplosions;
-	std::vector<Explosion*> largeAlienExplosions;
-	std::vector<Explosion*> missileExplosions;
-	std::vector<Explosion*> laserExplosions;
+	std::vector<Explosion*> smallExplosions;
+	std::vector<Explosion*> mediumExplosions;
+	std::vector<Explosion*> largeExplosions;
+	std::vector<Explosion*> massiveExplosions;
 
+	Explosion* getNextAvailable(ExplosionSize size);
 	void addToList(Explosion* explosion);
 	void removeFromList(Explosion* explosion);
 };

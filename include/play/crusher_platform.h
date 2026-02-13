@@ -24,8 +24,13 @@ public:
 	CrusherPlatform(PlayState* playState, Sprite* parent);
 	~CrusherPlatform();
 
-	// Overridden.
-	void setDisabled(bool disabled);
+	bool isRetreating() const {
+		return retreating;
+	}
+
+	void setRetreating(bool retreating) {
+		this->retreating = retreating;
+	}
 
 	// Overridden.
 	void setActive(bool active);
@@ -40,12 +45,15 @@ public:
 	bool checkCollision(Missile* missile);
 
 	// Overridden.
+	void smartBombNotification();
+
+	// Overridden.
 	void draw();
 
 protected:
-	std::vector<AlienComponent*> components;
-	NovaColor defaultColor;
-	NovaColor disabledColor;
+	std::vector<BoundingSphere*> boundingSpheres;
+	std::vector<GunPlatform*> gunPlatforms;
+	bool retreating;
 };
 
 class LeftCrusherPlatform: public CrusherPlatform {

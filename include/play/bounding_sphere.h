@@ -25,9 +25,6 @@ public:
 	~BoundingSphere();
 
 	// Overridden.
-	void setActive(bool active);
-
-	// Overridden.
 	void update(float elapsedTime);
 
 private:

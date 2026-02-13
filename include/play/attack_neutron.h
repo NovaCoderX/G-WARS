@@ -19,7 +19,7 @@
 #ifndef __ATTACK_NEUTRON_H
 #define __ATTACK_NEUTRON_H
 
-class AttackNeutron: public Alien {
+class AttackNeutron: public AttackAlien {
 public:
 	AttackNeutron(PlayState* playState);
 	~AttackNeutron();
@@ -28,15 +28,19 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
+	const NovaColor& getExplosionColor() const {
+		return readyToFireColor;
+	}
+
+	// Overridden.
 	void update(float timePassed);
 
 	// Overridden.
 	void draw();
 
 private:
-	Sprite *center;
+	Sprite* center;
 	Laser *laser;
-	NovaColor defaultColorBase;
 	NovaColor defaultColorCenter;
 	NovaColor readyToFireColor;
 	float lastFireTime;

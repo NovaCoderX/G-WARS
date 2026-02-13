@@ -40,6 +40,10 @@ public:
 		return gameOverPanel;
 	}
 
+	MissionCompletePanel* getMissionCompletePanel() const {
+		return missionCompletePanel;
+	}
+
 	void init();
 	void update(float elapsedTime);
 	void draw();
@@ -50,6 +54,7 @@ private:
 	HighScorePanel* highScorePanel;
 	PlayerStatsPanel* playerStatsPanel;
 	GameOverPanel* gameOverPanel;
+	MissionCompletePanel* missionCompletePanel;
 };
 
 #endif // __HUD_CONTROLLER_H

@@ -32,14 +32,18 @@ public:
 		this->visible = visible;
 	}
 
+	bool isAnimationComplete() const {
+		return animationComplete;
+	}
+
 	void init();
 	void update(float elapsedTime);
 	void draw();
-
 private:
 	bool visible;
 	std::vector<CharacterSprite*> characters;
 	NovaColor currentTextColor;
+	bool animationComplete;
 };
 
 #endif // __GAME_OVER_PANEL_H

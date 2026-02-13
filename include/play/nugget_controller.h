@@ -19,12 +19,6 @@
 #ifndef __NUGGET_CONTROLLER_H
 #define __NUGGET_CONTROLLER_H
 
-enum NuggetSpawnMode {
-	NEVER_SPAWN_NUGGETS = 0,
-	RANDOMLY_SPAWN_NUGGETS = 1,
-	ALWAYS_SPAWN_NUGGETS = 2
-};
-
 class NuggetController {
 public:
 	NuggetController(PlayState* playState);
@@ -34,18 +28,8 @@ public:
 	void update(float elapsedTime);
 	void checkCollisions();
 	void draw();
-	void spawnNugget(Alien* alien);
+	void spawnNugget(NuggetType nuggetType, const NovaVertex &location);
 	void deactivate(Nugget* nugget);
-
-	NuggetSpawnMode getSpawnMode() const {
-		return spawnMode;
-	}
-
-	NuggetSpawnMode setSpawnMode(NuggetSpawnMode spawnMode) {
-		NuggetSpawnMode perviousMode = this->spawnMode;
-		this->spawnMode = spawnMode;
-		return perviousMode;
-	}
 
 private:
 	PlayState* playState;
@@ -55,12 +39,15 @@ private:
 
 	std::vector<MultiplierNugget*> multiplierNuggets;
 	std::vector<PowerUpNugget*> powerUpNuggets;
-	NuggetSpawnMode spawnMode;
+	std::vector<ExtraLifeNugget*> extraLifeNuggets;
+	std::vector<ExtraBombNugget*> extraBombNuggets;
 
-	void addToList(Nugget* alien);
-	void removeFromList(Nugget* alien);
-	void spawnMultiplierNugget(Alien* alien);
-	void spawnPowerUpNugget(Alien* alien);
+	void addToList(Nugget* nugget);
+	void removeFromList(Nugget* nugget);
+	void spawnMultiplierNugget(const NovaVertex &location);
+	void spawnPowerUpNugget(const NovaVertex &location);
+	void spawnExtraLifeNugget(const NovaVertex &location);
+	void spawnExtraBombNugget(const NovaVertex &location);
 };
 
 #endif // __NUGGET_CONTROLLER_H

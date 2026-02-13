@@ -25,35 +25,37 @@ enum MissileType {
 	ALIEN_MISSILE = 2
 };
 
-class Missile: public Sprite {
-	friend class MissileController;
+class Missile: public Sprite, public ExplosiveObject {
 public:
 	Missile(PlayState* playState);
-
-	// Overridden.
-	void setActive(bool active);
 
 	MissileType getMissileType() const {
 		return missileType;
 	}
 
-	const NovaColor& getExplosionColor() const {
-		return explosionColor;
+	// Overridden.
+	void setActive(bool active);
+
+	// Overridden.
+	NovaVertex getExplosionOrigin() const {
+		return this->getPositionWCS();
 	}
 
-	void setExplosionColor(const NovaColor& explosionColor) {
-		this->explosionColor = explosionColor;
+	// Overridden.
+	const NovaColor& getExplosionColor() const {
+		return this->getCurrentColor();
 	}
 
 	// Overridden.
 	void update(float elapsedTime);
 
+public:
+	Missile *nextInList;
+	Missile *priorInList;
+
 protected:
 	PlayState* playState;
 	MissileType missileType;
-	Missile *nextInList;
-	Missile *priorInList;
-	NovaColor explosionColor;
 };
 
 #endif // __MISSILE_H

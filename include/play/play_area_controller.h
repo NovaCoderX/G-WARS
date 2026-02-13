@@ -25,6 +25,8 @@
 #define LEFT_SPAWN_POINT_Y 0
 #define RIGHT_SPAWN_POINT_X 90
 #define RIGHT_SPAWN_POINT_Y 0
+#define TOP_SPAWN_POINT_Y 70
+#define BOTTOM_SPAWN_POINT_Y -70
 #define SPAWN_ZONE_SIZE 90
 
 enum BorderIndex {
@@ -51,8 +53,9 @@ public:
 	bool isWithinPlayArea(Sprite *object);
 	bool isWithinPlayArea(BorderIndex borderIndex, Sprite *object);
 	bool isWithinZone(ZoneIndex zoneIndex, Sprite *object);
-	void shakeGrid();
 	void init();
+	void syncOptions();
+	void smartBombNotification();
 	void update(float elapsedTime);
 	void draw();
 
@@ -67,7 +70,7 @@ private:
 	} borderData;
 
 	std::vector<PlayAreaBorder*> borders;
-	PlayAreaGrid *grid;
+	PlayAreaGrid* grid;
 };
 
 #endif // __PLAY_AREA_CONTROLLER_H

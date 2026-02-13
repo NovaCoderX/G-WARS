@@ -21,7 +21,10 @@
 
 class ChaseAlien: public Alien {
 public:
-	ChaseAlien(PlayState* playState);
+	ChaseAlien(PlayState* playState, AlienType alienType);
+
+	// Overridden.
+	void setActive(bool active);
 
 	// Overridden.
 	void update(float elapsedTime);
