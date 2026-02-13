@@ -18,20 +18,24 @@
  *****************************************************************/
 #include "poly_nova.h"
 
-#define TITLE_VERTICAL_POSITION 54
-#define FIRST_CONTROL_VERTICAL_POSITION 30
+#define TITLE_VERTICAL_POSITION 50
+#define FIRST_CONTROL_VERTICAL_POSITION 31
 #define FIRST_BUTTON_VERTICAL_POSITION -50
-#define CONTROL_VERTICAL_SPACING 10
+#define CONTROL_VERTICAL_SPACING 8.8
+#define PANEL_VERTICAL_POSITION 0
 #define PANEL_WIDTH 110
-#define PANEL_HEIGHT 60
+#define PANEL_HEIGHT 72
 
 enum MenuControls {
 	PLAYER_NAME_INPUT = 0,
-	SOUND_VOLUME = 1,
-	MUSIC_VOLUME = 2,
-	MIXER_QUALITY = 3,
-	MIXER_CHANNELS = 4,
-	RETURN_BUTTON = 5
+	ONLINE_SAVING_TOGGLE = 1,
+	SOUND_VOLUME_INPUT = 2,
+	MUSIC_VOLUME_INPUT = 3,
+	MIXER_QUALITY_INPUT = 4,
+	MIXER_CHANNELS_INPUT = 5,
+	PLAYFIELD_TOGGLE = 6,
+	STARFIELD_TOGGLE = 7,
+	RETURN_BUTTON = 8
 };
 
 OptionsMenu::OptionsMenu(MenuState* menuState) : BaseMenu(menuState) {
@@ -75,17 +79,21 @@ void OptionsMenu::init() {
 
 	// Setup the background panel.
 	NovaColor panelColor = DEFAULT_TEXT_COLOR;
-	panelColor.rebase(30);
+	panelColor.rebase(20);
 	NovaColor borderColor = DEFAULT_TEXT_COLOR;
-	panel = new MenuPanel(menuState, PANEL_WIDTH, PANEL_HEIGHT, panelColor, borderColor, NovaVertex(0, 10, 0));
+	panel = new MenuPanel(menuState, PANEL_WIDTH, PANEL_HEIGHT, panelColor, borderColor, NovaVertex(0, PANEL_VERTICAL_POSITION, 0));
 
 	// Setup the controls.
-	x = STANDARD_CHARACTER_WIDTH;
+	x = SMALL_CHARACTER_WIDTH;
 	NovaColor textColor = DEFAULT_TEXT_COLOR;
 	y = FIRST_CONTROL_VERTICAL_POSITION;
 
-	controls.push_back(new OptionTextEdit(menuState, "player.name", DEFAULT_PLAYER_NAME, textColor, NovaVertex(x, y, z)));
+	controls.push_back(new OptionTextEdit(menuState, "player.name", DEFAULT_PLAYER_NAME, MAX_PLAYER_NAME_LENGTH, textColor, NovaVertex(x, y, z)));
 	labels.push_back(new Label(menuState, "PLAYER NAME:", textColor, RIGHT_ALIGNED_LABEL, NovaVertex(x, y, z)));
+	y -= CONTROL_VERTICAL_SPACING;
+
+	controls.push_back(new OptionToggle(menuState, "highscores.online", true, textColor, NovaVertex(x, y, z)));
+	labels.push_back(new Label(menuState, "ONLINE:", textColor, RIGHT_ALIGNED_LABEL, NovaVertex(x, y, z)));
 	y -= CONTROL_VERTICAL_SPACING;
 
 	std::vector<int> volume = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -105,6 +113,14 @@ void OptionsMenu::init() {
 	std::vector<int> channels = { 16, 32, 64 };
 	controls.push_back(new OptionSelector(menuState, "audio.mixer.channels", DEFAULT_MIXER_CHANNELS, channels, textColor, NovaVertex(x, y, z)));
 	labels.push_back(new Label(menuState, "MIX CHANNELS:", textColor, RIGHT_ALIGNED_LABEL, NovaVertex(x, y, z)));
+	y -= CONTROL_VERTICAL_SPACING;
+
+	controls.push_back(new OptionToggle(menuState, "playfield.enabled", true, textColor, NovaVertex(x, y, z)));
+	labels.push_back(new Label(menuState, "PLAYFIELD:", textColor, RIGHT_ALIGNED_LABEL, NovaVertex(x, y, z)));
+	y -= CONTROL_VERTICAL_SPACING;
+
+	controls.push_back(new OptionToggle(menuState, "starfield.enabled", true, textColor, NovaVertex(x, y, z)));
+	labels.push_back(new Label(menuState, "STARFIELD:", textColor, RIGHT_ALIGNED_LABEL, NovaVertex(x, y, z)));
 
 	x = 0;
 	y = FIRST_BUTTON_VERTICAL_POSITION;
@@ -123,22 +139,33 @@ void OptionsMenu::syncCurrentSelection() {
 }
 
 void OptionsMenu::handleKeyDown(SDL_keysym *keysym) {
-	switch (keysym->sym) {
-	case SDLK_ESCAPE:
-		currentSelection = RETURN_BUTTON;
-		syncCurrentSelection();
-		break;
-	case SDLK_UP:
-		selectionUp();
-		break;
-	case SDLK_DOWN:
-		selectionDown();
-		break;
-	case SDLK_RETURN:
-		selectionChosen();
-		break;
-	default:
-		break;
+	bool shortcutKeyUsed = false;
+
+	// Alt-enter toggles full screen mode
+	if ((keysym->sym == SDLK_RETURN) && (keysym->mod & KMOD_ALT)) {
+		g_worldManager->toggleFullScreen();
+		shortcutKeyUsed = true;
+	}
+
+	if (!shortcutKeyUsed) {
+		// Normal processing.
+		switch (keysym->sym) {
+		case SDLK_ESCAPE:
+			currentSelection = RETURN_BUTTON;
+			syncCurrentSelection();
+			break;
+		case SDLK_UP:
+			selectionUp();
+			break;
+		case SDLK_DOWN:
+			selectionDown();
+			break;
+		case SDLK_RETURN:
+			selectionChosen();
+			break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -223,27 +250,30 @@ void OptionsMenu::enterState() {
 
 void OptionsMenu::leaveState() {
 	// See if the audio settings in the YAML were changed, if so we will need to restart the audio manager.
-	bool restartRequired = false;
+	bool audioRestartRequired = false;
 
 	if (audioData.soundVolume != g_worldManager->getYamlish()->getInt("audio.sound.volume")) {
-		restartRequired = true;
+		audioRestartRequired = true;
 	}
 
 	if (audioData.musicVolume != g_worldManager->getYamlish()->getInt("audio.music.volume")) {
-		restartRequired = true;
+		audioRestartRequired = true;
 	}
 
 	if (audioData.mixerQuality != g_worldManager->getYamlish()->getInt("audio.mixer.quality")) {
-		restartRequired = true;
+		audioRestartRequired = true;
 	}
 
 	if (audioData.mixerChannels != g_worldManager->getYamlish()->getInt("audio.mixer.channels")) {
-		restartRequired = true;
+		audioRestartRequired = true;
 	}
 
-	if (restartRequired) {
+	if (audioRestartRequired) {
 		g_worldManager->restartAudioManager();
 	}
+
+	// Need to check if the player's name was just changed.
+	g_worldManager->getHighScoreHandler()->syncOptions();
 }
 
 void OptionsMenu::selectionUp() {

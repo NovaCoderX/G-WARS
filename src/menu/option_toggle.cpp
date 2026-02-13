@@ -54,7 +54,7 @@ void OptionToggle::setDisabled(bool disabled) {
 	}
 
 	for (CharacterSprite* character : displayValue) {
-		character->setSpriteColor(currentTextColor);
+		character->setCurrentColor(currentTextColor);
 	}
 }
 
@@ -69,7 +69,7 @@ void OptionToggle::setSelected(bool selected) {
 	}
 
 	for (CharacterSprite* character : displayValue) {
-		character->setSpriteColor(currentTextColor);
+		character->setCurrentColor(currentTextColor);
 	}
 }
 
@@ -87,7 +87,7 @@ void OptionToggle::setInputCaptured(bool inputCaptured) {
 	}
 
 	for (CharacterSprite* character : displayValue) {
-		character->setSpriteColor(currentTextColor);
+		character->setCurrentColor(currentTextColor);
 	}
 }
 
@@ -138,7 +138,7 @@ void OptionToggle::update(float elapsedTime) {
 		}
 
 		for (CharacterSprite* character : displayValue) {
-			character->setSpriteColor(currentTextColor);
+			character->setCurrentColor(currentTextColor);
 		}
 	}
 }
@@ -227,7 +227,7 @@ void OptionToggle::syncCurrentValue() {
 		}
 
 		// Skip any spaces.
-		x += STANDARD_CHARACTER_WIDTH;
+		x += SMALL_CHARACTER_WIDTH;
 	}
 }
 

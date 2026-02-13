@@ -37,8 +37,18 @@ static std::string formatStringWithCommas(int value) {
 	return numStr;
 }
 
-HighScoreEntry::HighScoreEntry(MenuState *menuState, uint rank, std::string name, uint score, const NovaColor &color, const NovaVertex &position) {
+HighScoreEntry::HighScoreEntry(MenuState *menuState, uint rank, std::string name, uint score, const NovaColor &color,
+		const NovaVertex &position, bool animated) {
 	this->menuState = menuState;
+	currentTextColor = color;
+
+	this->animated = animated;
+	if (animated) {
+		highColor = currentTextColor;
+		lowColor = currentTextColor;
+		lowColor.rebase(50);
+		increasingColor = false;
+	}
 
 	// Setup the ranking.
 	char buffer[20];
@@ -46,11 +56,11 @@ HighScoreEntry::HighScoreEntry(MenuState *menuState, uint rank, std::string name
 	std::string formattedNumber(buffer);
 	for (std::string::size_type i = 0; i < formattedNumber.size(); i++) {
 		playerRank.push_back(new CharacterDigit(menuState));
-		playerRank[i]->init(color);
+		playerRank[i]->init(currentTextColor);
 	}
 
 	// Position of the first digit.
-	float x = (position.x - 46);
+	float x = (position.x - 48);
 	float y = position.y;
 	float z = position.z;
 
@@ -85,7 +95,7 @@ HighScoreEntry::HighScoreEntry(MenuState *menuState, uint rank, std::string name
 
 	// Need to validate that our text count matches (that it is in sync).
 	if (numCharacters != name.size()) {
-		logWarningMessage("The player name contains characters which cannot be displayed");
+		logWarningMessage("The player name contains characters which cannot be displayed\n");
 	}
 
 	for (uint i = 0; i < numCharacters; i++) {
@@ -101,13 +111,13 @@ HighScoreEntry::HighScoreEntry(MenuState *menuState, uint rank, std::string name
 
 				// Convert the ASCII value to our baseline character index (0 == A).
 				characterIndex -= 65;
-				playerName[i++]->init(menuState->getAlphaCharacter(characterIndex), color);
+				playerName[i++]->init(menuState->getAlphaCharacter(characterIndex), currentTextColor);
 			} else {
 				int numberIndex = static_cast<int>(c);
 
 				// Convert the ASCII value to our baseline number index (0 == 0).
 				numberIndex -= 48;
-				playerName[i++]->init(menuState->getNumericalCharacter(numberIndex), color);
+				playerName[i++]->init(menuState->getNumericalCharacter(numberIndex), currentTextColor);
 			}
 		} else {
 			if (std::isblank(static_cast<unsigned char>(c))) {
@@ -116,14 +126,14 @@ HighScoreEntry::HighScoreEntry(MenuState *menuState, uint rank, std::string name
 			} else {
 				// Check for any special characters that we accept.
 				if (c == '-') {
-					playerName[i++]->init(menuState->getSpecialCharacter(DASH_CHARACTER_INDEX), color);
+					playerName[i++]->init(menuState->getSpecialCharacter(DASH_CHARACTER_INDEX), currentTextColor);
 				}
 			}
 		}
 	}
 
 	// Position the first character.
-	x = (position.x - 37);
+	x = (position.x - 34);
 	y = position.y;
 	z = position.z;
 
@@ -135,7 +145,7 @@ HighScoreEntry::HighScoreEntry(MenuState *menuState, uint rank, std::string name
 		}
 
 		// Skip any spaces.
-		x += STANDARD_CHARACTER_WIDTH;
+		x += SMALL_CHARACTER_WIDTH;
 	}
 
 	// Setup the player score.
@@ -148,11 +158,11 @@ HighScoreEntry::HighScoreEntry(MenuState *menuState, uint rank, std::string name
 
 	for (std::string::size_type i = 0; i < formattedNumber.size(); i++) {
 		playerScore.push_back(new CharacterDigit(menuState));
-		playerScore[i]->init(color);
+		playerScore[i]->init(currentTextColor);
 	}
 
 	// Position the first digit then transform and project in advance.
-	x = (position.x + 46);
+	x = (position.x + 48);
 	y = position.y;
 	z = position.z;
 
@@ -218,6 +228,43 @@ HighScoreEntry::~HighScoreEntry() {
 	}
 
 	playerScore.clear();
+}
+
+void HighScoreEntry::update(float elapsedTime) {
+	if (animated) {
+		// Do some simple color cycling.
+		if (increasingColor) {
+			if (currentTextColor.brighten((elapsedTime / 30), highColor)) {
+				increasingColor = false;
+			}
+		} else {
+			if (currentTextColor.fade((elapsedTime / 30), lowColor)) {
+				increasingColor = true;
+			}
+		}
+
+		for (CharacterDigit* digit : playerRank) {
+			if (digit->isVisible()) {
+				digit->setCurrentColor(currentTextColor);
+			} else {
+				break; // No point continuing.
+			}
+		}
+
+		for (CharacterSprite* character : playerName) {
+			if (character->getDefinition()) {
+				character->setCurrentColor(currentTextColor);
+			}
+		}
+
+		for (CharacterDigit* digit : playerScore) {
+			if (digit->isVisible()) {
+				digit->setCurrentColor(currentTextColor);
+			} else {
+				break; // No point continuing.
+			}
+		}
+	}
 }
 
 void HighScoreEntry::draw() {

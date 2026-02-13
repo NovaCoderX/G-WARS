@@ -91,22 +91,33 @@ void MainMenu::syncCurrentSelection() {
 }
 
 void MainMenu::handleKeyDown(SDL_keysym *keysym) {
-	switch (keysym->sym) {
-	case SDLK_ESCAPE:
-		currentSelection = QUIT_BUTTON;
-		syncCurrentSelection();
-		break;
-	case SDLK_UP:
-		selectionUp();
-		break;
-	case SDLK_DOWN:
-		selectionDown();
-		break;
-	case SDLK_RETURN:
-		selectionChosen();
-		break;
-	default:
-		break;
+	bool shortcutKeyUsed = false;
+
+	// Alt-enter toggles full screen mode
+	if ((keysym->sym == SDLK_RETURN) && (keysym->mod & KMOD_ALT)) {
+		g_worldManager->toggleFullScreen();
+		shortcutKeyUsed = true;
+	}
+
+	if (!shortcutKeyUsed) {
+		// Normal processing.
+		switch (keysym->sym) {
+		case SDLK_ESCAPE:
+			currentSelection = QUIT_BUTTON;
+			syncCurrentSelection();
+			break;
+		case SDLK_UP:
+			selectionUp();
+			break;
+		case SDLK_DOWN:
+			selectionDown();
+			break;
+		case SDLK_RETURN:
+			selectionChosen();
+			break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -167,7 +178,7 @@ void MainMenu::reset() {
 
 void MainMenu::enterState() {
 	// Update the selected and disabled controls.
-	if (g_worldManager->isGameOver()) {
+	if (!g_worldManager->isGameInProgress()) {
 		controls[RESUME_GAME_BUTTON]->setDisabled(true);
 	} else {
 		controls[RESUME_GAME_BUTTON]->setDisabled(false);
@@ -235,8 +246,6 @@ void MainMenu::selectionChosen() {
 		break;
 
 	case QUIT_BUTTON:
-		g_worldManager->save();
-
 		// Let the UI sound finish playing.
 		Uint32 startTime = SDL_GetTicks();
 		while (g_worldManager->isSoundPlaying(channel)) {
@@ -245,6 +254,7 @@ void MainMenu::selectionChosen() {
 			}
 		}
 
+		g_worldManager->save();
 		exit(EXIT_SUCCESS);
 		break;
 	}

@@ -24,7 +24,7 @@
 
 static Uint32 lastFrameTime = 0;
 
-MenuState::MenuState() {
+MenuState::MenuState() : GameState(MENU_STATE) {
 	camera = NULL;
 	smallAlphaCharacters = NULL;
 	largeAlphaCharacters = NULL;
@@ -278,7 +278,7 @@ void MenuState::processInput() {
 void MenuState::update() {
 	Uint32 currentFrameTime = SDL_GetTicks();
 
-	float elapsedTime = (currentFrameTime - lastFrameTime) / 1000.0;
+	float elapsedTime = (currentFrameTime - lastFrameTime) / 100.0;
 
 	menuBackground->update(elapsedTime);
 	activeMenu->update(elapsedTime);
@@ -300,6 +300,13 @@ void MenuState::enterState() {
 	// This will create the main menu screen for the first time.
 	this->setActiveMenu(MAIN_MENU);
 
+	// Start playing menu music.
+	g_worldManager->setMusicType(MENU_MUSIC);
+	g_worldManager->startMusic();
+
+	// Release the mouse.
+	g_worldManager->grabMouse(false);
+
 	// Update to the current time.
 	lastFrameTime = SDL_GetTicks();
 }
@@ -308,5 +315,10 @@ void MenuState::leaveState() {
 	if (activeMenu) {
 		activeMenu->leaveState();
 	}
+
+	g_worldManager->stopMusic(false);
+
+	// Capture the mouse.
+	g_worldManager->grabMouse(true);
 }
 

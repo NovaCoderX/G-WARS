@@ -20,9 +20,15 @@
 
 #include <algorithm>
 
-#define MAX_TEXT_VALUE_LENGTH 12
 #define INPUT_PANEL_WIDTH 52
 #define INPUT_PANEL_HEIGHT 6
+
+static inline bool is_blank(const std::string& s) {
+    // Returns true if length is 0 OR all characters are whitespace
+    return std::all_of(s.begin(), s.end(), [](unsigned char ch) {
+        return std::isspace(ch);
+    });
+}
 
 static inline void ltrim(std::string& s) {
 	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
@@ -47,15 +53,22 @@ static inline void truncate(std::string& s, std::size_t length) {
 	}
 }
 
+static inline void toUpper(std::string& s) {
+	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
+		return static_cast<char>(std::toupper(c));
+	});
+}
+
 OptionTextEdit::OptionTextEdit(MenuState* menuState, const std::string key, std::string defaultValue,
-		const NovaColor& textColor, const NovaVertex& position) : Control(menuState) {
+		uint maxTextLength, const NovaColor& textColor, const NovaVertex& position) : Control(menuState) {
+	this->maxTextLength = maxTextLength;
 	defaultTextColor = textColor;
 	disabledTextColor = defaultTextColor;
 	disabledTextColor.rebase(50);
 	selectedTextColor = defaultTextColor;
 	selectedTextColor.rebase(150);
-	editTextColor = NovaColor(0, 0, 0);
 	currentTextColor = defaultTextColor;
+	increasingColor = true;
 	this->moveTo(position);
 
 	// Setup the initial value text.
@@ -63,28 +76,18 @@ OptionTextEdit::OptionTextEdit(MenuState* menuState, const std::string key, std:
 	this->defaultValue = defaultValue;
 
 	currentValue = g_worldManager->getYamlish()->get(key);
-	if (currentValue.empty()) {
+	if (is_blank(currentValue)) {
 		currentValue = defaultValue;
 	}
 
 	trim(currentValue);
-	truncate(currentValue, MAX_TEXT_VALUE_LENGTH);
+	truncate(currentValue, maxTextLength);
+	toUpper(currentValue);
 	this->syncCurrentValue();
-
-	// Setup the input panel background.
-	float x = (position.x + 23);
-	float y = position.y;
-	float z = position.z;
-
-	panelColor = NovaColor(255, 255, 255);
-	NovaColor panelBorderColor = DEFAULT_TEXT_COLOR;
-	panelBorderColor.rebase(20);
-	inputPanel = new MenuPanel(menuState, INPUT_PANEL_WIDTH, INPUT_PANEL_HEIGHT,
-			panelColor, panelBorderColor, NovaVertex(x, y, z));
 
 	// Create the input cursor.
 	cursor = new CharacterSprite(menuState);
-	cursor->init(menuState->getSpecialCharacter(CURSOR_CHARACTER_INDEX), editTextColor);
+	cursor->init(menuState->getSpecialCharacter(CURSOR_CHARACTER_INDEX), defaultTextColor);
 }
 
 OptionTextEdit::~OptionTextEdit() {
@@ -93,11 +96,6 @@ OptionTextEdit::~OptionTextEdit() {
 	}
 
 	displayValue.clear();
-
-	if (inputPanel) {
-		delete inputPanel;
-		inputPanel = NULL;
-	}
 
 	if (cursor) {
 		delete cursor;
@@ -116,7 +114,7 @@ void OptionTextEdit::setDisabled(bool disabled) {
 	}
 
 	for (CharacterSprite* character : displayValue) {
-		character->setSpriteColor(currentTextColor);
+		character->setCurrentColor(currentTextColor);
 	}
 }
 
@@ -131,7 +129,7 @@ void OptionTextEdit::setSelected(bool selected) {
 	}
 
 	for (CharacterSprite* character : displayValue) {
-		character->setSpriteColor(currentTextColor);
+		character->setCurrentColor(currentTextColor);
 	}
 }
 
@@ -142,30 +140,24 @@ void OptionTextEdit::setInputCaptured(bool inputCaptured) {
 	// Reset the text color.
 	if (this->isInputCaptured()) {
 		// Need to change back to the default for color cycling.
-		currentTextColor = editTextColor;
+		currentTextColor = defaultTextColor;
 	} else {
 		// The control will still have focus.
 		currentTextColor = selectedTextColor;
 	}
 
 	for (CharacterSprite* character : displayValue) {
-		character->setSpriteColor(currentTextColor);
+		character->setCurrentColor(currentTextColor);
 	}
 
 	// Draw or hide the edit box and cursor.
 	if (this->isInputCaptured()) {
-		inputPanel->setVisible(true);
-
 		// Reset.
-		currentCursorColor = editTextColor;
-		cursor->setSpriteColor(currentCursorColor);
-		increasingCursorColor = true;
+		cursor->setCurrentColor(currentTextColor);
 
 		// The initial position of the cursor is based on the length of the current text value.
 		cursorPosition = displayValue.size();
 		this->syncCursorPosition();
-	} else {
-		inputPanel->setVisible(false);
 	}
 }
 
@@ -205,30 +197,31 @@ void OptionTextEdit::processInput() {
 void OptionTextEdit::update(float elapsedTime) {
 	// Flash the cursor by changing the color (black/white).
 	if (this->isInputCaptured()) {
-		if (increasingCursorColor) {
-			if (currentCursorColor.brighten((elapsedTime / 3), panelColor)) {
-				increasingCursorColor = false;
+		if (increasingColor) {
+			if (currentTextColor.brighten((elapsedTime / 30), selectedTextColor)) {
+				increasingColor = false;
 			}
 		} else {
-			if (currentCursorColor.fade((elapsedTime / 3), editTextColor)) {
-				increasingCursorColor = true;
+			if (currentTextColor.fade((elapsedTime / 30), defaultTextColor)) {
+				increasingColor = true;
 			}
 		}
 
-		cursor->setSpriteColor(currentCursorColor);
+		for (CharacterSprite* character : displayValue) {
+			character->setCurrentColor(currentTextColor);
+		}
+
+		cursor->setCurrentColor(currentTextColor);
 	}
 }
 
 void OptionTextEdit::draw() {
-	if (inputPanel->isVisible()) {
-		inputPanel->draw();
+	glBegin(GL_LINES);
 
-		glBegin(GL_LINES);
+	if (this->isInputCaptured()) {
 		cursor->draw();
-		glEnd();
 	}
 
-	glBegin(GL_LINES);
 	for (CharacterSprite* character : displayValue) {
 		if (character->getDefinition()) {
 			character->draw();
@@ -316,14 +309,14 @@ void OptionTextEdit::syncCurrentValue() {
 		}
 
 		// Skip any spaces.
-		x += STANDARD_CHARACTER_WIDTH;
+		x += SMALL_CHARACTER_WIDTH;
 	}
 }
 
 void OptionTextEdit::syncCursorPosition() {
 	// Sync the displayed cursor position to the current position.
 	NovaVertex position = this->getPositionWCS();
-	float x = position.x + (cursorPosition * STANDARD_CHARACTER_WIDTH);
+	float x = position.x + (cursorPosition * SMALL_CHARACTER_WIDTH);
 	float y = position.y;
 	float z = position.z;
 
@@ -410,7 +403,7 @@ void OptionTextEdit::deleteCharacter() {
 }
 
 void OptionTextEdit::insertCharacter(char character) {
-	if (currentValue.size() < MAX_TEXT_VALUE_LENGTH) {
+	if (currentValue.size() < maxTextLength) {
 		if (std::isalpha(character)) {
 			character = std::toupper(character);
 		}
@@ -424,13 +417,14 @@ void OptionTextEdit::insertCharacter(char character) {
 void OptionTextEdit::accept() {
 	g_worldManager->startSound(UI_CONFIRM);
 
-	if (currentValue.empty()) {
+	if (is_blank(currentValue)) {
 		currentValue = defaultValue;
 		syncCurrentValue();
 	}
 
 	trim(currentValue);
-	truncate(currentValue, MAX_TEXT_VALUE_LENGTH);
+	truncate(currentValue, maxTextLength);
+	toUpper(currentValue);
 	g_worldManager->getYamlish()->set(key, currentValue);
 	setInputCaptured(false);
 }

@@ -20,10 +20,10 @@
 
 #define TITLE_VERTICAL_POSITION 54
 #define FIRST_BUTTON_VERTICAL_POSITION -50
-#define FIRST_ENTRY_VERTICAL_POSITION 28
-#define ENTRY_VERTICAL_SPACING 8
-#define PANEL_WIDTH 100
-#define PANEL_HEIGHT 70
+#define FIRST_ENTRY_VERTICAL_POSITION 32
+#define ENTRY_VERTICAL_SPACING 7
+#define PANEL_WIDTH 104
+#define PANEL_HEIGHT 72
 
 enum MenuControls {
 	RETURN_BUTTON = 0
@@ -90,12 +90,23 @@ void HighScoreMenu::syncCurrentSelection() {
 }
 
 void HighScoreMenu::handleKeyDown(SDL_keysym *keysym) {
-	switch (keysym->sym) {
-	case SDLK_RETURN:
-		selectionChosen();
-		break;
-	default:
-		break;
+	bool shortcutKeyUsed = false;
+
+	// Alt-enter toggles full screen mode
+	if ((keysym->sym == SDLK_RETURN) && (keysym->mod & KMOD_ALT)) {
+		g_worldManager->toggleFullScreen();
+		shortcutKeyUsed = true;
+	}
+
+	if (!shortcutKeyUsed) {
+		// Normal processing.
+		switch (keysym->sym) {
+		case SDLK_RETURN:
+			selectionChosen();
+			break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -127,6 +138,10 @@ void HighScoreMenu::processInput() {
 }
 
 void HighScoreMenu::update(float elapsedTime) {
+	for (HighScoreEntry* entry : entries) {
+		entry->update(elapsedTime);
+	}
+
 	controls[currentSelection]->update(elapsedTime);
 }
 
@@ -167,9 +182,16 @@ void HighScoreMenu::enterState() {
 	float y = FIRST_ENTRY_VERTICAL_POSITION;
 	float z = 0;
 	NovaColor textColor = DEFAULT_TEXT_COLOR;
+	//NovaColor playerTextColor = NovaColor(25, 250, 94);
+	uint playerToken = g_worldManager->getHighScoreHandler()->getPlayerToken();
 
 	for (uint i = 0; i < highScores.size(); i++) {
-		entries.push_back(new HighScoreEntry(menuState, i+1, highScores[i].name, highScores[i].score, textColor, NovaVertex(x, y, z)));
+		if (highScores[i].id == playerToken) {
+			entries.push_back(new HighScoreEntry(menuState, i+1, highScores[i].name, highScores[i].score, textColor, NovaVertex(x, y, z), true));
+		} else {
+			entries.push_back(new HighScoreEntry(menuState, i+1, highScores[i].name, highScores[i].score, textColor, NovaVertex(x, y, z), false));
+		}
+
 		textColor.rebase(90);
 		y -= ENTRY_VERTICAL_SPACING;
 	}

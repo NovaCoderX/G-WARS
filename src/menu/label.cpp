@@ -111,12 +111,12 @@ Label::Label(MenuState* menuState, std::string text, const NovaColor& color, Lab
 	float z = position.z;
 
 	// First find the length of the string (fixed width font).
-	int length = (characters.size() * STANDARD_CHARACTER_WIDTH);
+	int length = (characters.size() * SMALL_CHARACTER_WIDTH);
 
 	// Calculate the starting point of the first character (if not left aligned).
 	if (alignment == CENTERED_LABEL) {
 		x = (x - (length / 2));
-		x += (STANDARD_CHARACTER_WIDTH / 2);
+		x += (SMALL_CHARACTER_WIDTH / 2);
 	} else if (alignment == RIGHT_ALIGNED_LABEL) {
 		x = (x - length);
 	}
@@ -129,7 +129,7 @@ Label::Label(MenuState* menuState, std::string text, const NovaColor& color, Lab
 		}
 
 		// Skip any spaces.
-		x += STANDARD_CHARACTER_WIDTH;
+		x += SMALL_CHARACTER_WIDTH;
 	}
 }
 
@@ -152,7 +152,7 @@ void Label::draw() {
 
 void Label::setColor(const NovaColor& color) {
 	for (CharacterSprite* character : characters) {
-		character->setSpriteColor(color);
+		character->setCurrentColor(color);
 	}
 }
 

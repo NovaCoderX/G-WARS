@@ -100,7 +100,7 @@ void OptionSelector::setDisabled(bool disabled) {
 	}
 
 	for (CharacterDigit* digit : displayValue) {
-		digit->setSpriteColor(currentTextColor);
+		digit->setCurrentColor(currentTextColor);
 	}
 }
 
@@ -115,7 +115,7 @@ void OptionSelector::setSelected(bool selected) {
 	}
 
 	for (CharacterDigit* digit : displayValue) {
-		digit->setSpriteColor(currentTextColor);
+		digit->setCurrentColor(currentTextColor);
 	}
 }
 
@@ -133,7 +133,7 @@ void OptionSelector::setInputCaptured(bool inputCaptured) {
 	}
 
 	for (CharacterDigit* digit : displayValue) {
-		digit->setSpriteColor(currentTextColor);
+		digit->setCurrentColor(currentTextColor);
 	}
 }
 
@@ -184,7 +184,7 @@ void OptionSelector::update(float elapsedTime) {
 		}
 
 		for (CharacterDigit* digit : displayValue) {
-			digit->setSpriteColor(currentTextColor);
+			digit->setCurrentColor(currentTextColor);
 		}
 	}
 }
