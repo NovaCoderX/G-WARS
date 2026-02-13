@@ -63,9 +63,9 @@ void CharacterDigit::init(const NovaColor &color) {
 	characters[COMMA_SEPARATOR_DIGIT]->init(g_worldManager->getSpriteDefinition("comma_separator_digit"), color);
 }
 
-void CharacterDigit::setSpriteColor(const NovaColor &color) {
+void CharacterDigit::setCurrentColor(const NovaColor &color) {
 	for (int i = 0; i < NUM_CHARACTER_DIGITS; i++) {
-		characters[i]->setSpriteColor(color);
+		characters[i]->setCurrentColor(color);
 	}
 }
 

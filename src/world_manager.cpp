@@ -140,9 +140,7 @@ void WorldManager::load(const char *baseDirectory) {
 	}
 
 	highScoreHandler = new HighScoreHandler();
-	if (!highScoreHandler->load("HighScores.txt")) {
-		logWarningMessage("Could not load the high score data\n");
-	}
+	highScoreHandler->init();
 
 	if (SDL_Init(SDL_INIT_NOPARACHUTE) == -1) {
 		fatalError("Could not initialize SDL: %s\n", SDL_GetError());
@@ -165,10 +163,12 @@ void WorldManager::load(const char *baseDirectory) {
 	spriteDefinitionLibrary = new SpriteDefinitionLibrary();
 	spriteDefinitionLibrary->load("G-WARS.scn");
 
-	// This will create the menu state for the first time.
+	// Pass control to the first active state.
+#ifdef TIME_DEMO_ENABLED
+	this->setActiveState(PLAY_STATE);
+#else
 	this->setActiveState(MENU_STATE);
-
-	logMessage("Finished creating the WorldManager\n");
+#endif
 }
 
 void WorldManager::save() {
@@ -177,7 +177,7 @@ void WorldManager::save() {
 	}
 
 	if (highScoreHandler) {
-		highScoreHandler->save("HighScores.txt");
+		highScoreHandler->save();
 	}
 }
 

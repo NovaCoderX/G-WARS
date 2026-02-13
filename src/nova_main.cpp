@@ -41,6 +41,8 @@ extern "C" {
 		// Seed the  pseudo-random number generator.
 		srand(time(NULL));
 
+		// TODO - set the time demo seconds in the world manager.
+
 		// Create our world object (global pointer), then run it.
 		g_worldManager = new WorldManager();
 		g_worldManager->load(baseDirectory);

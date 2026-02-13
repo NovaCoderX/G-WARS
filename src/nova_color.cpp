@@ -22,7 +22,7 @@
 void NovaColor::rebase(float percentage) {
 	if (percentage < 0) {
 		logWarningMessage("Rebase percentage cannot be less than zero\n");
-		percentage = 0;
+		percentage = 100;
 	}
 
 	// Percentage is used to adjust colors in a uniform manner.

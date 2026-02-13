@@ -35,7 +35,7 @@ int _gettimeofday(struct timeval *tv, void *tzvp) {
 
 extern void nova_main(char *baseDirectory);
 
-const char *ID = "$VER: G-WARS 2.0.02\r\n";
+const char *ID = "$VER: G-WARS 3.0.10\r\n";
 
 // The startup message from workbench or 0 if started via CLI.
 extern struct WBStartup *_WBenchMsg;
@@ -60,13 +60,13 @@ int main(int argc, char *argv[]) {
 		CurrentDir(_WBenchMsg->sm_ArgList[0].wa_Lock);
 
 		// Setup command line arguments.
-		myargv[myargc] = (char*) malloc(strlen("G-WARS") + 1);
+		myargv[myargc] = (char*)malloc(strlen("G-WARS") + 1);
 		strcpy(myargv[myargc++], "G-WARS");
 
 		// Process Tool types.
-		diskObject = GetDiskObject((const unsigned char*) _WBenchMsg->sm_ArgList[0].wa_Name);
+		diskObject = GetDiskObject((const unsigned char*)_WBenchMsg->sm_ArgList[0].wa_Name);
 		if (diskObject != NULL) {
-			toolType = (char*) FindToolType((const unsigned char**) diskObject->do_ToolTypes, (const unsigned char*) "closewb");
+			toolType = (char*) FindToolType((const unsigned char**)diskObject->do_ToolTypes, (const unsigned char*) "closewb");
 			if (toolType != NULL) {
 				SDL_putenv("SDL_CLOSE_WB=1");
 			}

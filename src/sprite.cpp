@@ -24,7 +24,7 @@ Sprite::Sprite(GameState *gameState) {
 	renderVertices = NULL;
 	displayVertices = NULL;
 	lines = NULL;
-	spriteColor = NovaColor(255, 255, 255);
+	currentColor = NovaColor(255, 255, 255);
 	facingTowardsDirection = 0;
 	horizontalVelocity = verticalVelocity = 0;
 }
@@ -166,19 +166,18 @@ NovaVertex Sprite::getAnchorPointCCS(int vertexIndex) const {
 	return (this->definition->staticVertices[vertexIndex] * objectToCameraMatrix);
 }
 
-
 void Sprite::calculateVisibility() {
 	// Update for derived class usage.
 	positionCCS = gameState->getCamera()->getPositionCCS(this);
 
 	// If the object's origin is within the view port then it's definitely visible.
-	if (gameState->getCamera()->checkProjectedPoint(positionCCS)) {
+	if (checkProjectedPoint(positionCCS)) {
 		visible = true;
 	} else {
 		// Take the objects extents into account.
 		NovaVertex topR = NovaVertex(getBoundingSphere() + positionCCS.x, getBoundingSphere() + positionCCS.y, positionCCS.z);
 		NovaVertex botL = NovaVertex(-getBoundingSphere() + positionCCS.x, -getBoundingSphere() + positionCCS.y, positionCCS.z);
-		visible = gameState->getCamera()->checkProjectedPoints(topR, botL);
+		visible = checkProjectedPoints(topR, botL);
 	}
 }
 
@@ -195,7 +194,7 @@ void Sprite::draw() {
 	objectToCameraMatrix = objectToWorldMatrix * gameState->getCamera()->getWorldToCameraMatrix();
 
 	// All lines  have the same color.
-	glColor3fv(spriteColor.data);
+	glColor3fv(currentColor.data);
 
 	for (int i = 0; i < definition->getNumLines(); i++) {
 		NovaLine *line = &lines[i];

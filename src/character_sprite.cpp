@@ -24,7 +24,7 @@ CharacterSprite::CharacterSprite(GameState* gameState) : Sprite(gameState) {
 
 void CharacterSprite::init(SpriteDefinition *definition, const NovaColor &color) {
 	this->setSpriteDefinition(definition);
-	spriteColor = color;
+	currentColor = color;
 }
 
 void CharacterSprite::transform() {
@@ -80,7 +80,7 @@ void CharacterSprite::transform() {
 
 void CharacterSprite::draw() {
 	// All lines have the same color.
-	glColor3fv(spriteColor.data);
+	glColor3fv(currentColor.data);
 
 	for (int i = 0; i < definition->getNumLines(); i++) {
 		NovaLine *line = &lines[i];

@@ -22,13 +22,15 @@
 #include <SDL/SDL_mixer.h>
 
 #define MIX_FADE_TIME 3000
-#define NUMBER_OF_MUSIC_TRACKS 4
+#define NUMBER_OF_MUSIC_TRACKS 6
 
 enum MusicTrack {
 	EVOLVED = 0,
 	WAVES = 1,
 	DEADLINE = 2,
-	KING = 3
+	SEQUENCE = 3,
+	BOSS_TRACK = 4,
+	MENU_TRACK = 5
 };
 
 static Mix_Chunk *samples[NUMBER_OF_SOUND_SAMPLES] = { NULL };
@@ -36,7 +38,7 @@ static Mix_Music *music[NUMBER_OF_MUSIC_TRACKS] = { NULL };
 
 AudioManager::AudioManager() {
 	musicEnabled = soundEnabled = false;
-	musicType = STANDARD_MUSIC;
+	musicType = GAMEPLAY_MUSIC;
 }
 
 AudioManager::~AudioManager() {
@@ -76,6 +78,8 @@ void AudioManager::init() {
 	if (soundVolumeIndex) {
 		logMessage("Sound enabled\n");
 		soundEnabled = true;
+	} else {
+		logMessage("Sound disabled\n");
 	}
 
 	int musicVolumeIndex = g_worldManager->getYamlish()->getInt("audio.music.volume", DEFAULT_MUSIC_VOLUME);
@@ -90,6 +94,8 @@ void AudioManager::init() {
 	if (musicVolumeIndex) {
 		logMessage("Music enabled\n");
 		musicEnabled = true;
+	} else {
+		logMessage("Music disabled\n");
 	}
 
 	if (soundEnabled || musicEnabled) {
@@ -190,7 +196,7 @@ void AudioManager::init() {
 			fatalError("Could not load sound sample: %s\n", filepath);
 		}
 		
-		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "Enemy_spawn_red");
+		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "Repulsar_spawn");
 		samples[ENEMY_SPAWN_BLACK_HOLE] = Mix_LoadWAV(filepath);
 		if (!samples[ENEMY_SPAWN_BLACK_HOLE]) {
 			fatalError("Could not load sound sample: %s\n", filepath);
@@ -202,6 +208,12 @@ void AudioManager::init() {
 			fatalError("Could not load sound sample: %s\n", filepath);
 		}
 
+		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "Enemy_spawn_red");
+		samples[ENEMY_SPAWN_MINI_CRUSHER] = Mix_LoadWAV(filepath);
+		if (!samples[ENEMY_SPAWN_MINI_CRUSHER]) {
+			fatalError("Could not load sound sample: %s\n", filepath);
+		}
+
 		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "Snake_spawn");
 		samples[ENEMY_SPAWN_BOSS] = Mix_LoadWAV(filepath);
 		if (!samples[ENEMY_SPAWN_BOSS]) {
@@ -209,8 +221,20 @@ void AudioManager::init() {
 		}
 
 		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "Enemy_explode");
-		samples[ENEMY_EXPLODE] = Mix_LoadWAV(filepath);
-		if (!samples[ENEMY_EXPLODE]) {
+		samples[STANDARD_ALIEN_EXPLODE] = Mix_LoadWAV(filepath);
+		if (!samples[STANDARD_ALIEN_EXPLODE]) {
+			logWarningMessage("Could not load sound sample: %s\n", filepath);
+		}
+
+		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "Gravity_well_die");
+		samples[SPECIAL_ALIEN_EXPLODE] = Mix_LoadWAV(filepath);
+		if (!samples[SPECIAL_ALIEN_EXPLODE]) {
+			logWarningMessage("Could not load sound sample: %s\n", filepath);
+		}
+
+		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "Gravity_well_explode");
+		samples[BOSS_ALIEN_EXPLODE] = Mix_LoadWAV(filepath);
+		if (!samples[BOSS_ALIEN_EXPLODE]) {
 			logWarningMessage("Could not load sound sample: %s\n", filepath);
 		}
 
@@ -269,14 +293,14 @@ void AudioManager::init() {
 		}
 
 		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "pickup_extralife");
-		samples[AWARDED_EXTRA_LIFE] = Mix_LoadWAV(filepath);
-		if (!samples[AWARDED_EXTRA_LIFE]) {
+		samples[PICKUP_EXTRA_LIFE] = Mix_LoadWAV(filepath);
+		if (!samples[PICKUP_EXTRA_LIFE]) {
 			logWarningMessage("Could not load sound sample: %s\n", filepath);
 		}
 
 		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "pickup_smartbomb");
-		samples[AWARDED_SMARTBOMB] = Mix_LoadWAV(filepath);
-		if (!samples[AWARDED_SMARTBOMB]) {
+		samples[PICKUP_SMARTBOMB] = Mix_LoadWAV(filepath);
+		if (!samples[PICKUP_SMARTBOMB]) {
 			logWarningMessage("Could not load sound sample: %s\n", filepath);
 		}
 
@@ -338,18 +362,27 @@ void AudioManager::init() {
 			logWarningMessage("Could not load music track: %s\n", filepath);
 		}
 
+		sprintf(filepath, "%s/Music/%s.ogg", g_worldManager->getBaseDirectory().c_str(), "Sequence");
+		music[SEQUENCE] = Mix_LoadMUS(filepath);
+		if (!music[SEQUENCE]) {
+			logWarningMessage("Could not load music track: %s\n", filepath);
+		}
+
 		sprintf(filepath, "%s/Music/%s.ogg", g_worldManager->getBaseDirectory().c_str(), "King");
-		music[KING] = Mix_LoadMUS(filepath);
-		if (!music[KING]) {
+		music[BOSS_TRACK] = Mix_LoadMUS(filepath);
+		if (!music[BOSS_TRACK]) {
+			logWarningMessage("Could not load music track: %s\n", filepath);
+		}
+
+		sprintf(filepath, "%s/Music/%s.ogg", g_worldManager->getBaseDirectory().c_str(), "Menu-Theme");
+		music[MENU_TRACK] = Mix_LoadMUS(filepath);
+		if (!music[MENU_TRACK]) {
 			logWarningMessage("Could not load music track: %s\n", filepath);
 		}
 
 		int volume = (MIX_MAX_VOLUME * ((float)musicVolumeIndex / 10));
 		logMessage("Music volume is set to: %d\n", volume);
-
-		for (int i = 0; i < NUMBER_OF_SOUND_SAMPLES; i++) {
-			Mix_VolumeMusic(volume);
-		}
+		Mix_VolumeMusic(volume);
 	}
 
 	if (musicEnabled || soundEnabled) {
@@ -381,21 +414,29 @@ bool AudioManager::isSoundPlaying(int channel) {
 }
 
 void AudioManager::startMusic(bool fadeIn) {
-	static int track = -1;
+	static int standardTrack = -1;
 
 	if (musicEnabled) {
 		// Stop any currently playing music.
 		stopMusic(false);
 
         if (musicType != NO_MUSIC) {
-    		if (musicType == STANDARD_MUSIC) {
-    			track++;
-    			if (track > DEADLINE) {
-    				track = EVOLVED;
-    			}
+        	int track = 0;
+
+    		if (musicType == MENU_MUSIC) {
+    			track = MENU_TRACK;
     		} else {
-    			// Boss music.
-    			track = KING;
+    			if (musicType == BOSS_MUSIC) {
+    				track = BOSS_TRACK;
+    			} else {
+					// Gameplay music.
+    				standardTrack++;
+					if (standardTrack > SEQUENCE) {
+						standardTrack = EVOLVED;
+					}
+
+					track = standardTrack;
+    			}
     		}
     
     		if (music[track]) {
