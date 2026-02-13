@@ -21,9 +21,11 @@
 
 class HighScoreEntry {
 public:
-	HighScoreEntry(MenuState *menuState, uint rank, std::string name, uint score, const NovaColor &color, const NovaVertex &position);
+	HighScoreEntry(MenuState *menuState, uint rank, std::string name, uint score, const NovaColor &color,
+			const NovaVertex &position, bool animated);
 	~HighScoreEntry();
 
+	void update(float elapsedTime);
 	void draw();
 
 private:
@@ -31,6 +33,11 @@ private:
 	std::vector<CharacterDigit*> playerRank;
 	std::vector<CharacterSprite*> playerName;
 	std::vector<CharacterDigit*> playerScore;
+	bool animated;
+	NovaColor currentTextColor;
+	NovaColor highColor;
+	NovaColor lowColor;
+	bool increasingColor;
 };
 
 #endif // __HIGH_SCORE_ENTRY_H

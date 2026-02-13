@@ -22,7 +22,7 @@
 class OptionTextEdit: public Control {
 public:
 	OptionTextEdit(MenuState* menuState, const std::string key, std::string defaultValue,
-			const NovaColor& textColor, const NovaVertex& position);
+			uint maxTextLength, const NovaColor& textColor, const NovaVertex& position);
 
 	~OptionTextEdit();
 
@@ -48,18 +48,15 @@ private:
 	std::string key;
 	std::string defaultValue;
 	std::string currentValue;
+	uint maxTextLength;
 	std::vector<CharacterSprite*> displayValue;
 	NovaColor defaultTextColor;
 	NovaColor disabledTextColor;
 	NovaColor selectedTextColor;
-	NovaColor editTextColor;
 	NovaColor currentTextColor;
-	MenuPanel* inputPanel;
-	NovaColor panelColor;
+	bool increasingColor;
 	CharacterSprite* cursor;
 	uint cursorPosition;
-	NovaColor currentCursorColor;
-	bool increasingCursorColor;
 
 	void syncCurrentValue();
 	void syncCursorPosition();
