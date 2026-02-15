@@ -20,7 +20,7 @@
 #include "poly_nova.h"
 
 #define DAMAGE_FACTOR 0.25
-#define FOLLOW_DISTANCE 6.0
+#define FOLLOW_DISTANCE 3.0
 
 SnakeBodySegment::SnakeBodySegment(PlayState* playState, Sprite* parent, const NovaColor &color) : SnakeSegment(playState, parent, color) {
 	// Set up how this object will explode.
