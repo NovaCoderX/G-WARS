@@ -19,6 +19,46 @@
 
 #include "poly_nova.h"
 
+// Robust, locale-independent float parser for Amiga 68k
+// Parses a float and advances the string pointer to the next value.
+static float ParseFixedFloat(const char** str) {
+    float result = 0.0f;
+    float sign = 1.0f;
+    float divisor = 10.0f;
+    const char* ptr = *str;
+
+    // 1. Skip standard whitespace and your file's specific delimiters (commas)
+    while (*ptr == ' ' || *ptr == '\t' || *ptr == ',') ptr++;
+
+    // 2. Handle Sign
+    if (*ptr == '-') {
+        sign = -1.0f;
+        ptr++;
+    } else if (*ptr == '+') {
+        ptr++;
+    }
+
+    // 3. Parse Integer Part
+    while (*ptr >= '0' && *ptr <= '9') {
+        result = (result * 10.0f) + (*ptr - '0');
+        ptr++;
+    }
+
+    // 4. Parse Fractional Part (Strictly looks for '.')
+    if (*ptr == '.') {
+        ptr++;
+        while (*ptr >= '0' && *ptr <= '9') {
+            result += (*ptr - '0') / divisor;
+            divisor *= 10.0f;
+            ptr++;
+        }
+    }
+
+    // Update the original pointer so the next call picks up where we left off
+    *str = ptr;
+    return result * sign;
+}
+
 
 SpriteDefinitionLibrary::SpriteDefinitionLibrary() {
 	sceneFp = NULL;
@@ -362,7 +402,14 @@ void SpriteDefinitionLibrary::loadData(const char *sectionName, float &a, float 
 	if (fgets(buffer, 80, sceneFp) != NULL)
 		if ((buffer[0] != '}') || (buffer[0] != '[') || (buffer[0] != ']'))
 			if (buffer[0] != 0 && buffer[0] != '\n') {
-				sscanf(buffer, "%f,%f,%f", &a, &b, &c);
+				//sscanf(buffer, "%f,%f,%f", &a, &b, &c);
+				// Use a pointer we can move along the string
+				const char* pBuffer = buffer;
+
+				// Parse the 3 values sequentially using our strict logic
+				a = ParseFixedFloat(&pBuffer);
+				b = ParseFixedFloat(&pBuffer);
+				c = ParseFixedFloat(&pBuffer);
 				loaded = true;
 			}
 
@@ -402,7 +449,9 @@ void SpriteDefinitionLibrary::loadData(const char *sectionName, float &a) {
 	if (fgets(buffer, 80, sceneFp) != NULL)
 		if ((buffer[0] != '}') || (buffer[0] != '[') || (buffer[0] != ']'))
 			if (buffer[0] != 0 && buffer[0] != '\n') {
-				sscanf(buffer, "%f", &a);
+				//sscanf(buffer, "%f", &a);
+				const char* pBuffer = buffer;
+	            a = ParseFixedFloat(&pBuffer); // Replaces sscanf
 				loaded = true;
 			}
 
@@ -456,7 +505,14 @@ void SpriteDefinitionLibrary::loadDefinitions() {
 		// Load vertex data.
 		for (inCtr = 0; inCtr < numVertices; inCtr++) {
 			if (fgets(buffer, 80, sceneFp) != NULL) {
-				sscanf(buffer, "%f,%f,%f", &x, &y, &z);
+				//sscanf(buffer, "%f,%f,%f", &x, &y, &z);
+				// Use a pointer we can move along the string
+				const char* pBuffer = buffer;
+
+				// Parse the 3 values sequentially using our strict logic
+				x = ParseFixedFloat(&pBuffer);
+				y = ParseFixedFloat(&pBuffer);
+				z = ParseFixedFloat(&pBuffer);
 				definitions[ctr].setVertex(inCtr, x, y, z);
 			}
 		}
