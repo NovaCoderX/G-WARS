@@ -35,8 +35,10 @@ extern "C" {
 #define API_TOKEN_ADMIN "XXX"
 
 #define MAX_SCORE_VALUE 9999999
-#define MIN_ONLINE_SCORE_VALUE 100000
+#define MIN_ONLINE_SCORE_VALUE 1000
 #define MAX_SCORE_ENTRIES 10
+#define LOCAL_PLAYER_DATA "local_player.dat"
+#define REMOTE_PLAYER_DATA "remote_player.dat"
 
 // A simple key for XORing. Keep this secret in your source code!
 const char SECRET_KEY[] = "CopperList1987";
@@ -133,10 +135,10 @@ HighScoreHandler::~HighScoreHandler() {
 void HighScoreHandler::init() {
 	// Read player token and data.
 	this->loadPlayerToken("token.dat");
-	this->loadLocalPlayerData("local_player.dat");
+	this->loadLocalPlayerData(LOCAL_PLAYER_DATA);
 
 	if (playerToken) {
-		this->loadRegisteredPlayerData("registered_player.dat");
+		this->loadRegisteredPlayerData(REMOTE_PLAYER_DATA);
 	}
 
 #ifndef TIME_DEMO_ENABLED
@@ -163,7 +165,7 @@ void HighScoreHandler::init() {
 	bool found = false;
 	for (size_t i = 0; i < highScores.size(); i++) {
 		if (highScores[i].id == playerToken) {
-			// Sync the high score data.
+			// Sync the high score data (local data is the 'master data').
 			highScores[i].name = localPlayerData.name;
 			highScores[i].score = localPlayerData.score;
 			found = true;
@@ -225,6 +227,7 @@ void HighScoreHandler::setPlayerScore(uint score) {
 		score = MAX_SCORE_VALUE;
 	}
 
+	// The local data is the 'master data'.
 	if (score > localPlayerData.score) {
 		localPlayerData.score = score;
 	}
@@ -297,10 +300,10 @@ void HighScoreHandler::save() {
 	}
 
 	this->savePlayerToken("token.dat");
-	this->saveLocalPlayerData("local_player.dat");
+	this->saveLocalPlayerData(LOCAL_PLAYER_DATA);
 
 	if (playerToken) {
-		this->saveRegisteredPlayerData("registered_player.dat");
+		this->saveRegisteredPlayerData(REMOTE_PLAYER_DATA);
 	}
 
 	this->saveLocalScores("scores.dat");
