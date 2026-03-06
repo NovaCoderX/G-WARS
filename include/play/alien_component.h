@@ -64,7 +64,6 @@ private:
 	NovaColor defaultColor;
 	NovaColor disabledColor;
 	NovaColor explosionColor;
-	bool exploded;
 };
 
 #endif // __ALIEN_COMPONENT_H
