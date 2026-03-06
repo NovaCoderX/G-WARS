@@ -25,7 +25,6 @@ AlienComponent::AlienComponent(PlayState* playState, Sprite* parent) : Sprite(pl
 	defaultColor = NovaColor(255, 255, 255);
 	disabledColor = NovaColor(64, 64, 64);
 	explosionColor = NovaColor(255, 255, 255);
-	exploded = false;
 
 	// Set up how this object will explode.
 	this->setExplosionSize(NO_EXPLOSION);
@@ -40,14 +39,11 @@ void AlienComponent::setActive(bool active) {
 	if (active) {
 		// Reset.
 		this->setCurrentColor(this->getDefaultColor());
-		exploded = false;
 	} else {
-		this->setCurrentColor(disabledColor);
-
-		// We only want to explode when we are first deactivated.
-		if (!exploded) {
+		// We only want to explode once when we are deactivated.
+		if (this->getCurrentColor() != disabledColor) {
+			this->setCurrentColor(disabledColor);
 			playState->getExplosionController()->createExplosion(this);
-			exploded = true;
 		}
 	}
 }
