@@ -21,13 +21,21 @@
 
 class BounceAlien: public Alien {
 public:
-	BounceAlien(PlayState* playState, AlienType alienType);
+	BounceAlien(PlayState* playState) : Alien(playState) {}
 
 	// Overridden.
 	void setActive(bool active);
 
 	// Overridden.
+	uint getNumberAwardPoints() {
+		return 1000;
+	}
+
+	// Overridden.
 	void update(float elapsedTime);
+
+	// Overridden.
+	bool checkCollision(Missile* missile);
 };
 
 #endif // __BOUNCE_ALIEN_H

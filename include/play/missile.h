@@ -33,8 +33,11 @@ public:
 		return missileType;
 	}
 
-	// Overridden.
-	void setActive(bool active);
+	bool isActive() const {
+		return active;
+	}
+
+	virtual void setActive(bool active);
 
 	// Overridden.
 	NovaVertex getExplosionOrigin() const {
@@ -43,11 +46,10 @@ public:
 
 	// Overridden.
 	const NovaColor& getExplosionColor() const {
-		return this->getCurrentColor();
+		return currentColor;
 	}
 
-	// Overridden.
-	void update(float elapsedTime);
+	virtual void update(float elapsedTime);
 
 public:
 	Missile *nextInList;
@@ -56,6 +58,7 @@ public:
 protected:
 	PlayState* playState;
 	MissileType missileType;
+	bool active;
 };
 
 #endif // __MISSILE_H

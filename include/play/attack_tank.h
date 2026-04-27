@@ -28,11 +28,6 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
-	const NovaColor& getExplosionColor() const {
-		return readyToFireColorTurret;
-	}
-
-	// Overridden.
 	void update(float timePassed);
 
 	// Overridden.
@@ -40,13 +35,6 @@ public:
 
 private:
 	Sprite* gunTurret;
-	NovaColor defaultColorTurret;
-	NovaColor readyToFireColorBase;
-	NovaColor readyToFireColorTurret;
-	float lastFireTime;
-	bool readyToFire;
-	float readyToFireTime;
-	float totalElapsedTime;
 };
 
 #endif // __ATTACK_TANK_H

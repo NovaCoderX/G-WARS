@@ -28,6 +28,11 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
+	uint getNumberAwardPoints() {
+		return 100000;
+	}
+
+	// Overridden.
 	void update(float elapsedTime);
 
 	// Overridden.
@@ -43,12 +48,9 @@ public:
 	void draw();
 
 private:
-	std::vector<SnakeSegment*> segments;
 	SnakeHeadSegment *headSegment;
 	std::vector<SnakeBodySegment*> bodySegments;
-	int numSpawnedSegments;
-	float lastSpawnedTime;
-	float totalElapsedTime;
+	std::vector<SnakeSegment*> segments;
 };
 
 #endif // __SNAKE_H

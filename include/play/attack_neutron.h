@@ -28,11 +28,6 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
-	const NovaColor& getExplosionColor() const {
-		return readyToFireColor;
-	}
-
-	// Overridden.
 	void update(float timePassed);
 
 	// Overridden.
@@ -40,13 +35,7 @@ public:
 
 private:
 	Sprite* center;
-	Laser *laser;
-	NovaColor defaultColorCenter;
-	NovaColor readyToFireColor;
-	float lastFireTime;
-	bool readyToFire;
-	float readyToFireTime;
-	float totalElapsedTime;
+	Laser* laser;
 };
 
 #endif // __ATTACK_NEUTRON_H

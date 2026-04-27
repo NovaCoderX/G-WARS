@@ -21,19 +21,7 @@
 
 class PowerUpNugget: public Nugget {
 public:
-	PowerUpNugget(PlayState* playState);
-
-	// Overridden.
-	void setActive(bool active);
-
-	// Overridden.
-	void update(float elapsedTime);
-
-private:
-	NovaColor highColor;
-	NovaColor lowColor;
-	bool increasingColor;
-	float totalElapsedTime;
+	PowerUpNugget(PlayState* playState) : Nugget(playState, POWER_UP_NUGGET, NovaColor(255, 216, 10), 60) {}
 };
 
 #endif // __POWER_UP_NUGGET_H

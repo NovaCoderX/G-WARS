@@ -27,19 +27,7 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
-	const NovaColor& getExplosionColor() const {
-		return readyToFireColor;
-	}
-
-	// Overridden.
 	void update(float timePassed);
-
-private:
-	NovaColor readyToFireColor;
-	bool readyToFire;
-	float lastFireTime;
-	float readyToFireTime;
-	float totalElapsedTime;
 };
 
 #endif // __ATTACK_ARTILLERY_H

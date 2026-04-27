@@ -21,19 +21,7 @@
 
 class ExtraBombNugget: public Nugget {
 public:
-	ExtraBombNugget(PlayState* playState);
-
-	// Overridden.
-	void setActive(bool active);
-
-	// Overridden.
-	void update(float elapsedTime);
-
-private:
-	NovaColor highColor;
-	NovaColor lowColor;
-	bool increasingColor;
-	float totalElapsedTime;
+	ExtraBombNugget(PlayState* playState) : Nugget(playState, EXTRA_BOMB_NUGGET, NovaColor(15, 167, 255), 70) {}
 };
 
 #endif // __EXTRA_BOMB_NUGGET_H

@@ -21,7 +21,7 @@
 
 class SnakeTailSegment: public SnakeBodySegment {
 public:
-	SnakeTailSegment(PlayState* playState, Sprite* parent, const NovaColor &color);
+	SnakeTailSegment(SnakeSegment* parent, const NovaColor &color);
 	~SnakeTailSegment();
 
 	// Overridden.

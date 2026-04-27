@@ -76,6 +76,19 @@ public:
 	Explosion(PlayState* playState, int numParticles, float maxVelocity, float duration);
 	~Explosion();
 
+	bool isActive() const {
+		return active;
+	}
+
+	void setActive(bool active) {
+		this->active = active;
+
+		if (active) {
+			// Prevent object being drawn when the draw method is called before the update method.
+			this->setVisible(false);
+		}
+	}
+
 	float getBoundingSphere() const {
 		return (boundingSphereExpansionFactor * totalElapsedTime);
 	}
@@ -106,7 +119,7 @@ public:
 	Explosion *nextInList;
 	Explosion *priorInList;
 
-private:
+protected:
 	PlayState* playState;
 	NovaParticle *innerParticles;
 	NovaParticle *middleParticles;
@@ -119,6 +132,7 @@ private:
 	float boundingSphereExpansionFactor;
 	NovaVertex positionCCS;
 	bool lightEmitting;
+	bool active;
 };
 
 #endif // __EXPLOSION_H

@@ -28,6 +28,11 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
+	uint getNumberAwardPoints() {
+		return 10000;
+	}
+
+	// Overridden.
 	void update(float elapsedTime);
 
 	// Overridden.
@@ -35,6 +40,9 @@ public:
 
 	// Overridden.
 	bool checkCollision(Missile* missile);
+
+	// Overridden.
+	void miniGateNotification();
 
 	// Overridden.
 	void draw();
@@ -45,6 +53,7 @@ private:
 	NovaColor highColor;
 	NovaColor lowColor;
 	bool increasingColor;
+	bool nuggetSpawned;
 };
 
 #endif // __MINI_CRUSHER_H

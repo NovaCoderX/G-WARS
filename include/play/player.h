@@ -24,11 +24,12 @@ enum PowerUpType {
 	INCREASED_SPEED_POWER_UP = 1,
 	INCREASED_FIRE_RATE_POWER_UP = 2,
 	MULTISHOT_POWER_UP = 3,
-	HOMING_MISSILE_POWER_UP = 4
+	HOMING_MISSILE_POWER_UP = 4,
+	PROTECTION_POWER_UP = 5
 };
 
-static std::string DEFAULT_PLAYER_NAME = "DOOMGUY";
 #define MAX_PLAYER_NAME_LENGTH 12
+static std::string DEFAULT_PLAYER_NAME = "DOOMGUY";
 
 struct InputRequest {
 	// This represents wants the player wants to do.
@@ -100,7 +101,12 @@ public:
 		return currentPowerUp;
 	}
 
-	// Overridden.
+	float getShieldDuration() const ;
+
+	bool isActive() const {
+		return active;
+	}
+
 	void setActive(bool active);
 
 	void resetInputRequests() {
@@ -140,6 +146,9 @@ private:
 	PowerUpType currentPowerUp;
 	float powerUpTimer;
 	bool restartMusic;
+	bool active;
+
+	void setCurrentPowerUp(PowerUpType type);
 };
 
 #endif // __PLAYER_H

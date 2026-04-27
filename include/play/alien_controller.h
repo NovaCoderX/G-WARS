@@ -21,7 +21,6 @@
 
 class AlienController {
 	friend class MissileController;
-	friend class MiniGate;
 public:
 	AlienController(PlayState* playState);
 	~AlienController();
@@ -32,6 +31,7 @@ public:
 	void draw();
 	void deactivate(Alien* alien);
 	void smartBombNotification();
+	void miniGateNotification();
 	Alien* findBestTarget(Missile* missile);
 	void applyGravitionalPull(Player* player);
 	bool isWithinBlackHole(const NovaVertex& positionCCS);
@@ -57,7 +57,7 @@ private:
 	std::vector<AttackNeutron*> attackNeutrons;
 
 	// Special aliens.
-	RocketShip* rocketShip;
+	std::vector<RocketShip*> rocketShips;
 	FlyingSaucer* flyingSaucer;
 	PlayerClone* playerClone;
 	BlackHole* blackHole;
@@ -91,7 +91,7 @@ private:
 
 	void addToList(Alien* alien);
 	void removeFromList(Alien* alien);
-	void spawnStandardAlien(AlienType type);
+	void spawnStandardAlien();
 	void spawnBounceCube();
 	void spawnBounceWanderer();
 	void spawnBounceStar();
@@ -104,14 +104,14 @@ private:
 	void spawnAttackShip();
 	void spawnAttackArtillery();
 	void spawnAttackNeutron();
-	void spawnSpecialAlien(AlienType type);
+	void spawnSpecialAlien();
 	void spawnRocketShip();
 	void spawnFlyingSaucer();
 	void spawnPlayerClone();
 	void spawnBlackHole();
 	void spawnMiniGate();
 	void spawnMiniCrusher();
-	void spawnBossAlien(AlienType type);
+	void spawnBossAlien();
 	void spawnSnake();
 	void spawnJelly();
 	void spawnCrusher();

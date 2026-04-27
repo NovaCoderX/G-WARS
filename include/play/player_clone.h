@@ -28,6 +28,11 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
+	uint getNumberAwardPoints() {
+		return 26000;
+	}
+
+	// Overridden.
 	void update(float elapsedTime);
 
 	// Overridden.

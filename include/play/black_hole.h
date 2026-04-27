@@ -21,7 +21,7 @@
 
 class BlackHoleRing: public AlienComponent {
 public:
-	BlackHoleRing(PlayState* playState, Alien* parent, SpriteDefinition *definition, const NovaColor &color);
+	BlackHoleRing(PlayState* playState, SpriteDefinition *definition, const NovaColor &color);
 
 	// Overridden.
 	void setActive(bool active);
@@ -42,6 +42,11 @@ public:
 
 	// Overridden.
 	void setActive(bool active);
+
+	// Overridden.
+	uint getNumberAwardPoints() {
+		return 24000;
+	}
 
 	// Overridden.
 	void update(float elapsedTime);

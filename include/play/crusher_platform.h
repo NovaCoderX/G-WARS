@@ -21,7 +21,7 @@
 
 class CrusherPlatform: public AlienComponent {
 public:
-	CrusherPlatform(PlayState* playState, Sprite* parent);
+	CrusherPlatform(Crusher* crusher);
 	~CrusherPlatform();
 
 	bool isRetreating() const {
@@ -51,14 +51,15 @@ public:
 	void draw();
 
 protected:
-	std::vector<BoundingSphere*> boundingSpheres;
-	std::vector<GunPlatform*> gunPlatforms;
+	Crusher* crusher;
+	std::vector<PlatformSphere*> spheres;
+	std::vector<PlatformGun*> guns;
 	bool retreating;
 };
 
 class LeftCrusherPlatform: public CrusherPlatform {
 public:
-	LeftCrusherPlatform(PlayState* playState, Sprite* parent);
+	LeftCrusherPlatform(Crusher* crusher) : CrusherPlatform(crusher) {}
 
 	// Overridden.
 	void setActive(bool active);
@@ -69,7 +70,7 @@ public:
 
 class RightCrusherPlatform: public CrusherPlatform {
 public:
-	RightCrusherPlatform(PlayState* playState, Sprite* parent);
+	RightCrusherPlatform(Crusher* crusher) : CrusherPlatform(crusher) {}
 
 	// Overridden.
 	void setActive(bool active);

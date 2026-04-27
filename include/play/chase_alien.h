@@ -21,13 +21,21 @@
 
 class ChaseAlien: public Alien {
 public:
-	ChaseAlien(PlayState* playState, AlienType alienType);
+	ChaseAlien(PlayState* playState) : Alien(playState) {}
 
 	// Overridden.
 	void setActive(bool active);
 
 	// Overridden.
+	uint getNumberAwardPoints() {
+		return 2000;
+	}
+
+	// Overridden.
 	void update(float elapsedTime);
+
+	// Overridden.
+	bool checkCollision(Missile* missile);
 };
 
 #endif // __CHASE_ALIEN_H

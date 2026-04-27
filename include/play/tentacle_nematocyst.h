@@ -21,7 +21,7 @@
 
 class TentacleNematocyst: public TentacleSegment {
 public:
-	TentacleNematocyst(PlayState* playState, Sprite* parent, float radius, const NovaColor &color);
+	TentacleNematocyst(Jelly* jelly, float radius, const NovaColor &color);
 	~TentacleNematocyst();
 
 	// Overridden.

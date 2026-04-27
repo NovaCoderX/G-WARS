@@ -21,10 +21,11 @@
 
 class TentacleSegment: public AlienComponent {
 public:
-	TentacleSegment(PlayState* playState, Sprite* parent, float radius, const NovaColor &color);
+	TentacleSegment(Jelly* jelly, float radius, const NovaColor &color);
 	~TentacleSegment();
 
 protected:
+	Jelly* jelly;
 	SpriteDefinition* segmentDefinition;
 };
 

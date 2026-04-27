@@ -21,13 +21,16 @@
 
 class SnakeBodySegment: public SnakeSegment {
 public:
-	SnakeBodySegment(PlayState* playState, Sprite* parent, const NovaColor &color);
+	SnakeBodySegment(SnakeSegment* parent, const NovaColor &color);
 
 	// Overridden.
 	void update(float elapsedTime);
 
 	// Overridden.
 	bool checkCollision(Missile* missile);
+
+protected:
+	SnakeSegment* parent;
 };
 
 #endif // __SNAKE_BODY_SEGMENT_H

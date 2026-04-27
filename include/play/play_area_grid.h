@@ -24,6 +24,10 @@ public:
 	PlayAreaGrid(PlayState* playState);
 	~PlayAreaGrid();
 
+	bool isShaking() const {
+		return shaking;
+	}
+
 	void init();
 	void smartBombNotification();
 	void update(float elapsedTime);

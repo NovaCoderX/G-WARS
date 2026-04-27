@@ -16,43 +16,21 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-#ifndef __CRUSHER_H
-#define __CRUSHER_H
+#ifndef __PLATFORM_SPHERE_H
+#define __PLATFORM_SPHERE_H
 
-// Forward declaration.
-class CrusherPlatform;
-
-class Crusher: public Alien {
+class PlatformSphere: public AlienComponent {
 public:
-	Crusher(PlayState* playState);
-	~Crusher();
-
-	// Overridden.
-	void setActive(bool active);
-
-	// Overridden.
-	uint getNumberAwardPoints() {
-		return 300000;
-	}
+	PlatformSphere(CrusherPlatform* platform, int anchorIndex, float radius);
+	~PlatformSphere();
 
 	// Overridden.
 	void update(float elapsedTime);
 
-	// Overridden.
-	bool checkCollision(Player* player);
-
-	// Overridden.
-	bool checkCollision(Missile* missile);
-
-	// Overridden.
-	void smartBombNotification();
-
-	// Overridden.
-	void draw();
-
 private:
-	CrusherPlatform* leftCrusher;
-	CrusherPlatform* rightCrusher;
+	CrusherPlatform* platform;
+	int anchorIndex;
+	SpriteDefinition* sphereDefinition;
 };
 
-#endif // __CRUSHER_H
+#endif // __PLATFORM_SPHERE_H

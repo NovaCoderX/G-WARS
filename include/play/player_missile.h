@@ -19,6 +19,9 @@
 #ifndef __PLAYER_MISSILE_H
 #define __PLAYER_MISSILE_H
 
+// Forward declarations.
+class Alien;
+
 class PlayerMissile: public Missile {
 public:
 	PlayerMissile(PlayState* playState);
@@ -39,7 +42,7 @@ public:
 
 private:
 	bool homingEnabled;
-	Sprite *target;
+	Alien *target;
 };
 
 #endif // __PLAYER_MISSILE_H

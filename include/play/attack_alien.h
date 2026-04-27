@@ -21,10 +21,45 @@
 
 class AttackAlien: public Alien {
 public:
-	AttackAlien(PlayState* playState, AlienType alienType);
+	AttackAlien(PlayState* playState);
+
+	const NovaColor& getDefaultColor() const {
+		return defaultColor;
+	}
+
+	const NovaColor& getReadyToFireColor() const {
+		return readyToFireColor;
+	}
+
+	void setReadyToFireColor(const NovaColor &color) {
+		this->readyToFireColor = color;
+	}
+
+	// Overridden.
+	const NovaColor& getExplosionColor() const {
+		return readyToFireColor;
+	}
 
 	// Overridden.
 	void setActive(bool active);
+
+	// Overridden.
+	uint getNumberAwardPoints() {
+		return 3000;
+	}
+
+	// Overridden.
+	bool checkCollision(Missile* missile);
+
+protected:
+	bool readyToFire;
+	float lastFireTime;
+	float readyToFireTime;
+	float totalElapsedTime;
+
+private:
+	NovaColor defaultColor;
+	NovaColor readyToFireColor;
 };
 
 #endif // __ATTACK_ALIEN_H

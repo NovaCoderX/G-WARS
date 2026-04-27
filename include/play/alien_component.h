@@ -21,10 +21,17 @@
 
 class AlienComponent : public Sprite, public ExplosiveObject {
 public:
-	AlienComponent(PlayState* playState, Sprite* parent);
+	AlienComponent(PlayState* playState);
 
-	// Overridden.
-	void setActive(bool active);
+	PlayState* getPlayState() {
+		return playState;
+	}
+
+	bool isActive() const {
+		return active;
+	}
+
+	virtual void setActive(bool active);
 
 	// Overridden.
 	NovaVertex getExplosionOrigin() const {
@@ -33,37 +40,35 @@ public:
 
 	// Overridden.
 	const NovaColor& getExplosionColor() const {
-		return explosionColor;
+		return activeColor;
 	}
 
-	void setExplosionColor(const NovaColor &color) {
-		this->explosionColor = color;
+	const NovaColor& getActiveColor() const {
+		return activeColor;
 	}
 
-	const NovaColor& getDefaultColor() const {
-		return defaultColor;
+	void setActiveColor(const NovaColor &color) {
+		this->activeColor = color;
 	}
 
-	void setDefaultColor(const NovaColor &color) {
-		this->defaultColor = color;
+	const NovaColor& getInactiveColor() const {
+		return inactiveColor;
 	}
 
-	const NovaColor& getDisabledtColor() const {
-		return disabledColor;
+	void setInactiveColor(const NovaColor &color) {
+		this->inactiveColor = color;
 	}
 
+	virtual void update(float elapsedTime) {}
 	virtual bool checkCollision(Player* player);
 	virtual bool checkCollision(Missile* missile);
 	virtual void smartBombNotification() {}
 
 protected:
 	PlayState* playState;
-	Sprite* parent;
-
-private:
-	NovaColor defaultColor;
-	NovaColor disabledColor;
-	NovaColor explosionColor;
+	bool active;
+	NovaColor activeColor;
+	NovaColor inactiveColor;
 };
 
 #endif // __ALIEN_COMPONENT_H

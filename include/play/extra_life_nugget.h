@@ -21,19 +21,7 @@
 
 class ExtraLifeNugget: public Nugget {
 public:
-	ExtraLifeNugget(PlayState* playState);
-
-	// Overridden.
-	void setActive(bool active);
-
-	// Overridden.
-	void update(float elapsedTime);
-
-private:
-	NovaColor highColor;
-	NovaColor lowColor;
-	bool increasingColor;
-	float totalElapsedTime;
+	ExtraLifeNugget(PlayState* playState) : Nugget(playState, EXTRA_LIFE_NUGGET, NovaColor(15, 167, 255), 80) {}
 };
 
 #endif // __EXTRA_LIFE_NUGGET_H

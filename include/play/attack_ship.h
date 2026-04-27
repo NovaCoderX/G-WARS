@@ -28,11 +28,6 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
-	const NovaColor& getExplosionColor() const {
-		return readyToFireColor;
-	}
-
-	// Overridden.
 	void update(float elapsedTime);
 
 	// Overridden.
@@ -40,11 +35,6 @@ public:
 
 private:
 	Laser *laser;
-	NovaColor readyToFireColor;
-	float totalElapsedTime;
-	float lastFireTime;
-	bool readyToFire;
-	float readyToFireTime;
 };
 
 #endif // __ATTACK_SHIP_H

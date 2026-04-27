@@ -21,19 +21,7 @@
 
 class MultiplierNugget: public Nugget {
 public:
-	MultiplierNugget(PlayState* playState);
-
-	// Overridden.
-	void setActive(bool active);
-
-	// Overridden.
-	void update(float timePassed);
-
-private:
-	NovaColor highColor;
-	NovaColor lowColor;
-	bool increasingColor;
-	float totalElapsedTime;
+	MultiplierNugget(PlayState* playState) : Nugget(playState, MULTIPLIER_NUGGET, NovaColor(101, 255, 44), 40) {}
 };
 
 #endif // __MULTIPLIER_NUGGET_H

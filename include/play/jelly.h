@@ -37,8 +37,8 @@ public:
 	void setActive(bool active);
 
 	// Overridden.
-	const NovaColor& getExplosionColor() const {
-		return highColor;
+	uint getNumberAwardPoints() {
+		return 200000;
 	}
 
 	// Overridden.

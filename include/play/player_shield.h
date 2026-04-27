@@ -23,15 +23,24 @@ class PlayerShield: public Sprite {
 public:
 	PlayerShield(PlayState* playState, SpriteDefinition* shieldDefinition);
 
-	// Overridden.
+	bool isActive() const {
+		return active;
+	}
+
 	void setActive(bool active);
 
 	// Overridden.
 	void update(float elapsedTime);
 
+	// Overridden.
+	void draw();
+
 private:
+	PlayState* playState;
 	float totalElapsedTime;
 	float lastFlashTime;
+	float flashDelay;
+	bool active;
 };
 
 #endif // __PLAYER_SHIELD_H

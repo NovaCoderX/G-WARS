@@ -22,6 +22,17 @@
 class AlienShield: public Sprite {
 public:
 	AlienShield(PlayState* playState, SpriteDefinition *shieldDefinition);
+
+	bool isActive() const {
+		return active;
+	}
+
+	void setActive(bool active) {
+		this->active = active;
+	}
+
+private:
+	bool active;
 };
 
 #endif // __ALIEN_SHIELD_H
