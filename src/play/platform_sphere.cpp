@@ -16,36 +16,35 @@
  License along with this library; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *****************************************************************/
-
 #include "poly_nova.h"
 
 #define NUMBER_OF_POINTS 8
 
-TentacleSegment::TentacleSegment(Jelly* jelly, float radius, const NovaColor &color) : AlienComponent(jelly->getPlayState()) {
-	this->jelly = jelly;
-	this->setActiveColor(color);
+PlatformSphere::PlatformSphere(CrusherPlatform* platform, int anchorIndex, float radius) : AlienComponent(platform->getPlayState()) {
+	this->platform = platform;
+	this->anchorIndex = anchorIndex;
 
 	// Create the definition.
-	segmentDefinition = new SpriteDefinition();
+	sphereDefinition = new SpriteDefinition();
 
 	// Create the vertex data.
 	float quadrant = (radius / 2);
-	segmentDefinition->allocateVertices(NUMBER_OF_POINTS);
-	segmentDefinition->setVertex(0, -quadrant, radius, 0);
-	segmentDefinition->setVertex(1, quadrant, radius, 0);
-	segmentDefinition->setVertex(2, radius, quadrant, 0);
-	segmentDefinition->setVertex(3, radius, -quadrant, 0);
-	segmentDefinition->setVertex(4, quadrant, -radius, 0);
-	segmentDefinition->setVertex(5, -quadrant, -radius, 0);
-	segmentDefinition->setVertex(6, -radius, -quadrant, 0);
-	segmentDefinition->setVertex(7, -radius, quadrant, 0);
+	sphereDefinition->allocateVertices(NUMBER_OF_POINTS);
+	sphereDefinition->setVertex(0, -quadrant, radius, 0);
+	sphereDefinition->setVertex(1, quadrant, radius, 0);
+	sphereDefinition->setVertex(2, radius, quadrant, 0);
+	sphereDefinition->setVertex(3, radius, -quadrant, 0);
+	sphereDefinition->setVertex(4, quadrant, -radius, 0);
+	sphereDefinition->setVertex(5, -quadrant, -radius, 0);
+	sphereDefinition->setVertex(6, -radius, -quadrant, 0);
+	sphereDefinition->setVertex(7, -radius, quadrant, 0);
 
 	// Create the line data.
-	segmentDefinition->allocateLines(NUMBER_OF_POINTS);
+	sphereDefinition->allocateLines(NUMBER_OF_POINTS);
 	int startVertex = 0;
 	int endVertex = 1;
 	for (int i = 0; i < NUMBER_OF_POINTS; i++) {
-		segmentDefinition->setLineVertexMapping(i, startVertex++, endVertex);
+		sphereDefinition->setLineVertexMapping(i, startVertex++, endVertex);
 		if (endVertex < (NUMBER_OF_POINTS - 1)) {
 			endVertex++;
 		} else {
@@ -54,14 +53,17 @@ TentacleSegment::TentacleSegment(Jelly* jelly, float radius, const NovaColor &co
 		}
 	}
 
-	segmentDefinition->calculateBoundingSphere();
-	this->setSpriteDefinition(segmentDefinition);
+	sphereDefinition->calculateBoundingSphere();
+	this->setSpriteDefinition(sphereDefinition);
 }
 
-TentacleSegment::~TentacleSegment() {
-	if (segmentDefinition) {
-		delete segmentDefinition;
-		segmentDefinition = NULL;
+PlatformSphere::~PlatformSphere() {
+	if (sphereDefinition) {
+		delete sphereDefinition;
+		sphereDefinition = NULL;
 	}
 }
 
+void PlatformSphere::update(float elapsedTime) {
+	this->moveTo(platform->getAnchorPointWCS(anchorIndex));
+}

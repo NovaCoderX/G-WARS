@@ -27,7 +27,7 @@ void Star::init(const NovaColor &color, float depth, float horizontalExtents, fl
 
 	// Randomize the starting color.
 	lowColor = highColor;
-	lowColor.rebase(float_rand(10, 50));
+	lowColor.rebase(float_rand(10, 60));
 	starColor = lowColor;
 
 	this->moveTo(int_rand(-horizontalExtents, horizontalExtents), int_rand(-verticalExtents, verticalExtents), depth);
@@ -39,7 +39,7 @@ void Star::update(float elapsedTime) {
 
 	// Need to transform this objects location into a CCS location.
 	// This will then be our center point for the star.
-	// We can use this center point to create 4 edges of the star and then project and draw all 5 points.
+	// We can use this center point to create the 4 edges of the star and then project and draw all 5 points.
 	positionCCS = playState->getCamera()->getPositionCCS(this);
 
 	visible = checkProjectedPoint(positionCCS);

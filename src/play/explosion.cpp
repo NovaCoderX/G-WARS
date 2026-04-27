@@ -81,6 +81,7 @@ Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, 
 
 	lightEmitting = false;
 	totalElapsedTime = 0;
+	active = false;
 }
 
 Explosion::~Explosion() {

@@ -21,8 +21,8 @@
 
 #define NUMBER_OF_TAIL_VERTICES 4
 
-SnakeTailSegment::SnakeTailSegment(PlayState* playState, Sprite* parent, const NovaColor& color) :
-		SnakeBodySegment(playState, parent, color) {
+SnakeTailSegment::SnakeTailSegment(SnakeSegment* parent, const NovaColor& color) :
+		SnakeBodySegment(parent, color) {
 	// Create the tail data.
 	tailData.color = NovaColor(255, 82, 15);
 	tailData.staticVertices = new NovaVertex[NUMBER_OF_TAIL_VERTICES];

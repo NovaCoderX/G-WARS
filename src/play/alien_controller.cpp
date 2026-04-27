@@ -22,7 +22,7 @@
 #define STAGE_START_DELAY 100
 #define MIN_STANDARD_ALIEN_SPAWN_INTERVAL 5
 #define MAX_STANDARD_ALIEN_SPAWN_INTERVAL 50
-#define SPECIAL_ALIEN_SPAWN_INTERVAL 300
+#define SPECIAL_ALIEN_INITIAL_SPAWN_INTERVAL 300
 
 #define WAVE_INTENSITY_INCREMENT_DURATION 300
 #define WAVE_INTENSITY_DECREMENT_DURATION 300
@@ -32,6 +32,7 @@
 #define NUMBER_OF_BOUNCE_ALIENS 12
 #define NUMBER_OF_CHASE_ALIENS 9
 #define NUMBER_OF_ATTACK_ALIENS 6
+#define NUMBER_OF_ROCKET_SHIPS 3
 
 enum GameStage {
 	SPAWN_STAGE_STARTUP = 0,
@@ -58,6 +59,30 @@ enum BossType {
 	FIRST_BOSS = 0, SECOND_BOSS = 1, LAST_BOSS = 2
 };
 
+enum AlienType {
+	BOUNCE_CUBE_ALIEN = 0,
+	BOUNCE_WANDERER_ALIEN = 1,
+	BOUNCE_STAR_ALIEN = 2,
+	BOUNCE_HEXAGON_ALIEN = 3,
+	CHASE_RHOMBUS_ALIEN = 4,
+	CHASE_STAR_ALIEN = 5,
+	CHASE_SHURIKEN_ALIEN = 6,
+	CHASE_CONCAVE_ALIEN = 7,
+	ATTACK_TANK_ALIEN = 8,
+	ATTACK_SHIP_ALIEN = 9,
+	ATTACK_ARTILLERY_ALIEN = 10,
+	ATTACK_NEUTRON_ALIEN = 11,
+	ROCKET_SHIP_ALIEN = 12,
+	FLYING_SAUCER_ALIEN = 13,
+	PLAYER_CLONE_ALIEN = 14,
+	BLACK_HOLE_ALIEN = 15,
+	MINI_GATE_ALIEN = 16,
+	MINI_CRUSHER_ALIEN = 17,
+	SNAKE_ALIEN = 18,
+	JELLY_ALIEN = 19,
+	CRUSHER_ALIEN = 20
+};
+
 static AlienType spawnMatrix[3][4];
 static AlienType specialAliens[10];
 static AlienType bossAliens[3];
@@ -69,7 +94,6 @@ AlienController::AlienController(PlayState* playState) {
 	alienListHead = NULL;
 
 	// Special aliens.
-	rocketShip = NULL;
 	flyingSaucer = NULL;
 	playerClone = NULL;
 	blackHole = NULL;
@@ -174,10 +198,11 @@ AlienController::~AlienController() {
 
 	attackNeutrons.clear();
 
-	if (rocketShip) {
-		delete rocketShip;
-		rocketShip = NULL;
+	for (Alien* alien : rocketShips) {
+		delete alien;
 	}
+
+	rocketShips.clear();
 
 	if (flyingSaucer) {
 		delete flyingSaucer;
@@ -243,7 +268,10 @@ void AlienController::init() {
 	}
 
 	// Special aliens.
-	rocketShip = new RocketShip(playState);
+	for (int i = 0; i < NUMBER_OF_ROCKET_SHIPS; i++) {
+		rocketShips.push_back(new RocketShip(playState));
+	}
+
 	flyingSaucer = new FlyingSaucer(playState);
 	playerClone = new PlayerClone(playState);
 	blackHole = new BlackHole(playState);
@@ -290,9 +318,9 @@ void AlienController::init() {
 	specialAliens[8] = MINI_CRUSHER_ALIEN;
 	specialAliens[9] = MINI_CRUSHER_ALIEN;
 
-	bossAliens[0] = SNAKE_ALIEN ;
-	bossAliens[1] = JELLY_ALIEN ;
-	bossAliens[2] = CRUSHER_ALIEN ;
+	bossAliens[0] = SNAKE_ALIEN;
+	bossAliens[1] = JELLY_ALIEN;
+	bossAliens[2] = CRUSHER_ALIEN;
 
 	spawnLogic.intervalIncrement = (float) (MAX_STANDARD_ALIEN_SPAWN_INTERVAL - MIN_STANDARD_ALIEN_SPAWN_INTERVAL)
 			/ WAVE_INTENSITY_INCREMENT_DURATION;
@@ -301,6 +329,9 @@ void AlienController::init() {
 
 	// This value will increase with each stage (increase the difficulty).
 	spawnLogic.midPointDuration = WAVE_INTENSITY_MIDPOINT_INITIAL_DURATION;
+
+	// This value will decrease with each game (increase the difficulty).
+	spawnLogic.currentIntervalSpecial = SPECIAL_ALIEN_INITIAL_SPAWN_INTERVAL;
 
 	// Initial game stage.
 	currentGameStage = SPAWN_STAGE_STARTUP;
@@ -315,9 +346,9 @@ void AlienController::init() {
 
 	// Timers.
 #ifdef TIME_DEMO_ENABLED
-		stageStartDelay = 0;
+	stageStartDelay = 0;
 #else
-		stageStartDelay = STAGE_START_DELAY;
+	stageStartDelay = STAGE_START_DELAY;
 #endif
 
 	totalElapsedTime = 0;
@@ -343,7 +374,6 @@ void AlienController::update(float elapsedTime) {
 				spawnLogic.currentAlienType = BOUNCE_ALIEN;
 				spawnLogic.intensity = INCREASING_SPAWN_INTENSITY;
 				spawnLogic.currentIntervalStandard = MAX_STANDARD_ALIEN_SPAWN_INTERVAL;
-				spawnLogic.currentIntervalSpecial = SPECIAL_ALIEN_SPAWN_INTERVAL;
 				spawnLogic.lastSpawnedStandard = totalElapsedTime;
 				spawnLogic.lastSpawnedSpecial = totalElapsedTime;
 
@@ -354,11 +384,10 @@ void AlienController::update(float elapsedTime) {
 	}
 
 	if (currentGameStage == SPAWN_STAGE) {
-		// See if we need to create more standard aliens.
 		if ((totalElapsedTime - spawnLogic.lastSpawnedStandard) >= spawnLogic.currentIntervalStandard) {
-			// Ready to spawn another standard alien (if the player is active).
-			if (playState->getPlayer()->isActive()) {
-				spawnStandardAlien(spawnMatrix[spawnLogic.currentAlienType][spawnLogic.currentWave[spawnLogic.currentAlienType]]);
+			// Ready to spawn another standard alien.
+			if (playState->getPlayer()->isActive() && (!playState->getPlayAreaController()->isSmartBombAnimationActive())) {
+				spawnStandardAlien();
 
 				// Store the time of the last spawn attempt (may not have actually spawned).
 				spawnLogic.lastSpawnedStandard = totalElapsedTime;
@@ -366,11 +395,10 @@ void AlienController::update(float elapsedTime) {
 		}
 		
 #ifndef TIME_DEMO_ENABLED
-		// See if we need to create more special aliens.
 		if ((totalElapsedTime - spawnLogic.lastSpawnedSpecial) >= spawnLogic.currentIntervalSpecial) {
-			// Ready to spawn another special alien (if the player is active).
-			if (playState->getPlayer()->isActive()) {
-				spawnSpecialAlien(specialAliens[int_rand(0, 9)]);
+			// Ready to spawn another special alien.
+			if (playState->getPlayer()->isActive() && (!playState->getPlayAreaController()->isSmartBombAnimationActive())) {
+				spawnSpecialAlien();
 
 				// Store the time of the last spawn attempt (may not have actually spawned).
 				spawnLogic.lastSpawnedSpecial = totalElapsedTime;
@@ -433,7 +461,7 @@ void AlienController::update(float elapsedTime) {
 				currentGameStage = BOSS_STAGE;
 				g_worldManager->setMusicType(BOSS_MUSIC);
 				g_worldManager->startMusic();
-				spawnBossAlien(bossAliens[currentBossType]);
+				spawnBossAlien();
 			}
 		}
 	}
@@ -469,7 +497,7 @@ void AlienController::draw() {
 void AlienController::deactivate(Alien* alien) {
 	this->removeFromList(alien);
 
-	if (alien->getAlienCategory() == Alien::BOSS_ALIEN) {
+	if (alien->getAlienCategory() == BOSS_ALIEN) {
 		// A boss has been killed, move back to the spawn stage.
 		currentGameStage = SPAWN_STAGE_STARTUP;
 		stageStartDelay = (totalElapsedTime + STAGE_START_DELAY);
@@ -483,9 +511,8 @@ void AlienController::deactivate(Alien* alien) {
 			// Move to the next boss type.
 			currentBossType++;
 		} else {
-			// This is the end of the game, display a message to the user.
+			// This is the end of the game, display a message (if the player is still alive).
 			if (playState->getPlayer()->getNumLives()) {
-				// Only display this message if the player is still alive.
 				playState->getHudController()->getMissionCompletePanel()->setVisible(true);
 			}
 
@@ -494,6 +521,7 @@ void AlienController::deactivate(Alien* alien) {
 			spawnLogic.currentWave[BOUNCE_ALIEN] = FIRST_WAVE;
 			spawnLogic.currentWave[CHASE_ALIEN] = FIRST_WAVE;
 			spawnLogic.currentWave[ATTACK_ALIEN] = FIRST_WAVE;
+			spawnLogic.currentIntervalSpecial = (spawnLogic.currentIntervalSpecial / 2);
 		}
 	}
 }
@@ -502,6 +530,15 @@ void AlienController::smartBombNotification() {
 	Alien* alien = alienListHead;
 	while (alien) {
 		alien->smartBombNotification();
+
+		alien = alien->nextInList;
+	}
+}
+
+void AlienController::miniGateNotification() {
+	Alien* alien = alienListHead;
+	while (alien) {
+		alien->miniGateNotification();
 
 		alien = alien->nextInList;
 	}
@@ -520,7 +557,7 @@ Alien* AlienController::findBestTarget(Missile* missile) {
 		bool candidate = false;
 
 		// Only consider standard aliens as targets.
-		if (alien->getAlienCategory() == Alien::STANDARD_ALIEN) {
+		if (alien->getAlienCategory() == STANDARD_ALIEN) {
 			// Only consider targets that the missile is heading towards.
 			alienPosition = alien->getPositionWCS();
 
@@ -573,7 +610,8 @@ Alien* AlienController::findBestTarget(Missile* missile) {
 }
 
 void AlienController::applyGravitionalPull(Player* player) {
-    if (blackHole->isActive()) {
+    // Currently, we only have a single blackhole instance to consider.
+	if (blackHole->isActive()) {
 		blackHole->applyGravitionalPull(player);
 	}
 }
@@ -655,7 +693,8 @@ void AlienController::removeFromList(Alien* alien) {
 	alien->setActive(false);
 }
 
-void AlienController::spawnStandardAlien(AlienType type) {
+void AlienController::spawnStandardAlien() {
+	AlienType type = spawnMatrix[spawnLogic.currentAlienType][spawnLogic.currentWave[spawnLogic.currentAlienType]];
 	switch (type) {
 	case BOUNCE_CUBE_ALIEN:
 		spawnBounceCube();
@@ -838,7 +877,8 @@ void AlienController::spawnAttackNeutron() {
 	}
 }
 
-void AlienController::spawnSpecialAlien(AlienType type) {
+void AlienController::spawnSpecialAlien() {
+	AlienType type = specialAliens[int_rand(0, 9)];
 	switch (type) {
 	case ROCKET_SHIP_ALIEN:
 		spawnRocketShip();
@@ -866,9 +906,13 @@ void AlienController::spawnSpecialAlien(AlienType type) {
 }
 
 void AlienController::spawnRocketShip() {
-	if (!rocketShip->isActive()) {
-		// Add it to the processing loop.
-		this->addToList(rocketShip);
+	// Find an empty slot.
+	for (Alien* alien : rocketShips) {
+		if (!alien->isActive()) {
+			// Add it to the processing loop.
+			this->addToList(alien);
+			break;
+		}
 	}
 }
 
@@ -907,7 +951,8 @@ void AlienController::spawnMiniCrusher() {
 	}
 }
 
-void AlienController::spawnBossAlien(AlienType type) {
+void AlienController::spawnBossAlien() {
+	AlienType type = bossAliens[currentBossType];
 	switch (type) {
 		case SNAKE_ALIEN :
 			spawnSnake();

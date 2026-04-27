@@ -23,9 +23,9 @@
 static AstMatrix3x3 rotationMatrix;
 static float lastAnimatedTime = 0;
 
-BounceCube::BounceCube(PlayState* playState) : BounceAlien(playState, BOUNCE_CUBE_ALIEN) {
+BounceCube::BounceCube(PlayState* playState) : BounceAlien(playState) {
 	this->setSpriteDefinition("bounce_cube");
-	this->setDefaultColor(NovaColor(154, 2, 217));
+	this->setCurrentColor(NovaColor(154, 2, 217));
 }
 
 void BounceCube::update(float elapsedTime) {

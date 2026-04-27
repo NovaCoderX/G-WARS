@@ -26,13 +26,17 @@
 #define MIN_INITIAL_VELOCITY 2
 #define MAX_INITIAL_VELOCITY 4
 
-Jelly::Jelly(PlayState* playState) : Alien(playState, JELLY_ALIEN) {
+Jelly::Jelly(PlayState* playState) : Alien(playState, BOSS_ALIEN) {
 	this->setSpriteDefinition("jelly");
 	highColor = NovaColor(48, 160, 255);
 	lowColor = highColor;
 	lowColor.rebase(33);
-	this->setDefaultColor(lowColor);
-	increasingColor = true;
+	currentColor = highColor;
+	increasingColor = false;
+
+	// Set up how this object will explode.
+	this->setExplosionSize(MASSIVE_EXPLOSION);
+	this->setExplosionSound(BOSS_ALIEN_EXPLODE);
 
 	// Create the tentacles.
 	tentacles.push_back(new Tentacle(this, FIRST_TENTACLE_ANCHOR, NovaColor(252, 7, 35)));
@@ -83,10 +87,11 @@ void Jelly::setActive(bool active) {
 		}
 
 		// Reset.
-		increasingColor = true;
+		this->setCurrentColor(highColor);
+		increasingColor = false;
 	}
 
-	// Set up all tentacles.
+	// Set up the tentacles.
 	for (Tentacle* tentacle : tentacles) {
 		tentacle->setActive(active);
 	}

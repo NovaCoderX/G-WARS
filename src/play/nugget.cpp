@@ -19,21 +19,63 @@
 
 #include "poly_nova.h"
 
-Nugget::Nugget(PlayState *playState, NuggetType nuggetType) : Sprite(playState) {
+
+
+Nugget::Nugget(PlayState *playState, NuggetType nuggetType, const NovaColor& color, float duration) : Sprite(playState) {
 	this->playState = playState;
 	this->nuggetType = nuggetType;
+	this->setSpriteDefinition("alien_nugget");
 	nextInList = priorInList = NULL;
-	defaultColor = NovaColor(255, 255, 255);
+	highColor = color;
+	lowColor = highColor;
+	lowColor.rebase(60);
+	this->setCurrentColor(highColor);
+	increasingColor = false;
+	this->duration = duration;
+	totalElapsedTime = 0;
+	active = false;
 }
 
 void Nugget::setActive(bool active) {
-	// Base processing.
-	Sprite::setActive(active);
+	this->active = active;
 
 	if (active) {
-		// Reset.
-		this->setCurrentColor(defaultColor);
+		// We have been activated.
+		this->setVisible(false);
+		this->setCurrentColor(highColor);
+		increasingColor = false;
+		totalElapsedTime = 0;
 	}
+}
+
+void Nugget::update(float elapsedTime) {
+	static NovaColor black;
+
+	totalElapsedTime += elapsedTime;
+
+	// See if we need to destroy the nugget (expired).
+	if (totalElapsedTime > duration) {
+		// fade out.
+		if (this->currentColor.fade((elapsedTime / 30), black)) {
+			playState->getNuggetController()->deactivate(this);
+		}
+	} else {
+		// Do some simple color cycling.
+		if (increasingColor) {
+			if (currentColor.brighten((elapsedTime / 30), highColor)) {
+				// Wrap.
+				increasingColor = false;
+			}
+		} else {
+			if (currentColor.fade((elapsedTime / 30), lowColor)) {
+				// Wrap.
+				increasingColor = true;
+			}
+		}
+	}
+
+	// Mark this object visible/invisible for this frame.
+	this->calculateVisibility();
 }
 
 void Nugget::checkCollision(Player *player) {

@@ -274,5 +274,3 @@ void NuggetController::spawnExtraBombNugget(const NovaVertex &location) {
 }
 
 
-
-

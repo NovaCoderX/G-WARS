@@ -21,10 +21,6 @@
 #define MIN_INITIAL_VELOCITY 3
 #define MAX_INITIAL_VELOCITY 6
 
-BounceAlien::BounceAlien(PlayState* playState, AlienType alienType) : Alien(playState, alienType) {
-	// Empty.
-}
-
 void BounceAlien::setActive(bool active) {
 	static bool verticalSwitch = true;
 
@@ -91,6 +87,22 @@ void BounceAlien::update(float elapsedTime) {
 	// Mark this object visible/invisible for this frame.
 	this->calculateVisibility();
 }
+
+bool BounceAlien::checkCollision(Missile* missile) {
+	// Base processing.
+	bool collision = Alien::checkCollision(missile);
+	if (collision) {
+		playState->getPlayer()->increaseScore(this);
+
+		// Randomly spawn nuggets.
+		if (int_rand(0, 3) == 2) {
+			playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, this->getPositionWCS());
+		}
+	}
+
+	return collision;
+}
+
 
 
 

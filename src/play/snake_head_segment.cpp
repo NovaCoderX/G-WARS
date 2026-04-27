@@ -26,12 +26,11 @@
 #define DEFAULT_FIRE_INTERVAL 10
 #define MAXIMUM_TARGET_ANGLE 33
 
-SnakeHeadSegment::SnakeHeadSegment(PlayState* playState, Sprite* parent, const NovaColor &color) :
- SnakeSegment(playState, parent, color) {
+SnakeHeadSegment::SnakeHeadSegment(PlayState* playState, const NovaColor &color) : SnakeSegment(playState, color) {
 	highColor = color;
 	lowColor = color;
 	lowColor.rebase(10);
-	this->setDefaultColor(highColor);
+	this->setActiveColor(highColor);
 	increasingColor = false;
 	vulnerable = false;
 	damage = 0;
@@ -40,7 +39,6 @@ SnakeHeadSegment::SnakeHeadSegment(PlayState* playState, Sprite* parent, const N
 	// Set up how this object will explode.
 	this->setExplosionSize(MASSIVE_EXPLOSION);
 	this->setExplosionSound(BOSS_ALIEN_EXPLODE);
-	this->setExplosionColor(this->getDefaultColor());
 
 	// Create the face data.
 	fangData.color = NovaColor(255, 82, 15);
@@ -153,9 +151,8 @@ void SnakeHeadSegment::setActive(bool active) {
 	if (active) {
 		// Reset.
 		increasingColor = false;
-		vulnerable = false;
+		this->setVulnerable(false);
 		damage = 0;
-		fireInterval = DEFAULT_FIRE_INTERVAL;
 		totalElapsedTime = lastFireTime = 0;
 	}
 }
@@ -262,7 +259,7 @@ bool SnakeHeadSegment::checkCollision(Missile* missile) {
 		// This segment was hit by the player's missile.
 		collision = true;
 
-		if (this->isActive() && this->isVulnerable()) {
+		if (this->isVulnerable()) {
 			damage++;
 			if (damage >= MAX_DAMAGE) {
 				this->setActive(false);

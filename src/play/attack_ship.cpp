@@ -94,16 +94,12 @@ static bool checkLaserHit(double x0, double y0, double radians, double targetX, 
 	return false;  // No hit detected
 }
 
-AttackShip::AttackShip(PlayState* playState) : AttackAlien(playState, ATTACK_SHIP_ALIEN) {
+AttackShip::AttackShip(PlayState* playState) : AttackAlien(playState) {
 	this->setSpriteDefinition("attack_ship");
-	this->setDefaultColor(NovaColor(169, 169, 169));
-
-	readyToFireColor = NovaColor(201, 255, 4);
-	readyToFire = false;
-	totalElapsedTime = lastFireTime = readyToFireTime = 0;
+	this->setReadyToFireColor(NovaColor(201, 255, 4));
 
 	laser = new Laser(playState);
-	laser->setColor(readyToFireColor);
+	laser->setColor(this->getReadyToFireColor());
 }
 
 AttackShip::~AttackShip() {
@@ -124,7 +120,8 @@ void AttackShip::setActive(bool active) {
 
 		// Reset.
 		readyToFire = false;
-		laser->setActive(false);
+		this->setCurrentColor(this->getDefaultColor());
+		laser->setVisible(false);
 		totalElapsedTime = lastFireTime = readyToFireTime = 0;
 	}
 }
@@ -168,8 +165,8 @@ void AttackShip::update(float elapsedTime) {
 		this->setFacingTowardsDirection(movementDirection);
 
 		// If the laser is currently active, deactivate it.
-		if (laser->isActive()) {
-			laser->setActive(false);
+		if (laser->isVisible()) {
+			laser->setVisible(false);
 			this->setCurrentColor(this->getDefaultColor());
 		}
 	}
@@ -177,12 +174,12 @@ void AttackShip::update(float elapsedTime) {
 	// Mark this object visible/invisible for this frame.
 	this->calculateVisibility();
 
-	if (laser->isActive()) {
+	if (laser->isVisible()) {
 		Player *player = playState->getPlayer();
 
 		// See if we need to expire the laser.
 		if ((!this->isVisible()) || ((totalElapsedTime - lastFireTime) > FIRE_DURATION)) {
-			laser->setActive(false);
+			laser->setVisible(false);
 			this->setCurrentColor(this->getDefaultColor());
 		} else {
 			// The laser is still active.
@@ -251,7 +248,7 @@ void AttackShip::update(float elapsedTime) {
 								(playerPosition.y - alienPosition.y));
 
 						if (fabs(this->getFacingTowardsDirection() - playerDirection) < MAXIMUM_TARGET_ANGLE) {
-							laser->setActive(true);
+							laser->setVisible(true);
 
 							// Reset.
 							readyToFire = false;
@@ -266,7 +263,7 @@ void AttackShip::update(float elapsedTime) {
 					// Ready to fire again, change color to let the player know.
 					readyToFire = true;
 					readyToFireTime = totalElapsedTime;
-					this->setCurrentColor(readyToFireColor);
+					this->setCurrentColor(this->getReadyToFireColor());
 				}
 			}
 		}
@@ -277,8 +274,8 @@ void AttackShip::draw() {
 	// Do base processing to draw the ship.
 	Sprite::draw();
 
-	// Draw the laser if it is active (implied visibility).
-	if (laser->isActive()) {
+	// Draw the laser if it is visible.
+	if (laser->isVisible()) {
 		laser->draw();
 	}
 }

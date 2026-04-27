@@ -19,97 +19,27 @@
 
 #include "poly_nova.h"
 
-// Helper methods.
-static bool isBossAlien(AlienType alienType) {
-	bool found;
 
-	switch (alienType) {
-	case SNAKE_ALIEN:
-		found = true;
-		break;
-
-	case JELLY_ALIEN:
-		found = true;
-		break;
-
-	case CRUSHER_ALIEN:
-		found = true;
-		break;
-
-	default:
-		found = false;
-	}
-
-	return found;
-}
-
-static bool isSpecialAlien(AlienType alienType) {
-	bool found;
-
-	switch (alienType) {
-	case ROCKET_SHIP_ALIEN:
-		found = true;
-		break;
-
-	case FLYING_SAUCER_ALIEN:
-		found = true;
-		break;
-
-	case PLAYER_CLONE_ALIEN:
-		found = true;
-		break;
-
-	case BLACK_HOLE_ALIEN:
-		found = true;
-		break;
-
-	case MINI_GATE_ALIEN:
-		found = true;
-		break;
-
-	case MINI_CRUSHER_ALIEN:
-		found = true;
-		break;
-
-	default:
-		found = false;
-	}
-
-	return found;
-}
-
-Alien::Alien(PlayState* playState, AlienType alienType) : Sprite(playState) {
+Alien::Alien(PlayState* playState, AlienCategory alienCategory) : Sprite(playState) {
 	this->playState = playState;
-	this->alienType = alienType;
-
-	if (isBossAlien(alienType)) {
-		alienCategory = BOSS_ALIEN;
-		this->setExplosionSize(MASSIVE_EXPLOSION);
-		this->setExplosionSound(BOSS_ALIEN_EXPLODE);
-	} else if (isSpecialAlien(alienType)) {
-		alienCategory = SPECIAL_ALIEN;
-		this->setExplosionSize(LARGE_EXPLOSION);
-		this->setExplosionSound(SPECIAL_ALIEN_EXPLODE);
-	} else {
-		alienCategory = STANDARD_ALIEN;
-		this->setExplosionSize(MEDIUM_EXPLOSION);
-		this->setExplosionSound(STANDARD_ALIEN_EXPLODE);
-	}
-
+	this->alienCategory = alienCategory;
 	nextInList = priorInList = NULL;
-	this->setDefaultColor(NovaColor(255, 255, 255));
+	active = false;
+
+	// Set up how this object will explode by default.
+	this->setExplosionSize(MEDIUM_EXPLOSION);
+	this->setExplosionSound(ALIEN_EXPLODE);
 	this->setLightEmittingExplosion(true);
 }
 
 void Alien::setActive(bool active) {
-	// Base processing.
-	Sprite::setActive(active);
-
 	if (active) {
-		// Reset.
-		this->setCurrentColor(this->getDefaultColor());
-	} else {
+		// We have been activated.
+		this->active = true;
+		this->setVisible(false);
+	} else if (this->active) {
 		// We have been destroyed.
+		this->active = false;
 		playState->getExplosionController()->createExplosion(this);
 	}
 }
@@ -141,12 +71,6 @@ bool Alien::checkCollision(Missile* missile) {
 		collision = true;
 		playState->getAlienController()->deactivate(this);
 
-		if (int_rand(0, 3) == 2) {
-			playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, this->getPositionWCS());
-		}
-
-		playState->getPlayer()->increaseScore(this);
-
 		// Missile has also been destroyed.
 		playState->getMissileController()->deactivate(missile);
 	}
@@ -158,3 +82,11 @@ void Alien::smartBombNotification() {
 	// We have been destroyed.
 	playState->getAlienController()->deactivate(this);
 }
+
+void Alien::miniGateNotification() {
+	// We have been destroyed.
+	playState->getAlienController()->deactivate(this);
+	playState->getPlayer()->increaseScore(this);
+	playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, this->getPositionWCS());
+}
+

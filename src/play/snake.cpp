@@ -19,12 +19,11 @@
 
 #include "poly_nova.h"
 
-#define SEGMENT_SPAWN_INTERVAL 0.3
 #define NUMBER_OF_SEGMENTS 21
 #define MIN_INITIAL_VELOCITY 6
 #define MAX_INITIAL_VELOCITY 9
 
-Snake::Snake(PlayState* playState) : Alien(playState, SNAKE_ALIEN) {
+Snake::Snake(PlayState* playState) : Alien(playState, BOSS_ALIEN) {
 	// The alien container doesn't explode.
 	this->setExplosionSize(NO_EXPLOSION);
 
@@ -32,7 +31,7 @@ Snake::Snake(PlayState* playState) : Alien(playState, SNAKE_ALIEN) {
 	NovaColor secondSegmentColor = NovaColor(255, 82, 15);
 
 	// Create the head segment (the first segment).
-	headSegment = new SnakeHeadSegment(playState, this, firstSegmentColor);
+	headSegment = new SnakeHeadSegment(playState, firstSegmentColor);
 	segments.push_back(headSegment);
 
 	// The first body segment's parent will be the head.
@@ -48,9 +47,9 @@ Snake::Snake(PlayState* playState) : Alien(playState, SNAKE_ALIEN) {
 
 		SnakeBodySegment* bodySegment = NULL;
 		if (i < (NUMBER_OF_SEGMENTS - 1)) {
-			bodySegment = new SnakeBodySegment(playState, parentSegment, segmentColor);
+			bodySegment = new SnakeBodySegment(parentSegment, segmentColor);
 		} else {
-			bodySegment = new SnakeTailSegment(playState, parentSegment, segmentColor);
+			bodySegment = new SnakeTailSegment(parentSegment, segmentColor);
 		}
 
 		// Add to the list of segments.
@@ -60,10 +59,6 @@ Snake::Snake(PlayState* playState) : Alien(playState, SNAKE_ALIEN) {
 		// Store.
 		parentSegment = bodySegment;
 	}
-
-	numSpawnedSegments = 0;
-	lastSpawnedTime = 0;
-	totalElapsedTime = 0;
 }
 
 Snake::~Snake() {
@@ -91,56 +86,50 @@ void Snake::setActive(bool active) {
 		// Make some sound.
 		g_worldManager->startSound(ENEMY_SPAWN_BOSS);
 
+		// Set initial position, direction and velocity of the new alien.
+		this->moveTo(0, 0, 0);
+		this->setVelocityFromComponents(0, 0);
+
+		// Set up the head segment.
+		headSegment->setActive(true);
+
 		// Find out which spawn zone we should be using (based on the players current location).
 		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
 			// Spawn the alien in the right zone.
-			this->moveTo(RIGHT_SPAWN_POINT_X, RIGHT_SPAWN_POINT_Y, 0);
-			horizontalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			headSegment->moveTo(RIGHT_SPAWN_POINT_X, RIGHT_SPAWN_POINT_Y, 0);
 
 			if (verticalSwitch) {
-				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+				headSegment->setVelocityFromComponents(-float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY), float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY));
 			} else {
-				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+				headSegment->setVelocityFromComponents(-float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY), -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY));
 			}
 		} else {
 			// Spawn the alien in the left zone.
-			this->moveTo(LEFT_SPAWN_POINT_X, LEFT_SPAWN_POINT_Y, 0);
-			horizontalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+			headSegment->moveTo(LEFT_SPAWN_POINT_X, LEFT_SPAWN_POINT_Y, 0);
 
 			if (verticalSwitch) {
-				verticalVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+				headSegment->setVelocityFromComponents(float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY), float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY));
 			} else {
-				verticalVelocity = -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
+				headSegment->setVelocityFromComponents(float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY), -float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY));
 			}
 		}
 
+		headSegment->setFacingTowardsDirection(calculateDirectionFromVelocityComponents(headSegment->getHorizontalVelocity(), headSegment->getVerticalVelocity()));
 		verticalSwitch = (!verticalSwitch);
 
-		// Set up all segments (the segments will be activated later).
-		double movementDirection = calculateDirectionFromVelocityComponents(horizontalVelocity, verticalVelocity);
-		for (SnakeSegment* segment : segments) {
-			segment->setVisible(false);
-			segment->moveTo(this->getPositionWCS());
-			segment->setVelocityFromComponents(horizontalVelocity, verticalVelocity);
-			segment->setFacingTowardsDirection(movementDirection);
-		}
-
-		// Reset.
-		numSpawnedSegments = 0;
-		lastSpawnedTime = 0;
-		totalElapsedTime = 0;
-	} else {
-		for (SnakeSegment* segment : segments) {
-			segment->setActive(false);
+		// Set up all the body segments.
+		for (SnakeBodySegment* bodySegment : bodySegments) {
+			bodySegment->setActive(true);
+			bodySegment->moveTo(headSegment->getPositionWCS());
+			bodySegment->setVelocityFromComponents(0, 0);
+			bodySegment->setFacingTowardsDirection(headSegment->getFacingTowardsDirection());
 		}
 	}
 }
 
 void Snake::update(float elapsedTime) {
-	totalElapsedTime += elapsedTime;
-
-	for (int i = 0; i < numSpawnedSegments; i++) {
-		segments[i]->update(elapsedTime);
+	for (SnakeSegment* segment : segments) {
+		segment->update(elapsedTime);
 	}
 
 	// If any segments are visible then mark the container as visible (so the draw method is called).
@@ -149,17 +138,6 @@ void Snake::update(float elapsedTime) {
 		if (segment->isVisible()) {
 			this->setVisible(true);
 			break;
-		}
-	}
-
-	// See if we are ready to spawn the next segment.
-	if (numSpawnedSegments < NUMBER_OF_SEGMENTS) {
-		if ((totalElapsedTime - lastSpawnedTime) >= SEGMENT_SPAWN_INTERVAL) {
-			segments[numSpawnedSegments]->setActive(true);
-			numSpawnedSegments++;
-
-			// Store the time of the last spawn.
-			lastSpawnedTime = totalElapsedTime;
 		}
 	}
 }
@@ -259,22 +237,21 @@ void Snake::smartBombNotification() {
 			headSegment->setVulnerable(true);
 		}
 	} else {
-		// Head is dead.
+		// Head is now dead.
 		headSegment->setActive(false);
 
 		// The head is dead, therefore the snake is dead.
 		playState->getAlienController()->deactivate(this);
-		playState->getPlayer()->increaseScore(this);
 	}
 }
 
 void Snake::draw() {
 	static DisplayVertex displayVertex;
 
-	// Only draw the nodes and connecting line if at least one child or parent node is visible.
+	// Only draw the nodes and connecting line if the child or parent node is visible.
 	SnakeSegment* parentSegment = headSegment;
-	for (int i = 1; i < NUMBER_OF_SEGMENTS; i++) {
-		SnakeSegment* childSegment = segments[i];
+	for (SnakeBodySegment* bodySegment : bodySegments) {
+		SnakeSegment* childSegment = bodySegment;
 		if (parentSegment->isVisible() || childSegment->isVisible()) {
 			// Draw the line.
 			NovaVertex start = childSegment->getAnchorPointCCS(SnakeSegment::BOTTOM_VERTEX_ANCHOR);

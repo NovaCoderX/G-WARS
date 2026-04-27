@@ -167,6 +167,16 @@ void PlayAreaGrid::update(float elapsedTime) {
 		if (highColorDisplayed) {
 			highColorTimer += elapsedTime;
 			if (highColorTimer >= HIGH_COLOR_INTERVAL) {
+				// Restore the row positions..
+				for (int i = 0; i < NUMBER_OF_ROWS; i++) {
+					rows[i]->moveTo(savedRowPositions[i]);
+				}
+
+				// Restore the column positions..
+				for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
+					columns[i]->moveTo(savedColumnPositions[i]);
+				}
+
 				// Reset.
 				shaking = false;
 				lineColor = lowColor;

@@ -26,13 +26,9 @@
 #define MAXIMUM_TARGET_ANGLE 30
 #define MUZZLE_VERTEX_ANCHOR 14
 
-AttackArtillery::AttackArtillery(PlayState* playState) : AttackAlien(playState, ATTACK_ARTILLERY_ALIEN) {
+AttackArtillery::AttackArtillery(PlayState* playState) : AttackAlien(playState) {
 	this->setSpriteDefinition("attack_artillery");
-	this->setDefaultColor(NovaColor(169, 169, 169));
-
-	readyToFireColor = NovaColor(255, 201, 4);
-	readyToFire = false;
-	totalElapsedTime = lastFireTime = readyToFireTime = 0;
+	this->setReadyToFireColor(NovaColor(255, 201, 4));
 }
 
 void AttackArtillery::setActive(bool active) {
@@ -46,6 +42,7 @@ void AttackArtillery::setActive(bool active) {
 
 		// Reset.
 		readyToFire = false;
+		this->setCurrentColor(this->getDefaultColor());
 		totalElapsedTime = lastFireTime = readyToFireTime = 0;
 	}
 }
@@ -112,7 +109,7 @@ void AttackArtillery::update(float elapsedTime) {
 	// Mark this object visible/invisible for this frame.
 	this->calculateVisibility();
 
-	if (this->visible && player->isActive() && (!player->isShieldActive())) {
+	if (this->isVisible() && player->isActive()) {
 		NovaVertex playerPosition = player->getPositionWCS();
 		NovaVertex alienPosition = this->getPositionWCS();
 		double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
@@ -141,7 +138,7 @@ void AttackArtillery::update(float elapsedTime) {
 					// Ready to fire another missile, change the color to let the player know.
 					readyToFire = true;
 					readyToFireTime = totalElapsedTime;
-					this->setCurrentColor(readyToFireColor);
+					this->setCurrentColor(this->getReadyToFireColor());
 				}
 			}
 		}

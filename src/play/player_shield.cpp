@@ -18,34 +18,40 @@
  *****************************************************************/
 #include "poly_nova.h"
 
-#define SHIELD_DURATION 60
-#define SHIELD_FLASH_DELAY 30
-#define SHIELD_FLASH_INTERVAL 3
+#define FLASH_DURATION 30
+#define FLASH_INTERVAL 3
 
 PlayerShield::PlayerShield(PlayState* playState, SpriteDefinition* shieldDefinition) : Sprite(playState) {
+	this->playState = playState;
 	this->setSpriteDefinition(shieldDefinition);
-	this->setCurrentColor(NovaColor(255, 255, 255));
 
 	// The shield will remain active until the timer reaches our shield duration time.
 	totalElapsedTime = 0;
 	lastFlashTime = 0;
+	flashDelay = 0;
+	active = false;
 }
 
 void PlayerShield::setActive(bool active) {
-	// Base processing.
-	Sprite::setActive(active);
-
 	if (active) {
-		// Shield is visible by default when activated.
+		// We have been activated.
+		this->active = true;
 		this->setVisible(true);
 
 		// Make some sound.
 		g_worldManager->startSound(PLAYER_SHIELD_ON);
 
+		// Calculate the flash delay based on the shield's duration.
+		flashDelay = (playState->getPlayer()->getShieldDuration() - FLASH_DURATION);
+		if (flashDelay < FLASH_DURATION) {
+			flashDelay = FLASH_DURATION;
+		}
+
 		// Reset.
 		totalElapsedTime = lastFlashTime = 0;
 	} else {
-		// Hide the shield.
+		// We have been deactivated.
+		this->active = false;
 		this->setVisible(false);
 	}
 }
@@ -53,28 +59,36 @@ void PlayerShield::setActive(bool active) {
 void PlayerShield::update(float elapsedTime) {
 	totalElapsedTime += elapsedTime;
 
-	// See if we need to turn off the shield.
-	if (totalElapsedTime > SHIELD_DURATION) {
-		// Turn off the shield.
-		this->setActive(false);
-	} else {
-		// Flash the shield when time is running out.
-		if (totalElapsedTime > SHIELD_FLASH_DELAY) {
-			// Flash the shield when the shield duration is coming to an end.
-			if ((totalElapsedTime - lastFlashTime) >= SHIELD_FLASH_INTERVAL) {
-				// Switch.
-				this->setVisible(!this->isVisible());
+	// Flash the shield when time is running out.
+	if (totalElapsedTime > flashDelay) {
+		if ((totalElapsedTime - lastFlashTime) >= FLASH_INTERVAL) {
+			// Switch.
+			this->setVisible(!this->isVisible());
 
-				if (this->isVisible()) {
-					g_worldManager->startSound(PLAYER_SHIELD_ON);
-				} else {
-					g_worldManager->startSound(PLAYER_SHIELD_OFF);
-				}
-
-				// Store.
-				lastFlashTime = totalElapsedTime;
+			if (this->isVisible()) {
+				g_worldManager->startSound(PLAYER_SHIELD_ON);
+			} else {
+				g_worldManager->startSound(PLAYER_SHIELD_OFF);
 			}
+
+			// Store.
+			lastFlashTime = totalElapsedTime;
+		}
+
+		if (totalElapsedTime > (flashDelay + FLASH_DURATION)) {
+			// The shield has expired.
+			this->setActive(false);
 		}
 	}
+}
+
+void PlayerShield::draw() {
+	// Shield color should always match the color of the player.
+	if (this->currentColor != playState->getPlayer()->getCurrentColor()) {
+		this->currentColor = playState->getPlayer()->getCurrentColor();
+	}
+
+	// Do base class processing.
+	Sprite::draw();
 }
 

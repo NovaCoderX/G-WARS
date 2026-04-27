@@ -21,9 +21,11 @@
 #define MIN_INITIAL_VELOCITY 2
 #define MAX_INITIAL_VELOCITY 4
 
-
-AttackAlien::AttackAlien(PlayState* playState, AlienType alienType) : Alien(playState, alienType) {
-	// Empty.
+AttackAlien::AttackAlien(PlayState* playState) : Alien(playState) {
+	defaultColor = NovaColor(169, 169, 169);
+	readyToFireColor = NovaColor(255, 255, 255);
+	readyToFire = false;
+	totalElapsedTime = lastFireTime = readyToFireTime = 0;
 }
 
 void AttackAlien::setActive(bool active) {
@@ -58,5 +60,20 @@ void AttackAlien::setActive(bool active) {
 
 		verticalSwitch = (!verticalSwitch);
 	}
+}
+
+bool AttackAlien::checkCollision(Missile* missile) {
+	// Base processing.
+	bool collision = Alien::checkCollision(missile);
+	if (collision) {
+		playState->getPlayer()->increaseScore(this);
+
+		// Randomly spawn nuggets.
+		if (int_rand(0, 3) == 2) {
+			playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, this->getPositionWCS());
+		}
+	}
+
+	return collision;
 }
 

@@ -19,9 +19,8 @@
 
 #include "poly_nova.h"
 
-SnakeSegment::SnakeSegment(PlayState* playState, Sprite* parent, const NovaColor& color) :
-		AlienComponent(playState, parent) {
+SnakeSegment::SnakeSegment(PlayState* playState, const NovaColor& color) : AlienComponent(playState) {
 	this->setSpriteDefinition("snake_segment");
-	this->setDefaultColor(color);
+	this->setActiveColor(color);
 }
 

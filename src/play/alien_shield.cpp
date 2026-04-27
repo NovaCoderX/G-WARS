@@ -21,4 +21,5 @@
 AlienShield::AlienShield(PlayState *playState, SpriteDefinition *shieldDefinition) : Sprite(playState) {
 	this->setSpriteDefinition(shieldDefinition);
 	this->setCurrentColor(NovaColor(255, 255, 255));
+	active = false;
 }

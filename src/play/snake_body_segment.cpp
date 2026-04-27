@@ -22,11 +22,12 @@
 #define DAMAGE_FACTOR 0.25
 #define FOLLOW_DISTANCE 3.0
 
-SnakeBodySegment::SnakeBodySegment(PlayState* playState, Sprite* parent, const NovaColor &color) : SnakeSegment(playState, parent, color) {
+SnakeBodySegment::SnakeBodySegment(SnakeSegment* parent, const NovaColor &color) :
+       SnakeSegment(parent->getPlayState(), color) {
+	this->parent = parent;
+
 	// Set up how this object will explode.
 	this->setExplosionSize(LARGE_EXPLOSION);
-	this->setExplosionSound(SILENCE);
-	this->setExplosionColor(this->getDefaultColor());
 }
 
 void SnakeBodySegment::update(float elapsedTime) {
@@ -64,7 +65,7 @@ bool SnakeBodySegment::checkCollision(Missile* missile) {
 		collision = true;
 
 		if (this->isActive()) {
-			if (this->currentColor.fade(DAMAGE_FACTOR, this->getDisabledtColor())) {
+			if (this->currentColor.fade(DAMAGE_FACTOR, this->getInactiveColor())) {
 				this->setActive(false);
 			}
 		}

@@ -19,7 +19,7 @@
 
 #include "poly_nova.h"
 
-#define DEFULT_NUM_STARS 0
+#define DEFAULT_NUM_STARS 0
 #define DEFAULT_STARFIELD_DEPTH 100
 
 StarfieldController::StarfieldController(PlayState* playState) {
@@ -43,9 +43,9 @@ void StarfieldController::init() {
 		float depth, horizontalExtents, verticalExtents;
 		int red, green, blue;
 
-		int numStarsLayer1 = yamlish->getInt("starfield.background.density", DEFULT_NUM_STARS);
-		int numStarsLayer2 = yamlish->getInt("starfield.middleground.density", DEFULT_NUM_STARS);
-		int numStarsLayer3 = yamlish->getInt("starfield.foreground.density", DEFULT_NUM_STARS);
+		int numStarsLayer1 = yamlish->getInt("starfield.background.density", DEFAULT_NUM_STARS);
+		int numStarsLayer2 = yamlish->getInt("starfield.middleground.density", DEFAULT_NUM_STARS);
+		int numStarsLayer3 = yamlish->getInt("starfield.foreground.density", DEFAULT_NUM_STARS);
 
 		int numStars = (numStarsLayer1 + numStarsLayer2 + numStarsLayer3);
 		for (int i = 0; i < numStars; i++) {

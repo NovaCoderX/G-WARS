@@ -19,32 +19,29 @@
 
 #include "poly_nova.h"
 
-AlienComponent::AlienComponent(PlayState* playState, Sprite* parent) : Sprite(playState) {
+AlienComponent::AlienComponent(PlayState* playState) : Sprite(playState) {
 	this->playState = playState;
-	this->parent = parent;
-	defaultColor = NovaColor(255, 255, 255);
-	disabledColor = NovaColor(64, 64, 64);
-	explosionColor = NovaColor(255, 255, 255);
+	this->setActiveColor(NovaColor(255, 255, 255));
+	this->setInactiveColor(NovaColor(64, 64, 64));
+	active = false;
 
-	// Set up how this object will explode.
+	// Set up how this object will explode by default.
 	this->setExplosionSize(NO_EXPLOSION);
 	this->setExplosionSound(SILENCE);
 	this->setLightEmittingExplosion(true);
 }
 
 void AlienComponent::setActive(bool active) {
-	// Base processing.
-	Sprite::setActive(active);
-
 	if (active) {
-		// Reset.
-		this->setCurrentColor(this->getDefaultColor());
-	} else {
-		// We only want to explode once when we are deactivated.
-		if (this->getCurrentColor() != disabledColor) {
-			this->setCurrentColor(disabledColor);
-			playState->getExplosionController()->createExplosion(this);
-		}
+		// We have been activated.
+		this->active = true;
+		this->setVisible(false);
+		this->setCurrentColor(activeColor);
+	} else if (this->active) {
+		// We have been deactivated.
+		this->active = false;
+		playState->getExplosionController()->createExplosion(this);
+		this->setCurrentColor(inactiveColor);
 	}
 }
 

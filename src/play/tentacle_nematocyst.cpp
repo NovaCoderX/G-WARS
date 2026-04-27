@@ -91,19 +91,17 @@ static bool checkLaserHit(double x0, double y0, double radians, double targetX, 
 	return false;  // No hit detected
 }
 
-TentacleNematocyst::TentacleNematocyst(PlayState* playState, Sprite* parent, float radius, const NovaColor& color) :
-		TentacleSegment(playState, parent, radius, color) {
+TentacleNematocyst::TentacleNematocyst(Jelly* parent, float radius, const NovaColor& color) :
+		TentacleSegment(parent, radius, color) {
 	highColor = color;
 	lowColor = highColor;
 	lowColor.rebase(10);
-	this->setDefaultColor(lowColor);
-	increasingColor = true;
+	this->setActiveColor(highColor);
+	increasingColor = false;
+	damage = 0;
 
 	// Set up how this object will explode.
 	this->setExplosionSize(LARGE_EXPLOSION);
-	this->setExplosionColor(highColor);
-
-	damage = 0;
 
 	laser = new Laser(playState);
 	laser->setColor(color);
@@ -122,25 +120,25 @@ void TentacleNematocyst::setActive(bool active) {
 
 	if (active) {
 		// Reset.
-		increasingColor = true;
+		increasingColor = false;
 		damage = 0;
-		laser->setActive(false);
+		laser->setVisible(false);
 	}
 }
 
 void TentacleNematocyst::update(float elapsedTime) {
-	if (laser->isActive()) {
+	if (laser->isVisible()) {
 		// See if we need to expire the laser.
 		if ((!this->isVisible()) || (!this->isActive())) {
-			laser->setActive(false);
+			laser->setVisible(false);
 		}
 
-		if (parent->getVerticalVelocity() > 0) {
+		if (jelly->getVerticalVelocity() > 0) {
 			// Jelly moving back up the playfield.
-			laser->setActive(false);
+			laser->setVisible(false);
 		}
 
-		if (laser->isActive()) {
+		if (laser->isVisible()) {
 			// The laser is still active.
 			Player* player = playState->getPlayer();
 			NovaVertex playerPosition = player->getPositionWCS();
@@ -150,7 +148,7 @@ void TentacleNematocyst::update(float elapsedTime) {
 			laser->setVertex(LINE_BEGIN, alienPosition.x, alienPosition.y, 0);
 
 			// Always fire straight down.
-			double direction = atan2(parent->getVerticalVelocity(), 0);
+			double direction = atan2(jelly->getVerticalVelocity(), 0);
 
 			// See if we hit the player.
 			bool laserHitPlayer = false;
@@ -196,7 +194,7 @@ void TentacleNematocyst::update(float elapsedTime) {
 		// Laser isn't active, see if we are now ready to fire (even if the player's shield is active).
 		Player* player = playState->getPlayer();
 		if (this->isVisible() && (this->isActive()) && player->isActive()) {
-			if (parent->getVerticalVelocity() < 0) {
+			if (jelly->getVerticalVelocity() < 0) {
 				NovaVertex alienPosition = this->getPositionWCS();
 				NovaVertex playerPosition = player->getPositionWCS();
 
@@ -207,7 +205,7 @@ void TentacleNematocyst::update(float elapsedTime) {
 					double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
 											(playerPosition.y - alienPosition.y));
 					if (playerDirection < MAXIMUM_TARGET_ANGLE) {
-						laser->setActive(true);
+						laser->setVisible(true);
 					}
 				}
 			}
@@ -216,7 +214,7 @@ void TentacleNematocyst::update(float elapsedTime) {
 
 	// Need to flash green when heading down the screen to warn the player.
 	if (this->isVisible() && (this->isActive())) {
-		if (parent->getVerticalVelocity() > 0) {
+		if (jelly->getVerticalVelocity() > 0) {
 			// Do some simple color cycling.
 			if (increasingColor) {
 				if (currentColor.brighten((elapsedTime / 10), highColor)) {
@@ -254,8 +252,8 @@ void TentacleNematocyst::draw() {
 	// Base processing.
 	TentacleSegment::draw();
 
-	// Draw the laser if it is active (implied visibility).
-	if (laser->isActive()) {
+	// Draw the laser if it is visible.
+	if (laser->isVisible()) {
 		laser->draw();
 	}
 }

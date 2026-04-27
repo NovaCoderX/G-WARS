@@ -18,32 +18,30 @@
  *****************************************************************/
 #include "poly_nova.h"
 
-#define MIN_INITIAL_VELOCITY 8
+#define MIN_INITIAL_VELOCITY 6
 #define MAX_INITIAL_VELOCITY 12
 
-MiniCrusher::MiniCrusher(PlayState* playState) : Alien(playState, MINI_CRUSHER_ALIEN) {
+MiniCrusher::MiniCrusher(PlayState* playState) : Alien(playState, SPECIAL_ALIEN) {
 	// The alien container doesn't explode.
 	this->setExplosionSize(NO_EXPLOSION);
 
-	highColor = NovaColor(3, 202, 252);
+	highColor = NovaColor(3, 202, 255);
 	lowColor = highColor;
 	lowColor.rebase(30);
-	this->setDefaultColor(lowColor);
 	increasingColor = true;
+	nuggetSpawned = false;
 
-	top = new AlienComponent(playState, this);
+	top = new AlienComponent(playState);
 	top->setSpriteDefinition("mini_crusher");
+	top->setActiveColor(highColor);
 	top->setExplosionSize(MEDIUM_EXPLOSION);
 	top->setExplosionSound(SPECIAL_ALIEN_EXPLODE);
-	top->setExplosionColor(highColor);
-	top->setFacingTowardsDirection(DOWN);
 
-	bottom = new AlienComponent(playState, this);
+	bottom = new AlienComponent(playState);
 	bottom->setSpriteDefinition("mini_crusher");
+	bottom->setActiveColor(highColor);
 	bottom->setExplosionSize(MEDIUM_EXPLOSION);
 	bottom->setExplosionSound(SPECIAL_ALIEN_EXPLODE);
-	bottom->setExplosionColor(highColor);
-	this->setExplosionSound(SPECIAL_ALIEN_EXPLODE);
 }
 
 MiniCrusher::~MiniCrusher() {
@@ -59,6 +57,8 @@ MiniCrusher::~MiniCrusher() {
 }
 
 void MiniCrusher::setActive(bool active) {
+	static bool verticalSwitch = true;
+
 	// Base processing.
 	Alien::setActive(active);
 
@@ -70,77 +70,105 @@ void MiniCrusher::setActive(bool active) {
 		this->moveTo(0, 0, 0);
 		this->setVelocityFromComponents(0, 0);
 
-		// Setup the top and bottom platforms.
-		float x = float_rand(60, 90);
+		// Set up the top and bottom platforms.
+		if (verticalSwitch) {
+			top->moveTo(-VERTICAL_BORDER_POSITION, HORIZONTAL_BORDER_POSITION, 0);
+			bottom->moveTo(VERTICAL_BORDER_POSITION, -HORIZONTAL_BORDER_POSITION, 0);
+		} else {
+			top->moveTo(VERTICAL_BORDER_POSITION, HORIZONTAL_BORDER_POSITION, 0);
+			bottom->moveTo(-VERTICAL_BORDER_POSITION, -HORIZONTAL_BORDER_POSITION, 0);
+		}
+
+		// Switch.
+		verticalSwitch = (!verticalSwitch);
+
+		NovaVertex topPosition = top->getPositionWCS();
+		NovaVertex bottomPosition = bottom->getPositionWCS();
 		float initialVelocity = float_rand(MIN_INITIAL_VELOCITY, MAX_INITIAL_VELOCITY);
 
-		// Find out which spawn zone we should be using (based on the players current location).
-		if (playState->getPlayAreaController()->isWithinZone(ZoneIndex::LEFT_SPAWN_ZONE, playState->getPlayer())) {
-			// Spawn the alien in the right zone.
-			top->moveTo(x, TOP_SPAWN_POINT_Y, 0);
-			top->setVelocityFromComponents(0, -initialVelocity);
+		double direction = calculateDirectionFromVelocityComponents((bottomPosition.x - topPosition.x),
+							(bottomPosition.y - topPosition.y));
+		top->setVelocityFromDirection(direction, initialVelocity);
+		top->setFacingTowardsDirection(direction);
 
-			bottom->moveTo(x, BOTTOM_SPAWN_POINT_Y, 0);
-			bottom->setVelocityFromComponents(0, initialVelocity);
-		} else {
-			// Spawn the alien in the left zone.
-			top->moveTo(-x, TOP_SPAWN_POINT_Y, 0);
-			top->setVelocityFromComponents(0, -initialVelocity);
-
-			bottom->moveTo(-x, BOTTOM_SPAWN_POINT_Y, 0);
-			bottom->setVelocityFromComponents(0, initialVelocity);
-		}
+		direction = calculateDirectionFromVelocityComponents((topPosition.x - bottomPosition.x),
+							(topPosition.y - bottomPosition.y));
+		bottom->setVelocityFromDirection(direction, initialVelocity);
+		bottom->setFacingTowardsDirection(direction);
 
 		// Reset.
 		increasingColor = true;
+		nuggetSpawned = false;
 	}
 
+	// Set up the crushers.
 	top->setActive(active);
 	bottom->setActive(active);
 }
 
 void MiniCrusher::update(float elapsedTime) {
-	// Apply the velocity.
-	top->applyVelocity(elapsedTime);
+	if (top->isActive()) {
+		// Apply the velocity.
+		top->applyVelocity(elapsedTime);
 
-	if (top->getVerticalVelocity() > 0) {
-		if (!playState->getPlayAreaController()->isWithinPlayArea(TOP_BORDER, top)) {
-			// We just hit the top border, make vertical velocity negative.
-			top->reverseVerticalVelocity();
+		if (top->getVerticalVelocity() > 0) {
+			if (!playState->getPlayAreaController()->isWithinPlayArea(TOP_BORDER, top)) {
+				top->reverseVelocity();
+
+				// Rotate the sprite towards the direction of travel.
+				double movementDirection = calculateDirectionFromVelocityComponents(top->getHorizontalVelocity(), top->getVerticalVelocity());
+				top->setFacingTowardsDirection(movementDirection);
+			}
+		} else {
+			if (!playState->getPlayAreaController()->isWithinPlayArea(BOTTOM_BORDER, top)) {
+				top->reverseVelocity();
+
+				// Rotate the sprite towards the direction of travel.
+				double movementDirection = calculateDirectionFromVelocityComponents(top->getHorizontalVelocity(), top->getVerticalVelocity());
+				top->setFacingTowardsDirection(movementDirection);
+			}
 		}
+
+		// Mark the crusher object visible/invisible for this frame.
+		top->calculateVisibility();
 	} else {
-		// We just hit the middle of the screen, make vertical velocity positive.
-		if ((top->getPositionWCS().y - top->getBoundingSphere()) < 0) {
-			top->reverseVerticalVelocity();
-		}
+		top->setVisible(false);
 	}
 
-	// Apply the velocity.
-	bottom->applyVelocity(elapsedTime);
+	if (bottom->isActive()) {
+		// Apply the velocity.
+		bottom->applyVelocity(elapsedTime);
 
-	// See if the bottom just moved outside the play area.
-	if (bottom->getVerticalVelocity() > 0) {
-		// We just hit the middle of the screen, make vertical velocity positive.
-		if ((bottom->getPositionWCS().y + bottom->getBoundingSphere()) > 0) {
-			bottom->reverseVerticalVelocity();
+		// See if the bottom just moved outside the play area.
+		if (bottom->getVerticalVelocity() > 0) {
+			if (!playState->getPlayAreaController()->isWithinPlayArea(TOP_BORDER, bottom)) {
+				bottom->reverseVelocity();
+
+				// Rotate the sprite towards the direction of travel.
+				double movementDirection = calculateDirectionFromVelocityComponents(bottom->getHorizontalVelocity(), bottom->getVerticalVelocity());
+				bottom->setFacingTowardsDirection(movementDirection);
+			}
+		} else {
+			if (!playState->getPlayAreaController()->isWithinPlayArea(BOTTOM_BORDER, bottom)) {
+				bottom->reverseVelocity();
+
+				// Rotate the sprite towards the direction of travel.
+				double movementDirection = calculateDirectionFromVelocityComponents(bottom->getHorizontalVelocity(), bottom->getVerticalVelocity());
+				bottom->setFacingTowardsDirection(movementDirection);
+			}
 		}
+
+		// Mark the crusher object visible/invisible for this frame.
+		bottom->calculateVisibility();
 	} else {
-		// We just hit the bottom border, make vertical velocity negative.
-		if (!playState->getPlayAreaController()->isWithinPlayArea(BOTTOM_BORDER, bottom)) {
-			bottom->reverseVerticalVelocity();
-		}
+		bottom->setVisible(false);
 	}
 
-	// Mark the platform objects visible/invisible for this frame.
-	top->calculateVisibility();
-	bottom->calculateVisibility();
-
-	// If either platform is visible, then mark the container as visible (so the draw method is called).
+	// If either crusher is visible, then mark the container as visible (so the draw method is called).
 	this->setVisible(false);
 	if (top->isVisible() || bottom->isVisible()) {
 		this->setVisible(true);
 	}
-
 
 	// Animate.
 	if (this->isVisible()) {
@@ -163,17 +191,29 @@ void MiniCrusher::update(float elapsedTime) {
 bool MiniCrusher::checkCollision(Player* player) {
 	bool collision = false;
 
-	// See if the top has just hit the player.
-	collision = top->checkCollision(player);
+	if (top->isActive()) {
+		// See if the top has just hit the player.
+		collision = top->checkCollision(player);
+		if (collision) {
+			top->setActive(false);
+		}
+	}
 
 	// Also check the bottom.
 	if (!collision) {
-		collision = bottom->checkCollision(player);
+		if (bottom->isActive()) {
+			collision = bottom->checkCollision(player);
+			if (collision) {
+				bottom->setActive(false);
+			}
+		}
 	}
 
 	if (collision) {
-		// This alien was hit by the player and destroyed.
-		playState->getAlienController()->deactivate(this);
+		if ((!top->isActive()) && (!bottom->isActive())) {
+			// This alien was hit by the player and destroyed.
+			playState->getAlienController()->deactivate(this);
+		}
 
 		// Optionally destroy the player.
 		player->youHit(this);
@@ -185,27 +225,70 @@ bool MiniCrusher::checkCollision(Player* player) {
 bool MiniCrusher::checkCollision(Missile* missile) {
 	bool collision = false;
 
-	// See if the top has just hit this missile.
-	collision = top->checkCollision(missile);
+	if (top->isActive()) {
+		// See if the top has just hit this missile.
+		collision = top->checkCollision(missile);
+		if (collision) {
+			top->setActive(false);
+
+			if (!nuggetSpawned) {
+				playState->getNuggetController()->spawnNugget(POWER_UP_NUGGET, top->getPositionWCS());
+				nuggetSpawned = true;
+			}
+		}
+	}
 
 	// Also check the bottom.
 	if (!collision) {
-		collision = bottom->checkCollision(missile);
+		if (bottom->isActive()) {
+			collision = bottom->checkCollision(missile);
+			if (collision) {
+				bottom->setActive(false);
+
+				if (!nuggetSpawned) {
+					playState->getNuggetController()->spawnNugget(POWER_UP_NUGGET, bottom->getPositionWCS());
+					nuggetSpawned = true;
+				}
+			}
+		}
 	}
 
 	if (collision) {
-		// This alien was hit by the player's missile.
-		playState->getAlienController()->deactivate(this);
-		// Note, cannot spawn nuggets because of container WCS position?
-		// would need to change Alien class to Sprite to allow each AlienComponent to spawn a nugget.
-		// If we do this then even the snake could spawn nuggets for each segment?
-		playState->getPlayer()->increaseScore(this);
+		if ((!top->isActive()) && (!bottom->isActive())) {
+			// This alien was hit by the player's missile and destroyed.
+			playState->getAlienController()->deactivate(this);
+			playState->getPlayer()->increaseScore(this);
+		}
 
 		// Missile has also been destroyed.
 		playState->getMissileController()->deactivate(missile);
 	}
 
 	return collision;
+}
+
+void MiniCrusher::miniGateNotification() {
+	// We have been destroyed.
+	playState->getAlienController()->deactivate(this);
+	playState->getPlayer()->increaseScore(this);
+
+	if (top->isActive()) {
+		top->setActive(false);
+
+		if (!nuggetSpawned) {
+			playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, top->getPositionWCS());
+			nuggetSpawned = true;
+		}
+	}
+
+	if (bottom->isActive()) {
+		bottom->setActive(false);
+
+		if (!nuggetSpawned) {
+			playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, bottom->getPositionWCS());
+			nuggetSpawned = true;
+		}
+	}
 }
 
 void MiniCrusher::draw() {

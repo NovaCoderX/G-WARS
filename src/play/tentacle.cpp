@@ -46,10 +46,10 @@ Tentacle::Tentacle(Jelly* jelly, Jelly::AnchorPoint anchor, const NovaColor &col
 
     for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
 		if (i < (NUMBER_OF_SEGMENTS - 1)) {
-			segments.push_back(new TentacleSegment(jelly->getPlayState(), jelly, currentSize, currentColor));
+			segments.push_back(new TentacleSegment(jelly, currentSize, currentColor));
 		} else {
 			// Add the last segment.
-			nematocyst = new TentacleNematocyst(jelly->getPlayState(), jelly, currentSize, NovaColor(34, 250, 5));
+			nematocyst = new TentacleNematocyst(jelly, currentSize, NovaColor(34, 250, 5));
 			segments.push_back(nematocyst);
 		}
 
@@ -84,6 +84,7 @@ void Tentacle::setActive(bool active) {
 		totalElapsedTime = 0;
 	}
 
+	// Set up the tentacles.
 	for (TentacleSegment* segment : segments) {
 		segment->setActive(active);
 	}

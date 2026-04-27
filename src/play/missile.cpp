@@ -24,6 +24,7 @@ Missile::Missile(PlayState* playState) : Sprite(playState) {
 	this->playState = playState;
 	missileType = UNDEFINED_MISSILE;
 	nextInList = priorInList = NULL;
+	active = false;
 
 	// Set up how this object will explode.
 	this->setExplosionSize(SMALL_EXPLOSION);
@@ -32,11 +33,13 @@ Missile::Missile(PlayState* playState) : Sprite(playState) {
 }
 
 void Missile::setActive(bool active) {
-	// Base processing.
-	Sprite::setActive(active);
-
-	if (!active) {
+	if (active) {
+		// We have been activated.
+		this->active = true;
+		this->setVisible(false);
+	} else if (this->active) {
 		// We have been destroyed.
+		this->active = false;
 		playState->getExplosionController()->createExplosion(this);
 	}
 }

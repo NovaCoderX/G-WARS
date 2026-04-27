@@ -23,15 +23,19 @@
 #define MIN_INITIAL_VELOCITY 1.3
 #define MAX_INITIAL_VELOCITY 2.6
 
-FlyingSaucer::FlyingSaucer(PlayState* playState) : Alien(playState, FLYING_SAUCER_ALIEN) {
+FlyingSaucer::FlyingSaucer(PlayState* playState) : Alien(playState, SPECIAL_ALIEN) {
 	this->setSpriteDefinition("flying_saucer");
 	highColor = NovaColor(255, 95, 31);
 	lowColor = highColor;
 	lowColor.rebase(10);
-	this->setDefaultColor(highColor);
+	currentColor = highColor;
 	increasingColor = false;
 	highColorTimer = 0;
 	highColorDisplayed = false;
+
+	// Set up how this object will explode.
+	this->setExplosionSize(LARGE_EXPLOSION);
+	this->setExplosionSound(SPECIAL_ALIEN_EXPLODE);
 }
 
 void FlyingSaucer::setActive(bool active) {
@@ -74,6 +78,7 @@ void FlyingSaucer::setActive(bool active) {
 		verticalSwitch = (!verticalSwitch);
 
 		// Reset.
+		this->setCurrentColor(highColor);
 		increasingColor = false;
 		highColorTimer = 0;
 		highColorDisplayed = false;
@@ -156,19 +161,11 @@ void FlyingSaucer::update(float elapsedTime) {
 }
 
 bool FlyingSaucer::checkCollision(Missile* missile) {
-	bool collision = false;
-
-	// See if this alien has just hit this missile.
-	NovaVertex between = (missile->getPositionWCS() - this->getPositionWCS());
-	if (between.magnitude() < (missile->getBoundingSphere() + this->getBoundingSphere())) {
-		// This alien was destroyed by a player's missile.
-		collision = true;
-		playState->getAlienController()->deactivate(this);
-		playState->getNuggetController()->spawnNugget(POWER_UP_NUGGET, this->getPositionWCS());
+	// Base processing.
+	bool collision = Alien::checkCollision(missile);
+	if (collision) {
 		playState->getPlayer()->increaseScore(this);
-
-		// Missile has also been destroyed.
-		playState->getMissileController()->deactivate(missile);
+		playState->getNuggetController()->spawnNugget(POWER_UP_NUGGET, this->getPositionWCS());
 	}
 
 	return collision;

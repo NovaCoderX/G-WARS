@@ -136,6 +136,7 @@ void PlayState::handleKeyDown(SDL_keysym *keysym) {
 		camera->moveTo(newCameraPosition);
 		camera->calculateWorldToCameraMatrix();
 		break;
+
 	case SDLK_MINUS:
 		newCameraPosition.z -= CAMERA_ZOOM_FACTOR;
 		if (newCameraPosition.z < CAMERA_MIN_ZOOM_AMOUNT) {
@@ -145,6 +146,13 @@ void PlayState::handleKeyDown(SDL_keysym *keysym) {
 		camera->moveTo(newCameraPosition);
 		camera->calculateWorldToCameraMatrix();
 		break;
+
+	case SDLK_SPACE:
+		if (player->isActive()) {
+			player->dropBombRequest();
+		}
+		break;
+
 	case SDLK_ESCAPE:
 		g_worldManager->setActiveState(MENU_STATE);
 		break;
@@ -190,6 +198,7 @@ void PlayState::processInput() {
 		case SDL_JOYBUTTONDOWN:
 			if (event.jbutton.button == 0) {
 				if (player->getNumLives()) {
+					// Note - We allow the player to enable autofire before they are reactivated.
 					player->fireMissileRequest(true);
 				} else {
 					// Game over man.
@@ -250,7 +259,7 @@ void PlayState::update() {
 		}
 #endif
 
-	// Then the entity updates.
+	// Then the entities.
 	missileController->update(elapsedTime);
 	alienController->update(elapsedTime);
 	nuggetController->update(elapsedTime);

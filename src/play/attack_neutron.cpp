@@ -25,7 +25,7 @@
 #define READY_TO_FIRE_DELAY 3
 #define MAXIMUM_TARGET_ANGLE 20
 #define MAXIMUM_TARGET_DISTANCE 40
-#define SPIN_ANIMATION_SPEED 16.0f
+#define SPIN_ANIMATION_SPEED 6.0f
 
 static AstMatrix3x3 rotationMatrix;
 static float lastAnimatedTime = 0;
@@ -98,23 +98,15 @@ static bool checkLaserHit(double x0, double y0, double radians, double targetX, 
 	return false;  // No hit detected
 }
 
-AttackNeutron::AttackNeutron(PlayState* playState) : AttackAlien(playState, ATTACK_NEUTRON_ALIEN) {
+AttackNeutron::AttackNeutron(PlayState* playState) : AttackAlien(playState) {
 	this->setSpriteDefinition("attack_neutron_base");
-	NovaColor defaultColorBase = NovaColor(169, 169, 169);
-	defaultColorBase.rebase(80);
-	this->setDefaultColor(defaultColorBase);
+	this->setReadyToFireColor(NovaColor(201, 255, 4));
 
 	center = new Sprite(playState);
 	center->setSpriteDefinition("attack_neutron_center");
-	defaultColorCenter = NovaColor(169, 169, 169);
-	center->setCurrentColor(defaultColorCenter);
-
-	readyToFireColor = NovaColor(201, 255, 4);
-	readyToFire = false;
-	totalElapsedTime = lastFireTime = readyToFireTime = 0;
 
 	laser = new Laser(playState);
-	laser->setColor(readyToFireColor);
+	laser->setColor(this->getReadyToFireColor());
 }
 
 AttackNeutron::~AttackNeutron() {
@@ -136,8 +128,9 @@ void AttackNeutron::setActive(bool active) {
 	if (active) {
 		// Reset.
 		readyToFire = false;
-		laser->setActive(false);
-		center->setCurrentColor(defaultColorCenter);
+		this->setCurrentColor(this->getDefaultColor());
+		center->setCurrentColor(this->getDefaultColor());
+		laser->setVisible(false);
 		totalElapsedTime = lastFireTime = readyToFireTime = 0;
 	}
 }
@@ -176,9 +169,10 @@ void AttackNeutron::update(float elapsedTime) {
 
 	if (borderViolated) {
 		// If the laser is currently active, deactivate it.
-		if (laser->isActive()) {
-			laser->setActive(false);
-			center->setCurrentColor(defaultColorCenter);
+		if (laser->isVisible()) {
+			laser->setVisible(false);
+			this->setCurrentColor(this->getDefaultColor());
+			center->setCurrentColor(this->getDefaultColor());
 		}
 	}
 
@@ -205,13 +199,14 @@ void AttackNeutron::update(float elapsedTime) {
 		center->setVisible(false);
 	}
 
-	if (laser->isActive()) {
+	if (laser->isVisible()) {
 		Player *player = playState->getPlayer();
 
 		// See if we need to expire the laser.
 		if ((!center->isVisible()) || ((totalElapsedTime - lastFireTime) > FIRE_DURATION)) {
-			laser->setActive(false);
-			center->setCurrentColor(defaultColorCenter);
+			laser->setVisible(false);
+			this->setCurrentColor(this->getDefaultColor());
+			center->setCurrentColor(this->getDefaultColor());
 		} else {
 			// The laser is still active.
 			NovaVertex alienPosition = center->getPositionWCS();
@@ -277,9 +272,10 @@ void AttackNeutron::update(float elapsedTime) {
 						// Need to check to see if we are traveling roughly in the correct direction to fire.
 						double playerDirection = calculateDirectionFromVelocityComponents((playerPosition.x - alienPosition.x),
 								(playerPosition.y - alienPosition.y));
+						double movementDirection = calculateDirectionFromVelocityComponents(this->getHorizontalVelocity(), this->getVerticalVelocity());
 
-						if (fabs(this->getFacingTowardsDirection() - playerDirection) < MAXIMUM_TARGET_ANGLE) {
-							laser->setActive(true);
+						if (fabs(movementDirection - playerDirection) < MAXIMUM_TARGET_ANGLE) {
+							laser->setVisible(true);
 
 							// Reset.
 							readyToFire = false;
@@ -294,7 +290,8 @@ void AttackNeutron::update(float elapsedTime) {
 					// Ready to fire again, change color to let the player know.
 					readyToFire = true;
 					readyToFireTime = totalElapsedTime;
-					center->setCurrentColor(readyToFireColor);
+					this->setCurrentColor(this->getReadyToFireColor());
+					center->setCurrentColor(this->getReadyToFireColor());
 				}
 			}
 		}
@@ -309,8 +306,8 @@ void AttackNeutron::draw() {
 		center->draw();
 	}
 
-	// Draw the laser if it is active (implied visibility).
-	if (laser->isActive()) {
+	// Draw the laser if it is visible.
+	if (laser->isVisible()) {
 		laser->draw();
 	}
 }

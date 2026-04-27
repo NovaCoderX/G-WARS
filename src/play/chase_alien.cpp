@@ -23,11 +23,6 @@
 #define MIN_INITIAL_VELOCITY 2
 #define MAX_INITIAL_VELOCITY 4
 
-
-ChaseAlien::ChaseAlien(PlayState* playState, AlienType alienType) : Alien(playState, alienType) {
-	// Empty.
-}
-
 void ChaseAlien::setActive(bool active) {
 	static bool verticalSwitch = true;
 
@@ -116,5 +111,19 @@ void ChaseAlien::update(float elapsedTime) {
 	this->calculateVisibility();
 }
 
+bool ChaseAlien::checkCollision(Missile* missile) {
+	// Base processing.
+	bool collision = Alien::checkCollision(missile);
+	if (collision) {
+		playState->getPlayer()->increaseScore(this);
+
+		// Randomly spawn nuggets.
+		if (int_rand(0, 3) == 2) {
+			playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, this->getPositionWCS());
+		}
+	}
+
+	return collision;
+}
 
 

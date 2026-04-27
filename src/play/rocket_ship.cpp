@@ -22,13 +22,17 @@
 #define MIN_INITIAL_VELOCITY 8
 #define MAX_INITIAL_VELOCITY 16
 
-RocketShip::RocketShip(PlayState* playState) : Alien(playState, ROCKET_SHIP_ALIEN) {
+RocketShip::RocketShip(PlayState* playState) : Alien(playState, SPECIAL_ALIEN) {
 	this->setSpriteDefinition("rocket_ship");
-	highColor = NovaColor(86, 173, 10);
+	highColor = NovaColor(86, 233, 10);
 	lowColor = highColor;
 	lowColor.rebase(30);
-	this->setDefaultColor(lowColor);
-	increasingColor = true;
+	currentColor = highColor;
+	increasingColor = false;
+
+	// Set up how this object will explode.
+	this->setExplosionSize(LARGE_EXPLOSION);
+	this->setExplosionSound(SPECIAL_ALIEN_EXPLODE);
 }
 
 void RocketShip::setActive(bool active) {
@@ -57,7 +61,8 @@ void RocketShip::setActive(bool active) {
 		}
 
 		// Reset.
-		increasingColor = true;
+		this->setCurrentColor(highColor);
+		increasingColor = false;
 	}
 }
 
@@ -102,4 +107,14 @@ void RocketShip::update(float elapsedTime) {
 	}
 }
 
+bool RocketShip::checkCollision(Missile* missile) {
+	// Base processing.
+	bool collision = Alien::checkCollision(missile);
+	if (collision) {
+		playState->getPlayer()->increaseScore(this);
+		playState->getNuggetController()->spawnNugget(POWER_UP_NUGGET, this->getPositionWCS());
+	}
+
+	return collision;
+}
 

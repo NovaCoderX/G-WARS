@@ -26,10 +26,14 @@
 #define MIN_INITIAL_VELOCITY 1
 #define MAX_INITIAL_VELOCITY 3
 
-PlayerClone::PlayerClone(PlayState* playState) : Alien(playState, PLAYER_CLONE_ALIEN) {
+PlayerClone::PlayerClone(PlayState* playState) : Alien(playState, SPECIAL_ALIEN) {
 	this->setSpriteDefinition("player");
-	this->setDefaultColor(NovaColor(255, 255, 255));
+	currentColor = NovaColor(255, 255, 255);
 	autofireTimer = 0;
+
+	// Set up how this object will explode.
+	this->setExplosionSize(LARGE_EXPLOSION);
+	this->setExplosionSound(SPECIAL_ALIEN_EXPLODE);
 
 	// Create the shield definition.
 	shieldDefinition = new SpriteDefinition();
@@ -148,40 +152,29 @@ void PlayerClone::update(float elapsedTime) {
 		}
 	}
 
+	// Activate or deactivate our shield based on the player's shield.
+	alienShield->setActive(player->isShieldActive());
+
+	// Show or hide our shield based on the player's shield.
+	alienShield->setVisible(player->isShieldVisible());
+
 	// Mark this object visible/invisible for this frame.
 	this->calculateVisibility();
 
 	if (this->isVisible()) {
-		if (player->isShieldActive()) {
-			// If player's shield is active then activate our shield.
-			alienShield->setActive(true);
+		// See if we are now ready to fire.
+		if (player->isActive() && (!player->isShieldActive())) {
+			NovaVertex alienPosition = this->getPositionWCS();
+			float between = (playerPosition - alienPosition).magnitude();
 
-			if (player->isShieldVisible()) {
-				alienShield->setVisible(true);
-			} else {
-				alienShield->setVisible(false);
-			}
-		} else {
-			// Otherwise hide our shield if it is currently visible.
-			if (alienShield->isActive()) {
-				alienShield->setActive(false);
-				alienShield->setVisible(false);
-			}
+			// We need to check that we are within firing range.
+			if ((between > MIN_FIRE_DISTANCE) && (between < MAX_FIRE_DISTANCE)) {
+				if (autofireTimer >= AUTOFIRE_INTERVAL) {
+					playState->getMissileController()->launchMissile(this->getPositionWCS(),
+							this->getFacingTowardsDirection(), this->getTotalVelocity());
 
-			// See if we are now ready to fire.
-			if (player->isActive()) {
-				NovaVertex alienPosition = this->getPositionWCS();
-				float between = (playerPosition - alienPosition).magnitude();
-
-				// We need to check that we are within firing range.
-				if ((between > MIN_FIRE_DISTANCE) && (between < MAX_FIRE_DISTANCE)) {
-					if (autofireTimer >= AUTOFIRE_INTERVAL) {
-						playState->getMissileController()->launchMissile(this->getPositionWCS(),
-								this->getFacingTowardsDirection(), this->getTotalVelocity());
-
-						// Reset.
-						autofireTimer = 0;
-					}
+					// Reset.
+					autofireTimer = 0;
 				}
 			}
 		}
@@ -208,13 +201,6 @@ bool PlayerClone::checkCollision(Player *player) {
 	return collision;
 }
 
-void PlayerClone::smartBombNotification() {
-	if (!alienShield->isActive()) {
-		// We have been destroyed.
-		playState->getAlienController()->deactivate(this);
-	}
-}
-
 bool PlayerClone::checkCollision(Missile *missile) {
 	bool collision = false;
 
@@ -227,8 +213,8 @@ bool PlayerClone::checkCollision(Missile *missile) {
 		if (!alienShield->isActive()) {
 			// This alien was destroyed by a player's missile.
 			playState->getAlienController()->deactivate(this);
-			playState->getNuggetController()->spawnNugget(EXTRA_BOMB_NUGGET, this->getPositionWCS());
 			playState->getPlayer()->increaseScore(this);
+			playState->getNuggetController()->spawnNugget(EXTRA_BOMB_NUGGET, this->getPositionWCS());
 		}
 
 		// Missile has been destroyed.
@@ -236,6 +222,13 @@ bool PlayerClone::checkCollision(Missile *missile) {
 	}
 
 	return collision;
+}
+
+void PlayerClone::smartBombNotification() {
+	if (!alienShield->isActive()) {
+		// We have been destroyed.
+		playState->getAlienController()->deactivate(this);
+	}
 }
 
 void PlayerClone::draw() {

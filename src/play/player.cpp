@@ -21,21 +21,22 @@
 
 #define DEFAULT_AUTOFIRE_INTERVAL 2
 #define POWER_UP_AUTOFIRE_INTERVAL 1
+#define DEFAULT_SHIELD_DURATION 60
+#define POWER_UP_DURATION 120
 #define DEFAULT_NUMBER_OF_SMART_BOMBS 3
 #define MAX_NUMBER_OF_SMART_BOMBS 9
 #define DEFAULT_NUMBER_LIVES 3
 #define MAX_NUMBER_LIVES 9
-#define POWER_UP_DURATION 150
 #define AWARD_SCORE_MULTIPLIER 3
 #define DEFAULT_SHIP_VELOCITY 4.0
 #define POWER_UP_SHIP_VELOCITY 6.0
 #define MAX_SHIP_VELOCITY 6.0
 #define DECELERATION_FACTOR 1.5
-#define NUMBER_OF_POWER_UP_TYPES 4
 #define DEFAULT_SCORE_MULTIPLIER 1
+#define MAX_SCORE_MULTIPLIER 20
 #define SCORE_MULTIPLIER_INCREMENT 1
 
-static PowerUpType powerUpTypes[NUMBER_OF_POWER_UP_TYPES] = { NO_POWER_UP_ASSIGNED };
+static PowerUpType powerUpTypes[10] = { NO_POWER_UP_ASSIGNED };
 static const NovaColor DEFAULT_PLAYER_COLOR(255, 255, 255);
 static const NovaColor POWER_UP_PLAYER_COLOR(253, 243, 2);
 
@@ -97,12 +98,19 @@ Player::Player(PlayState *playState) : Sprite(playState) {
 	currentPowerUp = NO_POWER_UP_ASSIGNED;
 	powerUpTimer = 0;
     restartMusic = false;
+    active = false;
     
 	// Set the power-ups.
 	powerUpTypes[0] = INCREASED_SPEED_POWER_UP;
 	powerUpTypes[1] = INCREASED_FIRE_RATE_POWER_UP;
 	powerUpTypes[2] = MULTISHOT_POWER_UP;
 	powerUpTypes[3] = HOMING_MISSILE_POWER_UP;
+	powerUpTypes[4] = PROTECTION_POWER_UP;
+	powerUpTypes[5] = INCREASED_SPEED_POWER_UP;
+	powerUpTypes[6] = INCREASED_FIRE_RATE_POWER_UP;
+	powerUpTypes[7] = MULTISHOT_POWER_UP;
+	powerUpTypes[8] = HOMING_MISSILE_POWER_UP;
+	powerUpTypes[9] = PROTECTION_POWER_UP;
 
 	// Set up how this object will explode.
 	this->setExplosionSize(MASSIVE_EXPLOSION);
@@ -122,19 +130,23 @@ Player::~Player() {
 	}
 }
 
-void Player::setActive(bool active) {
-	// Base processing.
-	Sprite::setActive(active);
+float Player::getShieldDuration() const {
+	if (currentPowerUp == PROTECTION_POWER_UP) {
+		return POWER_UP_DURATION;
+	} else {
+		return DEFAULT_SHIELD_DURATION;
+	}
+}
 
+void Player::setActive(bool active) {
 	if (active) {
-		// Reset.
+		// Player has been activated.
+		this->active = true;
 		this->setVisible(true);
 		autofireModeActive = false;
 		autofireTimer = 0;
 		scoreMultiplier = DEFAULT_SCORE_MULTIPLIER;
-		currentPowerUp = NO_POWER_UP_ASSIGNED;
-		this->setCurrentColor(DEFAULT_PLAYER_COLOR);
-		powerUpTimer = 0;
+		this->setCurrentPowerUp(NO_POWER_UP_ASSIGNED);
 
 		// Make some sound.
 		g_worldManager->startSound(PLAYER_SPAWN);
@@ -146,8 +158,9 @@ void Player::setActive(bool active) {
 
 		// Create a temporary shield.
 		playerShield->setActive(true);
-	} else {
+	} else if (this->active) {
 		// Player has been destroyed.
+		this->active = false;
 		this->setVisible(false);
 		this->setVelocityFromComponents(0, 0);
 		g_worldManager->stopMusic();
@@ -156,9 +169,6 @@ void Player::setActive(bool active) {
 		numLives--;
 		if (!numLives) {
 			// Player is dead and not coming back.
-			g_worldManager->getHighScoreHandler()->setPlayerScore(currentScore);
-			playState->getHudController()->getHighScorePanel()->setDirty(true);
-
 			g_worldManager->startSound(GAME_OVER);
 			playState->getHudController()->getGameOverPanel()->setVisible(true);
 			restartMusic = false;
@@ -192,35 +202,39 @@ void Player::youHit(Nugget *nugget) {
 	case MULTIPLIER_NUGGET:
 		g_worldManager->startSound(PICKUP_MULTIPLIER);
 		scoreMultiplier += SCORE_MULTIPLIER_INCREMENT;
+		if (scoreMultiplier > MAX_SCORE_MULTIPLIER) {
+			scoreMultiplier = MAX_SCORE_MULTIPLIER;
+		}
 		break;
 
 	case POWER_UP_NUGGET:
-		g_worldManager->startSound(PICKUP_POWER_UP);
-		currentPowerUp = powerUpTypes[int_rand(0, 4)];
-		this->setCurrentColor(POWER_UP_PLAYER_COLOR);
-
-		// Reset.
-		powerUpTimer = 0;
+		// Only assign a power-up if the player doesn't already have one assigned.
+		if (currentPowerUp == NO_POWER_UP_ASSIGNED) {
+			// Randomly assign a power-up.
+			this->setCurrentPowerUp(powerUpTypes[int_rand(0, 9)]);
+		}
 		break;
 
 	case EXTRA_LIFE_NUGGET:
-		if (numLives < MAX_NUMBER_LIVES) {
-			g_worldManager->startSound(PICKUP_EXTRA_LIFE);
-			numLives++;
-
-			// Update the stats panel.
-			playState->getHudController()->getPlayerStatsPanel()->setDirty(true);
+		g_worldManager->startSound(PICKUP_EXTRA_LIFE);
+		numLives++;
+		if (numLives > MAX_NUMBER_LIVES) {
+			numLives = MAX_NUMBER_LIVES;
 		}
+
+		// Update the stats panel.
+		playState->getHudController()->getPlayerStatsPanel()->setDirty(true);
 		break;
 
-	default: // EXTRA_BOMB_NUGGET
-		if (numSmartBombs < MAX_NUMBER_OF_SMART_BOMBS) {
-			g_worldManager->startSound(PICKUP_SMARTBOMB);
-			numSmartBombs++;
-
-			// Update the stats panel.
-			playState->getHudController()->getPlayerStatsPanel()->setDirty(true);
+	case EXTRA_BOMB_NUGGET:
+		g_worldManager->startSound(PICKUP_SMARTBOMB);
+		numSmartBombs++;
+		if (numSmartBombs > MAX_NUMBER_OF_SMART_BOMBS) {
+			numSmartBombs = MAX_NUMBER_OF_SMART_BOMBS;
 		}
+
+		// Update the stats panel.
+		playState->getHudController()->getPlayerStatsPanel()->setDirty(true);
 	}
 }
 
@@ -242,59 +256,21 @@ void Player::checkCollision(Missile *missile) {
 void Player::increaseScore(Alien *alien) {
 	// Only increase the score if the player is still alive.
 	if (this->isActive()) {
-		uint pointsAwarded = 0;
-
-		// The alien was destroyed, award points depending on the value of the various aliens.
-		switch (alien->getAlienType()) {
-		case ROCKET_SHIP_ALIEN :
-			pointsAwarded = 1000;
-			break;
-
-		case FLYING_SAUCER_ALIEN :
-			pointsAwarded = 3000;
-			break;
-
-		case PLAYER_CLONE_ALIEN :
-			pointsAwarded = 6000;
-			break;
-
-		case BLACK_HOLE_ALIEN :
-			pointsAwarded = 12000;
-			break;
-
-		case MINI_GATE_ALIEN :
-			pointsAwarded = 24000;
-			break;
-
-		case MINI_CRUSHER_ALIEN :
-			pointsAwarded = 2000;
-			break;
-
-		case SNAKE_ALIEN :
-			pointsAwarded = 48000;
-			break;
-
-		case JELLY_ALIEN :
-			pointsAwarded = 58000;
-			break;
-
-		case CRUSHER_ALIEN :
-			pointsAwarded = 68000;
-			break;
-
-		default:
-			// Standard aliens.
-			pointsAwarded = 100;
+		currentScore += (alien->getNumberAwardPoints() * scoreMultiplier);
+		if (currentScore > MAX_SCORE_VALUE) {
+			currentScore = MAX_SCORE_VALUE;
 		}
-
-		currentScore += (pointsAwarded * scoreMultiplier);
 		
-		// See if the current score is higher than the player's high-score.
-		if ((!highScoreAchived) && (currentScore > g_worldManager->getHighScoreHandler()->getHighestScore())) {
-			g_worldManager->startSound(HIGH_SCORE_ACHIEVED);
+		// Record the player's current score and see if it is the hightest.
+		if (g_worldManager->getHighScoreHandler()->playerScoreNotification(currentScore)) {
+			if (!highScoreAchived) {
+				// Only play the achievement sound once per game.
+				g_worldManager->startSound(HIGH_SCORE_ACHIEVED);
+				highScoreAchived = true;
+			}
 
-			// Only play the sound once per game.
-			highScoreAchived = true;
+			// Notify the high score panel that it needs to be updated.
+			playState->getHudController()->getHighScorePanel()->setDirty(true);
 		}
 
 		// Notify the current score panel that it needs to be updated.
@@ -305,13 +281,11 @@ void Player::increaseScore(Alien *alien) {
 void Player::update(float elapsedTime) {
 	NovaVertex originalShipPosition = this->getPositionWCS();
 
-	// See if the power-up has expired.
+	// See if the current power-up has expired.
 	if (currentPowerUp != NO_POWER_UP_ASSIGNED) {
 		powerUpTimer += elapsedTime;
-
 		if (powerUpTimer > POWER_UP_DURATION) {
-			currentPowerUp = NO_POWER_UP_ASSIGNED;
-			this->setCurrentColor(DEFAULT_PLAYER_COLOR);
+			this->setCurrentPowerUp(NO_POWER_UP_ASSIGNED);
 		}
 	}
 
@@ -388,9 +362,7 @@ void Player::update(float elapsedTime) {
 	}
 
 	// See if we need to add gravitational pull from any aliens.
-	if (!playerShield->isActive()) {
-		playState->getAlienController()->applyGravitionalPull(this);
-	}
+	playState->getAlienController()->applyGravitionalPull(this);
 
 	if (this->getTotalVelocity()) {
 		// We are moving, apply the velocity.
@@ -426,7 +398,7 @@ void Player::update(float elapsedTime) {
 			newShipPosition.y = (borderPosition.y + this->getBoundingSphere());
 		}
 
-		// Only update the player position if it has changed.
+		// Only update the player position if it was changed.
 		if (borderViolated) {
 			// Border collision occurred, update with the adjusted player position.
 			this->moveTo(newShipPosition);
@@ -553,7 +525,6 @@ void Player::update(float elapsedTime) {
 	}
 }
 
-
 void Player::updateVelocity(double additionalHorizontalVelocity, double additionalVerticalVelocity) {
     if ((additionalHorizontalVelocity != 0) || (additionalVerticalVelocity != 0)) {
         horizontalVelocity += additionalHorizontalVelocity;
@@ -575,10 +546,43 @@ void Player::draw() {
 	// Do base class processing.
 	Sprite::draw();
 
-	// Also draw the shield.
+	// Also draw the shield - Note that the shield can be active and invisible.
 	if (playerShield->isVisible()) {
 		playerShield->moveTo(this->getPositionWCS());
 		playerShield->draw();
 	}
 }
 
+void Player::setCurrentPowerUp(PowerUpType type) {
+	currentPowerUp = type;
+	if (currentPowerUp == NO_POWER_UP_ASSIGNED) {
+		this->setCurrentColor(DEFAULT_PLAYER_COLOR);
+	} else {
+		this->setCurrentColor(POWER_UP_PLAYER_COLOR);
+
+		switch (currentPowerUp) {
+		case INCREASED_SPEED_POWER_UP:
+			g_worldManager->startSound(PICKUP_POWER_UP_WARP);
+			break;
+
+		case INCREASED_FIRE_RATE_POWER_UP:
+			g_worldManager->startSound(PICKUP_POWER_UP_RAPID_FIRE);
+			break;
+
+		case MULTISHOT_POWER_UP:
+			g_worldManager->startSound(PICKUP_POWER_UP_MULTISHOT);
+			break;
+
+		case HOMING_MISSILE_POWER_UP:
+			g_worldManager->startSound(PICKUP_POWER_UP_HOMING_MISSILE);
+			break;
+
+		default: // PROTECTION_POWER_UP:
+			g_worldManager->startSound(PICKUP_POWER_UP_PROTECTION);
+			playerShield->setActive(true);
+		}
+
+		// Reset.
+		powerUpTimer = 0;
+	}
+}
