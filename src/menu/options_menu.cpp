@@ -272,7 +272,7 @@ void OptionsMenu::leaveState() {
 		g_worldManager->restartAudioManager();
 	}
 
-	// Need to check if the player's name was just changed.
+	// Need to sync the high score data because the player's name might have been changed.
 	g_worldManager->getHighScoreHandler()->syncOptions();
 }
 

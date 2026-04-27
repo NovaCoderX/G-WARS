@@ -182,7 +182,6 @@ void HighScoreMenu::enterState() {
 	float y = FIRST_ENTRY_VERTICAL_POSITION;
 	float z = 0;
 	NovaColor textColor = DEFAULT_TEXT_COLOR;
-	//NovaColor playerTextColor = NovaColor(25, 250, 94);
 	uint playerToken = g_worldManager->getHighScoreHandler()->getPlayerToken();
 
 	for (uint i = 0; i < highScores.size(); i++) {
@@ -192,7 +191,6 @@ void HighScoreMenu::enterState() {
 			entries.push_back(new HighScoreEntry(menuState, i+1, highScores[i].name, highScores[i].score, textColor, NovaVertex(x, y, z), false));
 		}
 
-		textColor.rebase(90);
 		y -= ENTRY_VERTICAL_SPACING;
 	}
 }
