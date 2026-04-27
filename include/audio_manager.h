@@ -20,7 +20,7 @@
 #define __AUDIO_MANAGER_H
 
 #define DEFAULT_MIXER_CHANNELS 32
-#define NUMBER_OF_SOUND_SAMPLES 35
+#define NUMBER_OF_SOUND_SAMPLES 39
 #define DEFAULT_SOUND_VOLUME 5
 #define MIN_SOUND_VOLUME 0
 #define MAX_SOUND_VOLUME 10
@@ -45,7 +45,7 @@ enum SampleType {
 	ENEMY_SPAWN_MINI_GATE = 13, // Enemy_spawn_blue
 	ENEMY_SPAWN_MINI_CRUSHER = 14, // Enemy_spawn_red
 	ENEMY_SPAWN_BOSS = 15, // Snake_spawn
-	STANDARD_ALIEN_EXPLODE = 16, // Enemy_explode
+	ALIEN_EXPLODE = 16, // Enemy_explode
 	SPECIAL_ALIEN_EXPLODE = 17, //  Gravity_well_die
 	BOSS_ALIEN_EXPLODE = 18, //  Gravity_well_explode
 	PLAYER_SPAWN = 19,
@@ -56,13 +56,17 @@ enum SampleType {
 	PLAYER_SHIELD_HIT_ENEMY = 24,
 	PLAYER_EXPLODE = 25, // Ship_explode
 	PICKUP_MULTIPLIER = 26, // Multiplier
-	PICKUP_POWER_UP = 27, // pickup_weapon
-	PICKUP_EXTRA_LIFE = 28, // pickup_extralife
-	PICKUP_SMARTBOMB = 29, // pickup_smartbomb
-	MISSILE_EXPLODE = 30, // bullet_hitwall
-	LASER_EXPLODE = 31, // bullet_hitwall
-	HIGH_SCORE_ACHIEVED = 32,
-	UI_CHANGE = 33,
+	PICKUP_EXTRA_LIFE = 27, // pickup_extralife
+	PICKUP_SMARTBOMB = 28, // pickup_smartbomb
+	PICKUP_POWER_UP_WARP = 29,
+	PICKUP_POWER_UP_RAPID_FIRE = 30,
+	PICKUP_POWER_UP_MULTISHOT = 31,
+	PICKUP_POWER_UP_HOMING_MISSILE = 32,
+	PICKUP_POWER_UP_PROTECTION = 33,
+	MISSILE_EXPLODE = 34, // bullet_hitwall
+	LASER_EXPLODE = 35, // bullet_hitwall
+	HIGH_SCORE_ACHIEVED = 36,
+	UI_CHANGE = 37,
 	UI_CONFIRM = (NUMBER_OF_SOUND_SAMPLES - 1)
 };
 

@@ -22,20 +22,7 @@
 class MatrixObject {
 public:
 	MatrixObject();
-	virtual ~MatrixObject();
-
-	bool isActive() const {
-		return active;
-	}
-
-	virtual void setActive(bool active) {
-		this->active = active;
-
-		if (active) {
-			// Prevent object being drawn when the draw method is called before the update method.
-			visible = false;
-		}
-	}
+	virtual ~MatrixObject() {}
 
 	bool isVisible() const {
 		return visible;
@@ -74,11 +61,8 @@ public:
 	void rotateAroundZ(float degrees);
 
 protected:
-	bool active;
-	bool visible;
-
-	// LCS->WCS matrix.
 	AstMatrix4x3 objectToWorldMatrix;
+	bool visible;
 };
 
 #endif // __MATRIX_OBJECT_H

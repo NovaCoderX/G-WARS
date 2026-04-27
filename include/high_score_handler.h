@@ -19,6 +19,8 @@
 #ifndef __HIGH_SCORE_HANDLER_H
 #define __HIGH_SCORE_HANDLER_H
 
+#define MAX_SCORE_VALUE 9999999
+
 struct HighScoreData
 {
 	uint id;
@@ -66,7 +68,7 @@ public:
 	std::vector<HighScoreData> getHighScores() { return highScores; }
 
 	void syncOptions();
-	void setPlayerScore(uint score);
+	bool playerScoreNotification(uint score);
 	void save();
 
 private:

@@ -88,6 +88,11 @@ public:
 		verticalVelocity = -verticalVelocity;
 	}
 
+	void reverseVelocity() {
+		horizontalVelocity = -horizontalVelocity;
+		verticalVelocity = -verticalVelocity;
+	}
+
 	void setVelocityFromComponents(double horizontalVelocity, double verticalVelocity) {
 		this->horizontalVelocity = horizontalVelocity;
 		this->verticalVelocity = verticalVelocity;
@@ -99,7 +104,6 @@ public:
 	NovaVertex getAnchorPointWCS(int vertexIndex) const;
 	NovaVertex getAnchorPointCCS(int vertexIndex) const;
 
-	virtual void update(float elapsedTime) {}
 	virtual void calculateVisibility();
 	virtual void draw();
 

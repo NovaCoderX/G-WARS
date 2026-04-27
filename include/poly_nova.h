@@ -79,7 +79,6 @@ class PlayState;
 #include <play/extra_bomb_nugget.h>
 #include <play/alien.h>
 #include <play/alien_component.h>
-#include <play/bounding_sphere.h>
 #include <play/bounce_alien.h>
 #include <play/bounce_cube.h>
 #include <play/bounce_wanderer.h>
@@ -111,9 +110,10 @@ class PlayState;
 #include <play/tentacle_segment.h>
 #include <play/tentacle_nematocyst.h>
 #include <play/tentacle.h>
-#include <play/gun_platform.h>
-#include <play/crusher_platform.h>
 #include <play/crusher.h>
+#include <play/platform_sphere.h>
+#include <play/platform_gun.h>
+#include <play/crusher_platform.h>
 #include <play/player_shield.h>
 #include <play/player.h>
 #include <play/hud_panel.h>
