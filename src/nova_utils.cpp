@@ -21,7 +21,7 @@
 
 #define MAX_LOG_MESSAGE_LENGTH 4000
 
-static FILE* _logFile = NULL;
+static FILE* _infoFile = NULL;
 static FILE* _warningLogFile = NULL;
 
 extern "C" {
@@ -33,15 +33,15 @@ extern "C" {
 		vsnprintf(message, MAX_LOG_MESSAGE_LENGTH, fmtString, args);
 		va_end(args);
 
-		if (!_logFile) {
-			_logFile = fopen("NOVA_LOG.TXT", "w");
-			if (_logFile) {
-				setbuf(_logFile, NULL);
+		if (!_infoFile) {
+			_infoFile = fopen("nova_info.txt", "w");
+			if (_infoFile) {
+				setbuf(_infoFile, NULL);
 			}
 		}
 
-		if (_logFile) {
-			fwrite(message, 1, strlen(message), _logFile);
+		if (_infoFile) {
+			fwrite(message, 1, strlen(message), _infoFile);
 		}
 	}
 
@@ -54,7 +54,7 @@ extern "C" {
 		va_end(args);
 
 		if (!_warningLogFile) {
-			_warningLogFile = fopen("NOVA_WARNING.TXT", "w");
+			_warningLogFile = fopen("nova_warning.txt", "w");
 			if (_warningLogFile) {
 				setbuf(_warningLogFile, NULL);
 			}
@@ -69,7 +69,7 @@ extern "C" {
 		FILE* errorLogFile = NULL;
 
 		// Always append for errors.
-		errorLogFile = fopen("NOVA_ERROR.TXT", "a");
+		errorLogFile = fopen("nova_error.txt", "a");
 		if (errorLogFile) {
 			setbuf(errorLogFile, NULL);
 			fwrite(message, 1, strlen(message), errorLogFile);
@@ -79,9 +79,9 @@ extern "C" {
 	}
 
 	void logShutdown(void) {
-		if (_logFile) {
-			fclose (_logFile);
-			_logFile = NULL;
+		if (_infoFile) {
+			fclose (_infoFile);
+			_infoFile = NULL;
 		}
 
 		if (_warningLogFile) {

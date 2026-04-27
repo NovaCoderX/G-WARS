@@ -221,8 +221,8 @@ void AudioManager::init() {
 		}
 
 		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "Enemy_explode");
-		samples[STANDARD_ALIEN_EXPLODE] = Mix_LoadWAV(filepath);
-		if (!samples[STANDARD_ALIEN_EXPLODE]) {
+		samples[ALIEN_EXPLODE] = Mix_LoadWAV(filepath);
+		if (!samples[ALIEN_EXPLODE]) {
 			logWarningMessage("Could not load sound sample: %s\n", filepath);
 		}
 
@@ -286,12 +286,6 @@ void AudioManager::init() {
 			logWarningMessage("Could not load sound sample: %s\n", filepath);
 		}
 
-		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "pickup_weapon");
-		samples[PICKUP_POWER_UP] = Mix_LoadWAV(filepath);
-		if (!samples[PICKUP_POWER_UP]) {
-			logWarningMessage("Could not load sound sample: %s\n", filepath);
-		}
-
 		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "pickup_extralife");
 		samples[PICKUP_EXTRA_LIFE] = Mix_LoadWAV(filepath);
 		if (!samples[PICKUP_EXTRA_LIFE]) {
@@ -301,6 +295,36 @@ void AudioManager::init() {
 		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "pickup_smartbomb");
 		samples[PICKUP_SMARTBOMB] = Mix_LoadWAV(filepath);
 		if (!samples[PICKUP_SMARTBOMB]) {
+			logWarningMessage("Could not load sound sample: %s\n", filepath);
+		}
+
+		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "pickup_warp");
+		samples[PICKUP_POWER_UP_WARP] = Mix_LoadWAV(filepath);
+		if (!samples[PICKUP_POWER_UP_WARP]) {
+			logWarningMessage("Could not load sound sample: %s\n", filepath);
+		}
+
+		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "pickup_rapid_fire");
+		samples[PICKUP_POWER_UP_RAPID_FIRE] = Mix_LoadWAV(filepath);
+		if (!samples[PICKUP_POWER_UP_RAPID_FIRE]) {
+			logWarningMessage("Could not load sound sample: %s\n", filepath);
+		}
+
+		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "pickup_multishot");
+		samples[PICKUP_POWER_UP_MULTISHOT] = Mix_LoadWAV(filepath);
+		if (!samples[PICKUP_POWER_UP_MULTISHOT]) {
+			logWarningMessage("Could not load sound sample: %s\n", filepath);
+		}
+
+		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "pickup_homing_missile");
+		samples[PICKUP_POWER_UP_HOMING_MISSILE] = Mix_LoadWAV(filepath);
+		if (!samples[PICKUP_POWER_UP_HOMING_MISSILE]) {
+			logWarningMessage("Could not load sound sample: %s\n", filepath);
+		}
+
+		sprintf(filepath, "%s/Sounds/%s.wav", g_worldManager->getBaseDirectory().c_str(), "pickup_protection");
+		samples[PICKUP_POWER_UP_PROTECTION] = Mix_LoadWAV(filepath);
+		if (!samples[PICKUP_POWER_UP_PROTECTION]) {
 			logWarningMessage("Could not load sound sample: %s\n", filepath);
 		}
 
@@ -335,7 +359,10 @@ void AudioManager::init() {
 		}
 
 		int volume = (MIX_MAX_VOLUME * ((float)soundVolumeIndex / 10));
-		logMessage("Sound FX volume is set to: %d\n", volume);
+
+#ifdef DEBUG
+		logMessage("Sound FX volume is set to: %d\n", soundVolumeIndex);
+#endif
 
 		for (int i = 0; i < NUMBER_OF_SOUND_SAMPLES; i++) {
 			Mix_VolumeChunk(samples[i], volume);
@@ -381,7 +408,11 @@ void AudioManager::init() {
 		}
 
 		int volume = (MIX_MAX_VOLUME * ((float)musicVolumeIndex / 10));
-		logMessage("Music volume is set to: %d\n", volume);
+
+#ifdef DEBUG
+		logMessage("Music volume is set to: %d\n", musicVolumeIndex);
+#endif
+
 		Mix_VolumeMusic(volume);
 	}
 

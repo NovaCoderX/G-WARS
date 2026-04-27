@@ -38,10 +38,13 @@ extern "C" {
 	void nova_main(char *baseDirectory) {
 		atexit(nova_exit_handler);
 
-		// Seed the  pseudo-random number generator.
+		// Seed the pseudo-random number generator.
 		srand(time(NULL));
 
-		// TODO - set the time demo seconds in the world manager.
+		// "Warm up" the generator by discarding the first 100 results.
+		for (int i = 0; i < 100; ++i) {
+		    rand();
+		}
 
 		// Create our world object (global pointer), then run it.
 		g_worldManager = new WorldManager();

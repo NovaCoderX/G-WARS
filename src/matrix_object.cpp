@@ -19,13 +19,8 @@
 #include "poly_nova.h"
 
 MatrixObject::MatrixObject() {
-	active = false;
 	visible = false;
 	objectToWorldMatrix.MakeIdentity();
-}
-
-MatrixObject::~MatrixObject() {
-	// Empty.
 }
 
 /*

@@ -23,29 +23,35 @@
 #include <SDL/SDL.h>
 
 // Amiga includes.
+#include <proto/exec.h>
 #include <proto/dos.h>
 #include <clib/icon_protos.h>
 #include <workbench/startup.h>
 
-#ifdef GET_TIME_OF_DAY_FUNC
-int _gettimeofday(struct timeval *tv, void *tzvp) {
-	return 0;
-}
-#endif
+#define MAX_ARGVS 100
+#define MIN_STACK_BYTES 300000
 
-extern void nova_main(char *baseDirectory);
-
-const char *ID = "$VER: G-WARS 3.0.10\r\n";
+const char *ID = "$VER: G-WARS 3.0.19\r\n";
 
 // The startup message from workbench or 0 if started via CLI.
 extern struct WBStartup *_WBenchMsg;
 
-#define MAX_ARGVS 100
-static char *myargv[MAX_ARGVS];
-static int myargc = 0;
+extern void nova_main(char *baseDirectory);
 
 int main(int argc, char *argv[]) {
 	char path[PATH_MAX];
+	struct Process* thisProcess;
+	ULONG stackSize = 0;
+
+	thisProcess = (struct Process*)FindTask(NULL);
+	if (thisProcess) {
+        stackSize = thisProcess->pr_Task.tc_SPUpper - thisProcess->pr_Task.tc_SPLower;
+    }
+
+	if (stackSize < MIN_STACK_BYTES) {
+        printf("Stack size (%d bytes) is too small...\n", stackSize);
+        return EXIT_FAILURE;
+    }
 
     if (!_WBenchMsg) {
         // Started from the shell.
@@ -55,6 +61,8 @@ int main(int argc, char *argv[]) {
 		// Started from WB.
     	struct DiskObject *diskObject;
 		char *toolType;
+		char *myargv[MAX_ARGVS];
+		int myargc = 0;
 
 		NameFromLock(_WBenchMsg->sm_ArgList[0].wa_Lock, (unsigned char*)path, PATH_MAX);
 		CurrentDir(_WBenchMsg->sm_ArgList[0].wa_Lock);

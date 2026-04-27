@@ -34,14 +34,12 @@ extern "C" {
 #define API_TOKEN_UPDATE "XXX"
 #define API_TOKEN_ADMIN "XXX"
 
-#define MAX_SCORE_VALUE 9999999
-#define MIN_ONLINE_SCORE_VALUE 1000
 #define MAX_SCORE_ENTRIES 10
 #define LOCAL_PLAYER_DATA "local_player.dat"
 #define REMOTE_PLAYER_DATA "remote_player.dat"
 
 // A simple key for XORing. Keep this secret in your source code!
-const char SECRET_KEY[] = "CopperList1987";
+const char SECRET_KEY[] = "XXX";
 
 struct PlayerTokenRecord {
     uint32_t id;
@@ -93,21 +91,6 @@ static inline void toUpper(std::string& s) {
 	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
 		return static_cast<char>(std::toupper(c));
 	});
-}
-
-static std::string formatStringWithCommas(int value) {
-	char buffer[20];
-
-	std::snprintf(buffer, sizeof(buffer), "%d", value);
-	std::string numStr(buffer);
-	int insertPosition = numStr.length() - 3;
-
-	while (insertPosition > 0) {
-		numStr.insert(insertPosition, ",");
-		insertPosition -= 3;
-	}
-
-	return numStr;
 }
 
 static std::string getPlayerName() {
@@ -192,7 +175,6 @@ void HighScoreHandler::init() {
 	this->syncOptions();
 }
 
-
 uint HighScoreHandler::getHighestScore() {
 	uint highestScore = 0;
 
@@ -208,10 +190,10 @@ void HighScoreHandler::syncOptions() {
 	Yamlish* yamlish = g_worldManager->getYamlish();
 	online = yamlish->getBool("highscores.online", false);
 
-	// Sync the local data in case the player has just changed their name.
+	// Sync the local data in case the player has changed their name.
 	localPlayerData.name = getPlayerName();
 
-	// We also need to sync the high score data in case the player has just changed their name.
+	// We also need to sync the high score data in case the player has changed their name.
 	if (!highScores.empty()) {
 		for (size_t i = 0; i < highScores.size(); i++) {
 			if (highScores[i].id == playerToken) {
@@ -222,7 +204,9 @@ void HighScoreHandler::syncOptions() {
 	}
 }
 
-void HighScoreHandler::setPlayerScore(uint score) {
+bool HighScoreHandler::playerScoreNotification(uint score) {
+	bool highest = false;
+
 	if (score > MAX_SCORE_VALUE) {
 		score = MAX_SCORE_VALUE;
 	}
@@ -245,7 +229,9 @@ void HighScoreHandler::setPlayerScore(uint score) {
 	if (!found) {
 		// Player is not in the high score data so we need to add them.
 		highScores.push_back(HighScoreData(playerToken, localPlayerData.name, localPlayerData.score));
+	}
 
+	if (!highScores.empty()) {
 		// Sort the table
 		std::sort(highScores.begin(), highScores.end());
 
@@ -253,21 +239,21 @@ void HighScoreHandler::setPlayerScore(uint score) {
 		while (highScores.size() > MAX_SCORE_ENTRIES) {
 			highScores.pop_back();
 		}
+
+		if (score == highScores[0].score) {
+			highest = true;
+		}
 	}
+
+	return highest;
 }
 
 void HighScoreHandler::save() {
 	if (online) {
 		bool valid = true;
 
-		if (localPlayerData.score < MIN_ONLINE_SCORE_VALUE) {
-			std::string formattedNumber = formatStringWithCommas(MIN_ONLINE_SCORE_VALUE);
-			logWarningMessage("Player high score must be greater than %s points to enable online saving\n", formattedNumber.c_str());
-			valid = false;
-		}
-
 		if (localPlayerData.name == DEFAULT_PLAYER_NAME) {
-			logWarningMessage("Cannot save Player high score online without a valid player name\n");
+			logWarningMessage("Cannot save the high score online without a valid player name\n");
 			valid = false;
 		}
 
@@ -697,4 +683,3 @@ void HighScoreHandler::saveLocalScores(const std::string& filename) {
 		}
     }
 }
-

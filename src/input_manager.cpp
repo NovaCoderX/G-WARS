@@ -51,16 +51,12 @@ void InputManager::init() {
 	// Read the joystick port to use in from the INI file (probably just 1 or 2, we will zero index it)
 	int port = g_worldManager->getYamlish()->getInt("input.joystick.port", JOYSTICK_PORT_DEFAULT);
 	if (port < 1) {
-		fatalError("The joystick port must have be greater than zero");
+		port = JOYSTICK_PORT_DEFAULT;
 	}
 
 	joystick = SDL_JoystickOpen(port - 1);
 	if (!joystick) {
 		fatalError("Could not open the joystick using port %d\n", port);
-	}
-
-	if (SDL_JoystickNumButtons(joystick) < 2) {
-		fatalError("The joystick must have at least two buttons");
 	}
 
 	logMessage("Using the joystick: %s in port %d\n", SDL_JoystickName(1), port);
