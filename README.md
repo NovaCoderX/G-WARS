@@ -1,7 +1,7 @@
 # G-WARS
 A retro Amiga 68k shooter inspired by XBox Geometry Wars.
 
-This is my first ever original Amiga game inspired by the classic
+This is my first original Amiga game inspired by the classic
 XBOX 360 shooter Geometry Wars (a 2025 release!).
 This is not a port of Geometry Wars, it's all my own code developed
 over the past 12 months (basically I just made it up as I went along).
