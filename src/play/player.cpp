@@ -40,7 +40,14 @@ static PowerUpType powerUpTypes[10] = { NO_POWER_UP_ASSIGNED };
 static const NovaColor DEFAULT_PLAYER_COLOR(255, 255, 255);
 static const NovaColor POWER_UP_PLAYER_COLOR(253, 243, 2);
 
-Player::Player(PlayState *playState) : Sprite(playState) {
+static const Direction DIRECTION_TABLE[3][3] = {
+	/* UP     */{ UP_AND_LEFT, UP, UP_AND_RIGHT },
+	/* CENTER */{ LEFT, UP, RIGHT }, /* [1][1] unreachable */
+	/* DOWN   */{ DOWN_AND_LEFT, DOWN, DOWN_AND_RIGHT }
+};
+
+Player::Player(PlayState* playState) :
+		Sprite(playState) {
 	this->playState = playState;
 	this->setSpriteDefinition("player");
 	this->setCurrentColor(DEFAULT_PLAYER_COLOR);
@@ -97,9 +104,9 @@ Player::Player(PlayState *playState) : Sprite(playState) {
 	scoreMultiplier = DEFAULT_SCORE_MULTIPLIER;
 	currentPowerUp = NO_POWER_UP_ASSIGNED;
 	powerUpTimer = 0;
-    restartMusic = false;
-    active = false;
-    
+	restartMusic = false;
+	active = false;
+
 	// Set the power-ups.
 	powerUpTypes[0] = INCREASED_SPEED_POWER_UP;
 	powerUpTypes[1] = INCREASED_FIRE_RATE_POWER_UP;
@@ -182,7 +189,7 @@ void Player::setActive(bool active) {
 	}
 }
 
-void Player::youHit(Alien *alien) {
+void Player::youHit(Alien* alien) {
 	// The player has collided with an alien.
 	if (!playerShield->isActive()) {
 		// Player destroyed.
@@ -196,7 +203,7 @@ void Player::youHit(Alien *alien) {
 	}
 }
 
-void Player::youHit(Nugget *nugget) {
+void Player::youHit(Nugget* nugget) {
 	// Player just picked up a nugget.
 	switch (nugget->getNuggetType()) {
 	case MULTIPLIER_NUGGET:
@@ -238,7 +245,7 @@ void Player::youHit(Nugget *nugget) {
 	}
 }
 
-void Player::checkCollision(Missile *missile) {
+void Player::checkCollision(Missile* missile) {
 	// See if the player has just hit this missile.
 	NovaVertex between = (missile->getPositionWCS() - this->getPositionWCS());
 	if (between.magnitude() < (missile->getBoundingSphere() + this->getBoundingSphere())) {
@@ -253,14 +260,14 @@ void Player::checkCollision(Missile *missile) {
 	}
 }
 
-void Player::increaseScore(Alien *alien) {
+void Player::increaseScore(Alien* alien) {
 	// Only increase the score if the player is still alive.
 	if (this->isActive()) {
 		currentScore += (alien->getNumberAwardPoints() * scoreMultiplier);
 		if (currentScore > MAX_SCORE_VALUE) {
 			currentScore = MAX_SCORE_VALUE;
 		}
-		
+
 		// Record the player's current score and see if it is the hightest.
 		if (g_worldManager->getHighScoreHandler()->playerScoreNotification(currentScore)) {
 			if (!highScoreAchived) {
@@ -289,76 +296,46 @@ void Player::update(float elapsedTime) {
 		}
 	}
 
-	if (inputRequest.up || inputRequest.down || inputRequest.left || inputRequest.right) {
+	if (inputRequest.isMoving()) {
 		// Movement has been requested.
-		float direction = 0;
+		Direction direction = DIRECTION_TABLE[inputRequest.vertical][inputRequest.horizontal];
 
-		if (inputRequest.up || inputRequest.down) {
-			if (inputRequest.up) {
-				if (inputRequest.left) {
-					direction = UP_AND_LEFT;
-				} else if (inputRequest.right) {
-					direction = UP_AND_RIGHT;
-				} else {
-					direction = UP;
-				}
-			} else {
-				// Down.
-				if (inputRequest.left) {
-					direction = DOWN_AND_LEFT;
-				} else if (inputRequest.right) {
-					direction = DOWN_AND_RIGHT;
-				} else {
-					direction = DOWN;
-				}
-			}
-		} else {
-			// Not up or down.
-			if (inputRequest.left) {
-				direction = LEFT;
-			} else {
-				direction = RIGHT;
-			}
-		}
-
-		// Set the new direction (this will overwrite any current velocity).
 		if (currentPowerUp == INCREASED_SPEED_POWER_UP) {
 			this->setVelocityFromDirection(direction, POWER_UP_SHIP_VELOCITY);
 		} else {
 			this->setVelocityFromDirection(direction, DEFAULT_SHIP_VELOCITY);
 		}
 
-		// Rotate the sprite to match the direction of travel.
 		this->setFacingTowardsDirection(direction);
 	} else {
-	    // Reduce any current velocity.
-    	if (horizontalVelocity != 0) {
-    	    if (horizontalVelocity > 0) {
-    	        horizontalVelocity -= (DECELERATION_FACTOR * elapsedTime);
-    	        if (horizontalVelocity < 0) {
-    	            horizontalVelocity = 0;
-    	        }
-    	    } else {
-    	        horizontalVelocity += (DECELERATION_FACTOR * elapsedTime);
-    	        if (horizontalVelocity > 0) {
-    	            horizontalVelocity = 0;
-    	        }
-    	    }
-    	}
-    
-    	if (verticalVelocity != 0) {
-    	    if (verticalVelocity > 0) {
-    	    	verticalVelocity -= (DECELERATION_FACTOR * elapsedTime);
-    	        if (verticalVelocity < 0) {
-    	        	verticalVelocity = 0;
-    	        }
-    	    } else {
-    	    	verticalVelocity += (DECELERATION_FACTOR * elapsedTime);
-    	        if (verticalVelocity > 0) {
-    	        	verticalVelocity = 0;
-    	        }
-    	    }
-    	}
+		// Reduce any current velocity.
+		if (horizontalVelocity != 0) {
+			if (horizontalVelocity > 0) {
+				horizontalVelocity -= (DECELERATION_FACTOR * elapsedTime);
+				if (horizontalVelocity < 0) {
+					horizontalVelocity = 0;
+				}
+			} else {
+				horizontalVelocity += (DECELERATION_FACTOR * elapsedTime);
+				if (horizontalVelocity > 0) {
+					horizontalVelocity = 0;
+				}
+			}
+		}
+
+		if (verticalVelocity != 0) {
+			if (verticalVelocity > 0) {
+				verticalVelocity -= (DECELERATION_FACTOR * elapsedTime);
+				if (verticalVelocity < 0) {
+					verticalVelocity = 0;
+				}
+			} else {
+				verticalVelocity += (DECELERATION_FACTOR * elapsedTime);
+				if (verticalVelocity > 0) {
+					verticalVelocity = 0;
+				}
+			}
+		}
 	}
 
 	// See if we need to add gravitational pull from any aliens.
@@ -487,7 +464,8 @@ void Player::update(float elapsedTime) {
 	if (inputRequest.fireMissile) {
 		if (autofireModeActive) {
 			autofireTimer += elapsedTime;
-			float autofireInterval = (currentPowerUp == INCREASED_FIRE_RATE_POWER_UP) ? POWER_UP_AUTOFIRE_INTERVAL : DEFAULT_AUTOFIRE_INTERVAL;
+			float autofireInterval =
+					(currentPowerUp == INCREASED_FIRE_RATE_POWER_UP) ? POWER_UP_AUTOFIRE_INTERVAL : DEFAULT_AUTOFIRE_INTERVAL;
 			if (autofireTimer >= autofireInterval) {
 				playState->getMissileController()->launchMissile(this);
 
@@ -526,20 +504,20 @@ void Player::update(float elapsedTime) {
 }
 
 void Player::updateVelocity(double additionalHorizontalVelocity, double additionalVerticalVelocity) {
-    if ((additionalHorizontalVelocity != 0) || (additionalVerticalVelocity != 0)) {
-        horizontalVelocity += additionalHorizontalVelocity;
-        verticalVelocity += additionalVerticalVelocity;
+	if ((additionalHorizontalVelocity != 0) || (additionalVerticalVelocity != 0)) {
+		horizontalVelocity += additionalHorizontalVelocity;
+		verticalVelocity += additionalVerticalVelocity;
 
-        // Calculate the magnitude of the velocity vector.
-        double totalVelocity = this->getTotalVelocity();
+		// Calculate the magnitude of the velocity vector.
+		double totalVelocity = this->getTotalVelocity();
 
-        // Clamp the total velocity to the maximum velocity.
-        if (totalVelocity > MAX_SHIP_VELOCITY) {
-            double scale = MAX_SHIP_VELOCITY / totalVelocity;
-            horizontalVelocity *= scale;
-            verticalVelocity *= scale;
-        }
-    }
+		// Clamp the total velocity to the maximum velocity.
+		if (totalVelocity > MAX_SHIP_VELOCITY) {
+			double scale = MAX_SHIP_VELOCITY / totalVelocity;
+			horizontalVelocity *= scale;
+			verticalVelocity *= scale;
+		}
+	}
 }
 
 void Player::draw() {

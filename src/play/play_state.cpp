@@ -174,24 +174,22 @@ void PlayState::processInput() {
 			if (event.jaxis.axis == 0) {
 				// Horizontal movement.
 				if (event.jaxis.value < 0) {
-					player->moveLeftRequest(true);
+					player->moveHorizontalRequest(HorizontalInput::HORIZONTAL_LEFT);
 				} else if (event.jaxis.value > 0) {
-					player->moveRightRequest(true);
+					player->moveHorizontalRequest(HorizontalInput::HORIZONTAL_RIGHT);
 				} else {
 					// Returned to the center.
-					player->moveLeftRequest(false);
-					player->moveRightRequest(false);
+					player->moveHorizontalRequest(HorizontalInput::HORIZONTAL_CENTER);
 				}
-			} else {
+			} else if (event.jaxis.axis == 1) {
 				// Vertical movement.
 				if (event.jaxis.value < 0) {
-					player->moveUpRequest(true);
+					player->moveVerticalRequest(VerticalInput::VERTICAL_UP);
 				} else if (event.jaxis.value > 0) {
-					player->moveDownRequest(true);
+					player->moveVerticalRequest(VerticalInput::VERTICAL_DOWN);
 				} else {
 					// Returned to the center.
-					player->moveUpRequest(false);
-					player->moveDownRequest(false);
+					player->moveVerticalRequest(VerticalInput::VERTICAL_CENTER);
 				}
 			}
 			break;
