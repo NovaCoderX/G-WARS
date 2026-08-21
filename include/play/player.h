@@ -31,20 +31,32 @@ enum PowerUpType {
 #define MAX_PLAYER_NAME_LENGTH 12
 static std::string DEFAULT_PLAYER_NAME = "DOOMGUY";
 
+enum HorizontalInput {
+	HORIZONTAL_LEFT = 0, HORIZONTAL_CENTER = 1, HORIZONTAL_RIGHT = 2
+};
+
+enum VerticalInput {
+	VERTICAL_UP = 0, VERTICAL_CENTER = 1, VERTICAL_DOWN = 2
+};
+
 struct InputRequest {
-	// This represents wants the player wants to do.
-	bool left, right, up, down;
+	HorizontalInput horizontal;
+	VerticalInput vertical;
 	bool fireMissile;
 	bool dropBomb;
 
 	InputRequest() {
-		left = right = up = down = false;
-		fireMissile = dropBomb = false;
+		reset();
 	}
 
 	void reset() {
-		left = right = up = down = false;
+		horizontal = HORIZONTAL_CENTER;
+		vertical = VERTICAL_CENTER;
 		fireMissile = dropBomb = false;
+	}
+
+	bool isMoving() const {
+		return (horizontal != HORIZONTAL_CENTER) || (vertical != VERTICAL_CENTER);
 	}
 };
 
@@ -53,20 +65,12 @@ public:
 	Player(PlayState* playState);
 	~Player();
 
-	void moveDownRequest(bool toggle) {
-		inputRequest.down = toggle;
+	void moveHorizontalRequest(HorizontalInput h) {
+		inputRequest.horizontal = h;
 	}
 
-	void moveUpRequest(bool toggle) {
-		inputRequest.up = toggle;
-	}
-
-	void moveLeftRequest(bool toggle) {
-		inputRequest.left = toggle;
-	}
-
-	void moveRightRequest(bool toggle) {
-		inputRequest.right = toggle;
+	void moveVerticalRequest(VerticalInput v) {
+		inputRequest.vertical = v;
 	}
 
 	void fireMissileRequest(bool toggle) {
@@ -101,7 +105,7 @@ public:
 		return currentPowerUp;
 	}
 
-	float getShieldDuration() const ;
+	float getShieldDuration() const;
 
 	bool isActive() const {
 		return active;
@@ -123,10 +127,10 @@ public:
 		return currentColor;
 	}
 
-	void youHit(Alien *alien);
-	void youHit(Nugget *nugget);
-	void checkCollision(Missile *missile);
-	void increaseScore(Alien *alien);
+	void youHit(Alien* alien);
+	void youHit(Nugget* nugget);
+	void checkCollision(Missile* missile);
+	void increaseScore(Alien* alien);
 	void update(float elapsedTime);
 	void updateVelocity(double additionalHorizontalVelocity, double additionalVerticalVelocity);
 	void draw();
@@ -134,8 +138,8 @@ public:
 private:
 	PlayState* playState;
 	InputRequest inputRequest;
-	SpriteDefinition *shieldDefinition;
-	PlayerShield *playerShield;
+	SpriteDefinition* shieldDefinition;
+	PlayerShield* playerShield;
 	uint numSmartBombs;
 	bool autofireModeActive;
 	float autofireTimer;
