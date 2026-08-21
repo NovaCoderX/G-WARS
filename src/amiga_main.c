@@ -31,12 +31,16 @@
 #define MAX_ARGVS 100
 #define MIN_STACK_BYTES 300000
 
-const char *ID = "$VER: G-WARS 3.0.19\r\n";
+const char *ID = "$VER: G-WARS 3.0.21\r\n";
 
 // The startup message from workbench or 0 if started via CLI.
 extern struct WBStartup *_WBenchMsg;
 
 extern void nova_main(char *baseDirectory);
+
+// FIX 1: Provide the raw global symbol that libvorbis is hunting for
+int vorbis_compatibility_errno __asm__("_errno");
+
 
 int main(int argc, char *argv[]) {
 	char path[PATH_MAX];
@@ -59,26 +63,8 @@ int main(int argc, char *argv[]) {
         nova_main(path);
     } else {
 		// Started from WB.
-    	struct DiskObject *diskObject;
-		char *toolType;
-		char *myargv[MAX_ARGVS];
-		int myargc = 0;
-
-		NameFromLock(_WBenchMsg->sm_ArgList[0].wa_Lock, (unsigned char*)path, PATH_MAX);
-		CurrentDir(_WBenchMsg->sm_ArgList[0].wa_Lock);
-
-		// Setup command line arguments.
-		myargv[myargc] = (char*)malloc(strlen("G-WARS") + 1);
-		strcpy(myargv[myargc++], "G-WARS");
-
-		// Process Tool types.
-		diskObject = GetDiskObject((const unsigned char*)_WBenchMsg->sm_ArgList[0].wa_Name);
-		if (diskObject != NULL) {
-			toolType = (char*) FindToolType((const unsigned char**)diskObject->do_ToolTypes, (const unsigned char*) "closewb");
-			if (toolType != NULL) {
-				SDL_putenv("SDL_CLOSE_WB=1");
-			}
-		}
+    	NameFromLock(_WBenchMsg->sm_ArgList[0].wa_Lock, (unsigned char*)path, PATH_MAX);
+    	CurrentDir(_WBenchMsg->sm_ArgList[0].wa_Lock);
 
 		nova_main(path);
 	}
