@@ -31,7 +31,7 @@
 #define MAX_ARGVS 100
 #define MIN_STACK_BYTES 300000
 
-const char *ID = "$VER: G-WARS 3.0.21\r\n";
+const char *ID = "$VER: G-WARS 3.0.22\r\n";
 
 // The startup message from workbench or 0 if started via CLI.
 extern struct WBStartup *_WBenchMsg;
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     }
 
 	if (stackSize < MIN_STACK_BYTES) {
-        printf("Stack size (%d bytes) is too small...\n", stackSize);
+        printf("Stack size (%lu bytes) is too small...\n", stackSize);
         return EXIT_FAILURE;
     }
 
