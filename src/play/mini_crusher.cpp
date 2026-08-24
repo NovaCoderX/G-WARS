@@ -20,6 +20,7 @@
 
 #define MIN_INITIAL_VELOCITY 6
 #define MAX_INITIAL_VELOCITY 12
+#define MAX_DAMAGE 3
 
 MiniCrusher::MiniCrusher(PlayState* playState) : Alien(playState, SPECIAL_ALIEN) {
 	// The alien container doesn't explode.
@@ -29,7 +30,7 @@ MiniCrusher::MiniCrusher(PlayState* playState) : Alien(playState, SPECIAL_ALIEN)
 	lowColor = highColor;
 	lowColor.rebase(30);
 	increasingColor = true;
-	nuggetSpawned = false;
+	damage = 0;
 
 	top = new AlienComponent(playState);
 	top->setSpriteDefinition("mini_crusher");
@@ -98,7 +99,7 @@ void MiniCrusher::setActive(bool active) {
 
 		// Reset.
 		increasingColor = true;
-		nuggetSpawned = false;
+		damage = 0;
 	}
 
 	// Set up the crushers.
@@ -191,29 +192,17 @@ void MiniCrusher::update(float elapsedTime) {
 bool MiniCrusher::checkCollision(Player* player) {
 	bool collision = false;
 
-	if (top->isActive()) {
-		// See if the top has just hit the player.
-		collision = top->checkCollision(player);
-		if (collision) {
-			top->setActive(false);
-		}
-	}
+	// See if the top has just hit the player.
+	collision = top->checkCollision(player);
 
 	// Also check the bottom.
 	if (!collision) {
-		if (bottom->isActive()) {
-			collision = bottom->checkCollision(player);
-			if (collision) {
-				bottom->setActive(false);
-			}
-		}
+		collision = bottom->checkCollision(player);
 	}
 
 	if (collision) {
-		if ((!top->isActive()) && (!bottom->isActive())) {
-			// This alien was hit by the player and destroyed.
-			playState->getAlienController()->deactivate(this);
-		}
+		// This alien was hit by the player and destroyed.
+		playState->getAlienController()->deactivate(this);
 
 		// Optionally destroy the player.
 		player->youHit(this);
@@ -223,72 +212,44 @@ bool MiniCrusher::checkCollision(Player* player) {
 }
 
 bool MiniCrusher::checkCollision(Missile* missile) {
-	bool collision = false;
+	bool collisionTop = false;
+	bool collisionBottom = false;
 
-	if (top->isActive()) {
-		// See if the top has just hit this missile.
-		collision = top->checkCollision(missile);
-		if (collision) {
-			top->setActive(false);
-
-			if (!nuggetSpawned) {
-				playState->getNuggetController()->spawnNugget(POWER_UP_NUGGET, top->getPositionWCS());
-				nuggetSpawned = true;
-			}
-		}
-	}
+	// See if the top has just hit this missile.
+	collisionTop = top->checkCollision(missile);
 
 	// Also check the bottom.
-	if (!collision) {
-		if (bottom->isActive()) {
-			collision = bottom->checkCollision(missile);
-			if (collision) {
-				bottom->setActive(false);
-
-				if (!nuggetSpawned) {
-					playState->getNuggetController()->spawnNugget(POWER_UP_NUGGET, bottom->getPositionWCS());
-					nuggetSpawned = true;
-				}
-			}
-		}
+	if (!collisionTop) {
+		collisionBottom = bottom->checkCollision(missile);
 	}
 
-	if (collision) {
-		if ((!top->isActive()) && (!bottom->isActive())) {
+	if (collisionTop || collisionBottom) {
+		damage++;
+		if (damage >= MAX_DAMAGE) {
 			// This alien was hit by the player's missile and destroyed.
 			playState->getAlienController()->deactivate(this);
 			playState->getPlayer()->increaseScore(this);
+
+			if (collisionTop) {
+				playState->getNuggetController()->spawnNugget(POWER_UP_NUGGET, top->getPositionWCS());
+			} else {
+				playState->getNuggetController()->spawnNugget(POWER_UP_NUGGET, bottom->getPositionWCS());
+			}
 		}
 
 		// Missile has also been destroyed.
 		playState->getMissileController()->deactivate(missile);
 	}
 
-	return collision;
+	return (collisionTop || collisionBottom);
 }
 
 void MiniCrusher::miniGateNotification() {
 	// We have been destroyed.
 	playState->getAlienController()->deactivate(this);
 	playState->getPlayer()->increaseScore(this);
-
-	if (top->isActive()) {
-		top->setActive(false);
-
-		if (!nuggetSpawned) {
-			playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, top->getPositionWCS());
-			nuggetSpawned = true;
-		}
-	}
-
-	if (bottom->isActive()) {
-		bottom->setActive(false);
-
-		if (!nuggetSpawned) {
-			playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, bottom->getPositionWCS());
-			nuggetSpawned = true;
-		}
-	}
+	playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, top->getPositionWCS());
+	playState->getNuggetController()->spawnNugget(MULTIPLIER_NUGGET, bottom->getPositionWCS());
 }
 
 void MiniCrusher::draw() {

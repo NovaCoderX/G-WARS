@@ -24,8 +24,56 @@
 #define NUMBER_OF_COLUMNS 9
 #define HIGH_COLOR_INTERVAL 10
 
+// The resting and peak brightness of the grid lines, as a scale factor applied to a
+// fully saturated hue. Scaling (rather than adding) is what preserves the hue as the
+// effect ramps up, so the sweep still reads as color at full intensity.
+#define LOW_INTENSITY (16.0f / 255.0f)
+#define HIGH_INTENSITY (158.0f / 255.0f)
+
+// How much the intensity climbs per unit of elapsed time.
+#define INTENSITY_RAMP_RATE 30
+
+// How long each hue is held before the sweep advances (roughly four frames at 50Hz).
+// Anything much shorter reads as static rather than as a sweep.
+#define STROBE_INTERVAL 0.8
+
 static NovaVertex savedRowPositions[NUMBER_OF_ROWS];
 static NovaVertex savedColumnPositions[NUMBER_OF_COLUMNS];
+
+/*
+ ** Build a fully saturated color for a position on the color wheel, where hue runs
+ ** from 0 to 1. Kept local because this is the only place that needs it.
+ */
+static NovaColor colorFromHue(float hue) {
+	// Wrap into range so callers do not have to.
+	while (hue >= 1) {
+		hue -= 1;
+	}
+
+	while (hue < 0) {
+		hue += 1;
+	}
+
+	float sector = hue * 6;
+	int index = (int) sector;
+	int rising = (int) ((sector - index) * 255);
+	int falling = (255 - rising);
+
+	switch (index) {
+	case 0:
+		return NovaColor(255, rising, 0);
+	case 1:
+		return NovaColor(falling, 255, 0);
+	case 2:
+		return NovaColor(0, 255, rising);
+	case 3:
+		return NovaColor(0, falling, 255);
+	case 4:
+		return NovaColor(rising, 0, 255);
+	default:
+		return NovaColor(255, 0, falling);
+	}
+}
 
 PlayAreaGrid::PlayAreaGrid(PlayState* playState) {
 	this->playState = playState;
@@ -35,6 +83,9 @@ PlayAreaGrid::PlayAreaGrid(PlayState* playState) {
 	shakeTimer = 0;
 	highColorTimer = 0;
 	highColorDisplayed = false;
+	strobeIndex = 0;
+	strobeTimer = 0;
+	intensity = LOW_INTENSITY;
 }
 
 PlayAreaGrid::~PlayAreaGrid() {
@@ -63,8 +114,13 @@ PlayAreaGrid::~PlayAreaGrid() {
 
 void PlayAreaGrid::init() {
 	lowColor = NovaColor(16, 16, 16);
-	highColor = NovaColor(158, 2, 12);
+	highColor = NovaColor(158, 158, 158);
 	lineColor = lowColor;
+
+	// Build the strobe palette, evenly spaced around the color wheel.
+	for (int i = 0; i < NUMBER_OF_STROBE_COLORS; i++) {
+		strobeColors[i] = colorFromHue((float) i / NUMBER_OF_STROBE_COLORS);
+	}
 
 	// Create the rows.
 	for (int i = 0; i < NUMBER_OF_ROWS; i++) {
@@ -149,6 +205,25 @@ void PlayAreaGrid::smartBombNotification() {
 	shakeTimer = 0;
 	highColorTimer = 0;
 	highColorDisplayed = false;
+
+	// Start the sweep on a random hue so that each smart bomb looks different, then
+	// walk forwards from there.
+	strobeIndex = int_rand(0, (NUMBER_OF_STROBE_COLORS - 1));
+	strobeTimer = 0;
+	intensity = LOW_INTENSITY;
+}
+
+/*
+ ** Push the current line color out to every row and column.
+ */
+void PlayAreaGrid::applyLineColor() {
+	for (int i = 0; i < NUMBER_OF_ROWS; i++) {
+		rows[i]->setColor(lineColor);
+	}
+
+	for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
+		columns[i]->setColor(lineColor);
+	}
 }
 
 void PlayAreaGrid::update(float elapsedTime) {
@@ -156,13 +231,32 @@ void PlayAreaGrid::update(float elapsedTime) {
 	static bool verticalSwitch = true;
 
 	if (shaking) {
-		// Shake it baby.
-		float amount;
-		if (verticalSwitch) {
-			amount = float_rand(0, 3);
-		} else {
-			amount = -float_rand(0, 3);
+		// Advance the sweep to the next hue every few ticks.
+		strobeTimer += elapsedTime;
+		if (strobeTimer >= STROBE_INTERVAL) {
+			strobeIndex++;
+			if (strobeIndex >= NUMBER_OF_STROBE_COLORS) {
+				strobeIndex = 0;
+			}
+
+			strobeTimer = 0;
 		}
+
+		// The ramp is tracked separately from the color, so that changing hue does
+		// not throw away the progress made so far.
+		if (!highColorDisplayed) {
+			intensity += (elapsedTime / INTENSITY_RAMP_RATE);
+			if (intensity >= HIGH_INTENSITY) {
+				intensity = HIGH_INTENSITY;
+
+				// Stay at the highest color for a few ticks.
+				highColorDisplayed = true;
+			}
+		}
+
+		// Rebuild the line color from the current hue at the current intensity.
+		lineColor = strobeColors[strobeIndex];
+		lineColor *= intensity;
 
 		if (highColorDisplayed) {
 			highColorTimer += elapsedTime;
@@ -180,31 +274,41 @@ void PlayAreaGrid::update(float elapsedTime) {
 				// Reset.
 				shaking = false;
 				lineColor = lowColor;
-			}
-		} else {
-			// Do some simple color cycling.
-			if (lineColor.brighten((elapsedTime / 30), highColor)) {
-				// Stay at the highest color for a few ticks.
-				highColorDisplayed = true;
+
+				// Put the resting color back without disturbing the restored positions.
+				this->applyLineColor();
 			}
 		}
 
-		for (int i = 0; i < NUMBER_OF_ROWS; i++) {
-			NovaVertex position = rows[i]->getPositionWCS();
-			position.y += amount;
-			rows[i]->moveTo(position);
-			rows[i]->setColor(lineColor);
-		}
+		// Only shake while the effect is still running. Doing this unconditionally would
+		// re-offset the rows and columns on the same frame they were restored, leaving a
+		// small permanent drift behind every smart bomb.
+		if (shaking) {
+			// Shake it baby.
+			float amount;
+			if (verticalSwitch) {
+				amount = float_rand(0, 3);
+			} else {
+				amount = -float_rand(0, 3);
+			}
 
-		for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
-			NovaVertex position = columns[i]->getPositionWCS();
-			position.x += amount;
-			columns[i]->moveTo(position);
-			columns[i]->setColor(lineColor);
-		}
+			for (int i = 0; i < NUMBER_OF_ROWS; i++) {
+				NovaVertex position = rows[i]->getPositionWCS();
+				position.y += amount;
+				rows[i]->moveTo(position);
+				rows[i]->setColor(lineColor);
+			}
 
-		// Switch.
-		verticalSwitch = (!verticalSwitch);
+			for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
+				NovaVertex position = columns[i]->getPositionWCS();
+				position.x += amount;
+				columns[i]->moveTo(position);
+				columns[i]->setColor(lineColor);
+			}
+
+			// Switch.
+			verticalSwitch = (!verticalSwitch);
+		}
 	}
 
 	// Determine which rows are visible (has to be done after shaking because the positions would have changed).
@@ -233,13 +337,13 @@ void PlayAreaGrid::update(float elapsedTime) {
 void PlayAreaGrid::draw() {
 	for (int i = 0; i < NUMBER_OF_ROWS; i++) {
 		if (rows[i]->isVisible()) {
-			rows[i]->draw();
+			rows[i]->draw(!shaking);
 		}
 	}
 
 	for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
 		if (columns[i]->isVisible()) {
-			columns[i]->draw();
+			columns[i]->draw(!shaking);
 		}
 	}
 }
