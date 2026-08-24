@@ -53,7 +53,7 @@ private:
 	NovaColor highColor;
 	NovaColor lowColor;
 	bool increasingColor;
-	bool nuggetSpawned;
+	uint damage;
 };
 
 #endif // __MINI_CRUSHER_H

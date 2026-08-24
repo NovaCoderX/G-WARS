@@ -19,6 +19,8 @@
 #ifndef __PLAY_AREA_GRID_H
 #define __PLAY_AREA_GRID_H
 
+#define NUMBER_OF_STROBE_COLORS 12
+
 class PlayAreaGrid {
 public:
 	PlayAreaGrid(PlayState* playState);
@@ -57,6 +59,15 @@ private:
 	NovaColor lowColor;
 	float highColorTimer;
 	bool highColorDisplayed;
+
+	// Fully saturated hues, evenly spaced around the color wheel. The smart bomb
+	// effect sweeps through these while ramping the intensity up.
+	NovaColor strobeColors[NUMBER_OF_STROBE_COLORS];
+	int strobeIndex;
+	float strobeTimer;
+	float intensity;
+
+	void applyLineColor();
 };
 
 #endif // __PLAY_AREA_GRID_H
