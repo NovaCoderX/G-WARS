@@ -80,7 +80,6 @@ PlayAreaGrid::PlayAreaGrid(PlayState* playState) {
 	rowData.staticVertices = NULL;
 	columnData.staticVertices = NULL;
 	shaking = false;
-	shakeTimer = 0;
 	highColorTimer = 0;
 	highColorDisplayed = false;
 	strobeIndex = 0;
@@ -202,7 +201,6 @@ void PlayAreaGrid::smartBombNotification() {
 	this->shaking = true;
 
 	// Reset.
-	shakeTimer = 0;
 	highColorTimer = 0;
 	highColorDisplayed = false;
 
