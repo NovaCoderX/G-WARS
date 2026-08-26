@@ -53,7 +53,6 @@ private:
 	std::vector<GridLine*> columns;
 
 	bool shaking;
-	float shakeTimer;
 	NovaColor lineColor;
 	NovaColor highColor;
 	NovaColor lowColor;
