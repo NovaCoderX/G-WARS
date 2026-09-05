@@ -30,7 +30,7 @@ public:
 	}
 
 	void init(int numVertices);
-	void draw(bool applyLighting);
+	void draw();
 
 private:
 	PlayState* playState;
