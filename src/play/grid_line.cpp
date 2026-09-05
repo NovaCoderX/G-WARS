@@ -50,7 +50,7 @@ void GridLine::init(int numVertices) {
 	displayVertices = new DisplayVertex[this->numVertices];
 }
 
-void GridLine::draw(bool applyLighting) {
+void GridLine::draw() {
 	static AstMatrix4x3 objectToCameraMatrix;
     static NovaColor black;
 
@@ -65,14 +65,12 @@ void GridLine::draw(bool applyLighting) {
         // Transform.
 		renderVertices[i] = (*staticVertices[i]) * objectToCameraMatrix;
 		
-		if (applyLighting) {
-			if (playState->getAlienController()->isWithinBlackHole(renderVertices[i])) {
-				// Apply dark light.
-				renderVertices[i].lightSum = black;
-			} else {
-				// Apply standard lighting.
-				playState->getExplosionController()->applyLighting(renderVertices[i]);
-			}
+		if (playState->getAlienController()->isWithinBlackHole(renderVertices[i])) {
+			// Apply dark light.
+			renderVertices[i].lightSum = black;
+		} else {
+			// Apply standard lighting.
+			playState->getExplosionController()->applyLighting(renderVertices[i]);
 		}
 
     	// Project.

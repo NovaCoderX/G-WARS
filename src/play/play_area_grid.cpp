@@ -23,12 +23,13 @@
 #define NUMBER_OF_COLUMN_VERTICES 9
 #define NUMBER_OF_COLUMNS 9
 #define HIGH_COLOR_INTERVAL 10
+#define NUMBER_OF_STROBE_COLORS 12
 
 // The resting and peak brightness of the grid lines, as a scale factor applied to a
 // fully saturated hue. Scaling (rather than adding) is what preserves the hue as the
 // effect ramps up, so the sweep still reads as color at full intensity.
 #define LOW_INTENSITY (16.0f / 255.0f)
-#define HIGH_INTENSITY (158.0f / 255.0f)
+#define HIGH_INTENSITY (128.0f / 255.0f)
 
 // How much the intensity climbs per unit of elapsed time.
 #define INTENSITY_RAMP_RATE 30
@@ -39,41 +40,6 @@
 
 static NovaVertex savedRowPositions[NUMBER_OF_ROWS];
 static NovaVertex savedColumnPositions[NUMBER_OF_COLUMNS];
-
-/*
- ** Build a fully saturated color for a position on the color wheel, where hue runs
- ** from 0 to 1. Kept local because this is the only place that needs it.
- */
-static NovaColor colorFromHue(float hue) {
-	// Wrap into range so callers do not have to.
-	while (hue >= 1) {
-		hue -= 1;
-	}
-
-	while (hue < 0) {
-		hue += 1;
-	}
-
-	float sector = hue * 6;
-	int index = (int) sector;
-	int rising = (int) ((sector - index) * 255);
-	int falling = (255 - rising);
-
-	switch (index) {
-	case 0:
-		return NovaColor(255, rising, 0);
-	case 1:
-		return NovaColor(falling, 255, 0);
-	case 2:
-		return NovaColor(0, 255, rising);
-	case 3:
-		return NovaColor(0, falling, 255);
-	case 4:
-		return NovaColor(rising, 0, 255);
-	default:
-		return NovaColor(255, 0, falling);
-	}
-}
 
 PlayAreaGrid::PlayAreaGrid(PlayState* playState) {
 	this->playState = playState;
@@ -113,13 +79,7 @@ PlayAreaGrid::~PlayAreaGrid() {
 
 void PlayAreaGrid::init() {
 	lowColor = NovaColor(16, 16, 16);
-	highColor = NovaColor(158, 158, 158);
 	lineColor = lowColor;
-
-	// Build the strobe palette, evenly spaced around the color wheel.
-	for (int i = 0; i < NUMBER_OF_STROBE_COLORS; i++) {
-		strobeColors[i] = colorFromHue((float) i / NUMBER_OF_STROBE_COLORS);
-	}
 
 	// Create the rows.
 	for (int i = 0; i < NUMBER_OF_ROWS; i++) {
@@ -253,7 +213,8 @@ void PlayAreaGrid::update(float elapsedTime) {
 		}
 
 		// Rebuild the line color from the current hue at the current intensity.
-		lineColor = strobeColors[strobeIndex];
+		//lineColor = strobeColors[strobeIndex];
+		lineColor = NovaColor(255, 255, 255);
 		lineColor *= intensity;
 
 		if (highColorDisplayed) {
@@ -335,13 +296,13 @@ void PlayAreaGrid::update(float elapsedTime) {
 void PlayAreaGrid::draw() {
 	for (int i = 0; i < NUMBER_OF_ROWS; i++) {
 		if (rows[i]->isVisible()) {
-			rows[i]->draw(!shaking);
+			rows[i]->draw();
 		}
 	}
 
 	for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
 		if (columns[i]->isVisible()) {
-			columns[i]->draw(!shaking);
+			columns[i]->draw();
 		}
 	}
 }
