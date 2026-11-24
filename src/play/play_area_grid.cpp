@@ -22,21 +22,10 @@
 #define NUMBER_OF_ROWS 7
 #define NUMBER_OF_COLUMN_VERTICES 9
 #define NUMBER_OF_COLUMNS 9
-#define HIGH_COLOR_INTERVAL 10
-#define NUMBER_OF_STROBE_COLORS 12
 
-// The resting and peak brightness of the grid lines, as a scale factor applied to a
-// fully saturated hue. Scaling (rather than adding) is what preserves the hue as the
-// effect ramps up, so the sweep still reads as color at full intensity.
-#define LOW_INTENSITY (16.0f / 255.0f)
-#define HIGH_INTENSITY (128.0f / 255.0f)
-
-// How much the intensity climbs per unit of elapsed time.
-#define INTENSITY_RAMP_RATE 30
-
-// How long each hue is held before the sweep advances (roughly four frames at 50Hz).
-// Anything much shorter reads as static rather than as a sweep.
-#define STROBE_INTERVAL 0.8
+// How far (in world units) the grid is jolted each frame while the smart bomb
+// shockwave is travelling.
+#define SHAKE_AMOUNT 3
 
 static NovaVertex savedRowPositions[NUMBER_OF_ROWS];
 static NovaVertex savedColumnPositions[NUMBER_OF_COLUMNS];
@@ -46,11 +35,6 @@ PlayAreaGrid::PlayAreaGrid(PlayState* playState) {
 	rowData.staticVertices = NULL;
 	columnData.staticVertices = NULL;
 	shaking = false;
-	highColorTimer = 0;
-	highColorDisplayed = false;
-	strobeIndex = 0;
-	strobeTimer = 0;
-	intensity = LOW_INTENSITY;
 }
 
 PlayAreaGrid::~PlayAreaGrid() {
@@ -157,117 +141,50 @@ void PlayAreaGrid::init() {
 	}
 }
 
-void PlayAreaGrid::smartBombNotification() {
-	this->shaking = true;
-
-	// Reset.
-	highColorTimer = 0;
-	highColorDisplayed = false;
-
-	// Start the sweep on a random hue so that each smart bomb looks different, then
-	// walk forwards from there.
-	strobeIndex = int_rand(0, (NUMBER_OF_STROBE_COLORS - 1));
-	strobeTimer = 0;
-	intensity = LOW_INTENSITY;
-}
-
-/*
- ** Push the current line color out to every row and column.
- */
-void PlayAreaGrid::applyLineColor() {
-	for (int i = 0; i < NUMBER_OF_ROWS; i++) {
-		rows[i]->setColor(lineColor);
-	}
-
-	for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
-		columns[i]->setColor(lineColor);
-	}
-}
-
 void PlayAreaGrid::update(float elapsedTime) {
 	static NovaVertex positionCCS;
 	static bool verticalSwitch = true;
 
-	if (shaking) {
-		// Advance the sweep to the next hue every few ticks.
-		strobeTimer += elapsedTime;
-		if (strobeTimer >= STROBE_INTERVAL) {
-			strobeIndex++;
-			if (strobeIndex >= NUMBER_OF_STROBE_COLORS) {
-				strobeIndex = 0;
-			}
+	// The smart bomb is drawn as a shockwave (see SmartBombWave), which lights the grid
+	// vertices it passes over through the normal lighting in GridLine::draw. The grid
+	// just shakes for as long as the wave is travelling.
+	if (playState->getExplosionController()->isSmartBombActive()) {
+		shaking = true;
 
-			strobeTimer = 0;
+		// Shake it baby.
+		float amount;
+		if (verticalSwitch) {
+			amount = float_rand(0, SHAKE_AMOUNT);
+		} else {
+			amount = -float_rand(0, SHAKE_AMOUNT);
 		}
 
-		// The ramp is tracked separately from the color, so that changing hue does
-		// not throw away the progress made so far.
-		if (!highColorDisplayed) {
-			intensity += (elapsedTime / INTENSITY_RAMP_RATE);
-			if (intensity >= HIGH_INTENSITY) {
-				intensity = HIGH_INTENSITY;
-
-				// Stay at the highest color for a few ticks.
-				highColorDisplayed = true;
-			}
+		for (int i = 0; i < NUMBER_OF_ROWS; i++) {
+			NovaVertex position = rows[i]->getPositionWCS();
+			position.y += amount;
+			rows[i]->moveTo(position);
 		}
 
-		// Rebuild the line color from the current hue at the current intensity.
-		//lineColor = strobeColors[strobeIndex];
-		lineColor = NovaColor(255, 255, 255);
-		lineColor *= intensity;
-
-		if (highColorDisplayed) {
-			highColorTimer += elapsedTime;
-			if (highColorTimer >= HIGH_COLOR_INTERVAL) {
-				// Restore the row positions..
-				for (int i = 0; i < NUMBER_OF_ROWS; i++) {
-					rows[i]->moveTo(savedRowPositions[i]);
-				}
-
-				// Restore the column positions..
-				for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
-					columns[i]->moveTo(savedColumnPositions[i]);
-				}
-
-				// Reset.
-				shaking = false;
-				lineColor = lowColor;
-
-				// Put the resting color back without disturbing the restored positions.
-				this->applyLineColor();
-			}
+		for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
+			NovaVertex position = columns[i]->getPositionWCS();
+			position.x += amount;
+			columns[i]->moveTo(position);
 		}
 
-		// Only shake while the effect is still running. Doing this unconditionally would
-		// re-offset the rows and columns on the same frame they were restored, leaving a
-		// small permanent drift behind every smart bomb.
-		if (shaking) {
-			// Shake it baby.
-			float amount;
-			if (verticalSwitch) {
-				amount = float_rand(0, 3);
-			} else {
-				amount = -float_rand(0, 3);
-			}
-
-			for (int i = 0; i < NUMBER_OF_ROWS; i++) {
-				NovaVertex position = rows[i]->getPositionWCS();
-				position.y += amount;
-				rows[i]->moveTo(position);
-				rows[i]->setColor(lineColor);
-			}
-
-			for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
-				NovaVertex position = columns[i]->getPositionWCS();
-				position.x += amount;
-				columns[i]->moveTo(position);
-				columns[i]->setColor(lineColor);
-			}
-
-			// Switch.
-			verticalSwitch = (!verticalSwitch);
+		// Switch.
+		verticalSwitch = (!verticalSwitch);
+	} else if (shaking) {
+		// The wave has finished: put the rows and columns back exactly where they
+		// started so the shake leaves no drift.
+		for (int i = 0; i < NUMBER_OF_ROWS; i++) {
+			rows[i]->moveTo(savedRowPositions[i]);
 		}
+
+		for (int i = 0; i < NUMBER_OF_COLUMNS; i++) {
+			columns[i]->moveTo(savedColumnPositions[i]);
+		}
+
+		shaking = false;
 	}
 
 	// Determine which rows are visible (has to be done after shaking because the positions would have changed).

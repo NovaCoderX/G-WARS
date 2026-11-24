@@ -29,6 +29,12 @@ public:
 	void draw();
 
 	void createExplosion(const ExplosiveObject* explosiveObject);
+	void triggerSmartBomb(const NovaVertex &originWCS);
+
+	bool isSmartBombActive() const {
+		return smartBombWave->isActive();
+	}
+
 	void deactivate(Explosion* explosion);
 	void applyLighting(RenderVertex& targetVertex);
 
@@ -39,6 +45,7 @@ private:
 	std::vector<Explosion*> mediumExplosions;
 	std::vector<Explosion*> largeExplosions;
 	std::vector<Explosion*> massiveExplosions;
+	SmartBombWave* smartBombWave;
 
 	Explosion* getNextAvailable(ExplosionSize size);
 	void addToList(Explosion* explosion);

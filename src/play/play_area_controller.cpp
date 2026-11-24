@@ -129,10 +129,10 @@ void PlayAreaController::syncOptions() {
 	}
 }
 
-void PlayAreaController::smartBombNotification() {
-	if (grid) {
-		grid->smartBombNotification();
-	}
+bool PlayAreaController::isSmartBombAnimationActive() {
+	// Driven by the shockwave rather than the grid, which may be switched off (the old
+	// grid->isShaking() dereferenced a NULL grid when it was).
+	return playState->getExplosionController()->isSmartBombActive();
 }
 
 void PlayAreaController::update(float elapsedTime) {

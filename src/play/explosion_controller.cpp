@@ -27,6 +27,7 @@
 ExplosionController::ExplosionController(PlayState* playState) {
 	this->playState = playState;
 	explosionListHead = NULL;
+	smartBombWave = NULL;
 }
 
 ExplosionController::~ExplosionController() {
@@ -53,6 +54,11 @@ ExplosionController::~ExplosionController() {
 	}
 
 	massiveExplosions.clear();
+
+	if (smartBombWave) {
+		delete smartBombWave;
+		smartBombWave = NULL;
+	}
 }
 
 void ExplosionController::init() {
@@ -62,6 +68,9 @@ void ExplosionController::init() {
 	float duration;
 
 	Yamlish* yamlish = g_worldManager->getYamlish();
+
+	smartBombWave = new SmartBombWave(playState);
+	smartBombWave->init();
 
 	numExplosions = yamlish->getInt("explosions.small.max.instances", DEFAULT_NUM_EXPLOSIONS);
 	if (numExplosions > 0) {
@@ -115,6 +124,8 @@ void ExplosionController::update(float elapsedTime) {
 
 		explosion = explosion->nextInList;
 	}
+
+	smartBombWave->update(elapsedTime);
 }
 
 void ExplosionController::draw() {
@@ -126,6 +137,12 @@ void ExplosionController::draw() {
 
 		explosion = explosion->nextInList;
 	}
+
+	smartBombWave->draw();
+}
+
+void ExplosionController::triggerSmartBomb(const NovaVertex &originWCS) {
+	smartBombWave->trigger(originWCS);
 }
 
 void ExplosionController::createExplosion(const ExplosiveObject* explosiveObject) {
@@ -147,6 +164,8 @@ void ExplosionController::applyLighting(RenderVertex& targetVertex) {
 	// Loop through all active explosions and see if our target vertex
 	// is within the explosion's bounding sphere (using the explosion origin's CCS).
 	// If it is within the bounding sphere then add its color to the vertex light sum.
+	smartBombWave->applyLighting(targetVertex);
+
 	Explosion* explosion = explosionListHead;
 	while (explosion) {
 		if (explosion->isVisible() && explosion->isLightEmitting()) {

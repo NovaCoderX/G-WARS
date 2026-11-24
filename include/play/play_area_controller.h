@@ -54,13 +54,10 @@ public:
 	bool isWithinPlayArea(BorderIndex borderIndex, Sprite *object);
 	bool isWithinZone(ZoneIndex zoneIndex, Sprite *object);
 
-	bool isSmartBombAnimationActive() {
-		return grid->isShaking();
-	}
+	bool isSmartBombAnimationActive();
 
 	void init();
 	void syncOptions();
-	void smartBombNotification();
 	void update(float elapsedTime);
 	void draw();
 
