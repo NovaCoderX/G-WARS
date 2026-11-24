@@ -124,7 +124,9 @@ protected:
 	NovaParticle *innerParticles;
 	NovaParticle *middleParticles;
 	NovaParticle *outerParticles;
-	int numParticles;
+	int numInnerParticles;
+	int numMiddleParticles;
+	int numOuterParticles;
 	float duration[3];
 	float totalElapsedTime;
 	NovaColor explosionColor;
