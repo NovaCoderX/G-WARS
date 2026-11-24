@@ -26,7 +26,7 @@ Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, 
 	this->playState = playState;
 	nextInList = priorInList = NULL;
 
-	if (numParticles <= 0) {
+	if (numParticles <= 2) {
 		fatalError("Invalid number of innerParticles\n");
 	}
 
@@ -38,16 +38,25 @@ Explosion::Explosion(PlayState* playState, int numParticles, float maxVelocity, 
 		fatalError("Invalid explosion duration\n");
 	}
 
-	this->numParticles = numParticles;
-	innerParticles = new NovaParticle[this->numParticles];
-	middleParticles = new NovaParticle[this->numParticles];
-	outerParticles = new NovaParticle[this->numParticles];
+	this->numInnerParticles = numParticles * 2;
+	this->numMiddleParticles = numParticles;
+	this->numOuterParticles = numParticles / 2;
 
-	for (int i = 0; i < numParticles; i++) {
+	innerParticles = new NovaParticle[this->numInnerParticles];
+	middleParticles = new NovaParticle[this->numMiddleParticles];
+	outerParticles = new NovaParticle[this->numOuterParticles];
+
+	for (int i = 0; i < numInnerParticles; i++) {
 		innerParticles[i].horizontalVelocity = float_rand(-maxVelocity, maxVelocity);
 		innerParticles[i].verticalVelocity = float_rand(-maxVelocity, maxVelocity);
+	}
+
+	for (int i = 0; i < numMiddleParticles; i++) {
 		middleParticles[i].horizontalVelocity = float_rand(-maxVelocity, maxVelocity);
 		middleParticles[i].verticalVelocity = float_rand(-maxVelocity, maxVelocity);
+	}
+
+	for (int i = 0; i < numOuterParticles; i++) {
 		outerParticles[i].horizontalVelocity = float_rand(-maxVelocity, maxVelocity);
 		outerParticles[i].verticalVelocity = float_rand(-maxVelocity, maxVelocity);
 	}
@@ -162,7 +171,7 @@ void Explosion::draw() {
 
 	glColor3fv(explosionColor.data);
 
-	for (int i = 0; i < numParticles; i++) {
+	for (int i = 0; i < numOuterParticles; i++) {
 		particle = positionCCS;
 		particle.x += (outerParticles[i].horizontalVelocity * totalElapsedTime);
 		particle.y += (outerParticles[i].verticalVelocity * totalElapsedTime);
@@ -175,7 +184,7 @@ void Explosion::draw() {
 	}
 
 	if (totalElapsedTime < duration[MIDDLE_DURATION]) {
-		for (int i = 0; i < numParticles; i++) {
+		for (int i = 0; i < numMiddleParticles; i++) {
 			particle = positionCCS;
 			particle.x += (middleParticles[i].horizontalVelocity * totalElapsedTime);
 			particle.y += (middleParticles[i].verticalVelocity * totalElapsedTime);
@@ -188,7 +197,7 @@ void Explosion::draw() {
 		}
 
 		if (totalElapsedTime < duration[INNER_DURATION]) {
-			for (int i = 0; i < numParticles; i++) {
+			for (int i = 0; i < numInnerParticles; i++) {
 				particle = positionCCS;
 				particle.x += (innerParticles[i].horizontalVelocity * totalElapsedTime);
 				particle.y += (innerParticles[i].verticalVelocity * totalElapsedTime);
