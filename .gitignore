@@ -1,0 +1,2 @@
+# Real high score API keys: local only, never commit (see include/api_keys_default.h).
+include/api_keys.h

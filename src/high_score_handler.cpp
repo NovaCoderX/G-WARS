@@ -29,17 +29,20 @@ extern "C" {
 	char* PerformHTTPSRequest(const char* method, const char* path, const char* body);
 }
 
-// TODO - move to compiler defs
-#define API_TOKEN_READ "XXX"
-#define API_TOKEN_UPDATE "XXX"
-#define API_TOKEN_ADMIN "XXX"
+// The real API keys live in include/api_keys.h, which is not in the repository.
+// Without it the placeholders in include/api_keys_default.h are used.
+#if __has_include("api_keys.h")
+#include "api_keys.h"
+#else
+#include "api_keys_default.h"
+#endif
 
 #define MAX_SCORE_ENTRIES 10
 #define LOCAL_PLAYER_DATA "local_player.dat"
 #define REMOTE_PLAYER_DATA "remote_player.dat"
 
-// A simple key for XORing. Keep this secret in your source code!
-const char SECRET_KEY[] = "XXX";
+// A simple key for XORing (from api_keys.h).
+const char SECRET_KEY[] = API_SECRET_KEY;
 
 struct PlayerTokenRecord {
     uint32_t id;
