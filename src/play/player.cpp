@@ -486,7 +486,7 @@ void Player::update(float elapsedTime) {
 	if (inputRequest.dropBomb) {
 		if (numSmartBombs > 0) {
 			playState->getAlienController()->smartBombNotification();
-			playState->getPlayAreaController()->smartBombNotification();
+			playState->getExplosionController()->triggerSmartBomb(this->getPositionWCS());
 			g_worldManager->startSound(FIRE_SMARTBOMB_LOW);
 			numSmartBombs--;
 

@@ -29,7 +29,6 @@ public:
 	}
 
 	void init();
-	void smartBombNotification();
 	void update(float elapsedTime);
 	void draw();
 
@@ -52,14 +51,6 @@ private:
 
 	bool shaking;
 	NovaColor lineColor;
-	NovaColor lowColor;
-	float highColorTimer;
-	bool highColorDisplayed;
-	int strobeIndex;
-	float strobeTimer;
-	float intensity;
-
-	void applyLineColor();
 };
 
 #endif // __PLAY_AREA_GRID_H

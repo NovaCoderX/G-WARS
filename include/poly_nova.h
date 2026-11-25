@@ -67,6 +67,7 @@ class PlayState;
 #include <play/play_area_border.h>
 #include <play/nova_particle.h>
 #include <play/explosion.h>
+#include <play/smart_bomb_wave.h>
 #include <play/star.h>
 #include <play/missile.h>
 #include <play/alien_missile.h>
