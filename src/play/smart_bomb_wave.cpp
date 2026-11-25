@@ -73,12 +73,12 @@ SmartBombWave::~SmartBombWave() {
 void SmartBombWave::init() {
 	Yamlish* yamlish = g_worldManager->getYamlish();
 
-	numParticles = yamlish->getInt("smartbomb.particle.density", DEFAULT_NUM_PARTICLES);
+	numParticles = yamlish->getInt("explosions.smartbomb.particle.density", DEFAULT_NUM_PARTICLES);
 	if (numParticles < 8) {
 		numParticles = 8;
 	}
 
-	speed = yamlish->getFloat("smartbomb.particle.velocity", DEFAULT_WAVE_SPEED);
+	speed = yamlish->getFloat("explosions.smartbomb.particle.velocity", DEFAULT_WAVE_SPEED);
 	if (speed <= 0) {
 		speed = DEFAULT_WAVE_SPEED;
 	}
