@@ -26,7 +26,7 @@
 // Ring speed in world units per tick (a tick is 1/10 s). The play area is 200 x 160,
 // so the wave (wake included) clears the grid in about 1.3 s from the centre and
 // 2.3 s from a corner. Aliens hold their fire for as long as it runs.
-#define DEFAULT_WAVE_SPEED 13.0f
+#define DEFAULT_WAVE_SPEED 9.0f
 
 // The slowest particle travels at this fraction of the ring speed. The spread is what
 // gives the ring its thickness, which grows as it expands.

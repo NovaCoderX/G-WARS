@@ -51,7 +51,6 @@ private:
 
 	bool shaking;
 	NovaColor lineColor;
-	NovaColor lowColor;
 };
 
 #endif // __PLAY_AREA_GRID_H

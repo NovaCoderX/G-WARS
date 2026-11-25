@@ -62,8 +62,7 @@ PlayAreaGrid::~PlayAreaGrid() {
 }
 
 void PlayAreaGrid::init() {
-	lowColor = NovaColor(16, 16, 16);
-	lineColor = lowColor;
+	lineColor = NovaColor(16, 16, 16);;
 
 	// Create the rows.
 	for (int i = 0; i < NUMBER_OF_ROWS; i++) {

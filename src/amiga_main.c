@@ -31,7 +31,7 @@
 #define MAX_ARGVS 100
 #define MIN_STACK_BYTES 300000
 
-const char *ID = "$VER: G-WARS 3.0.23\r\n";
+const char *ID = "$VER: G-WARS 3.0.24\r\n";
 
 // The startup message from workbench or 0 if started via CLI.
 extern struct WBStartup *_WBenchMsg;
